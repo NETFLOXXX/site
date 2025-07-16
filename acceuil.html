@@ -717,7 +717,7 @@
   <div class="suggestions" id="suggestions"></div>
 </div>
                 <div class="user-status" id="userStatus">
-                    <a href="#" class="login-btn" onclick="showLoginModal()">Se connecter</a>
+                    <button type="button" class="google-btn" onclick="loginWithGoogle()">Se connecter</a>
                 </div>
                 <div class="user-menu hidden" id="userMenu">
                     <div class="user-avatar" onclick="toggleUserMenu()">👤</div>
@@ -1360,9 +1360,9 @@ document.addEventListener('DOMContentLoaded', function() {
         const name = currentUser?.name || null;
 
         if (name) {
-            welcomeMessage.textContent = "Content de vous revoir, " + name + " !";
+            welcomeMessage.textContent = "Ravie de vous revoir, " + name + " !";
         } else {
-            welcomeMessage.innerHTML = "Bienvenue sur Netflox !<br>Connectez-vous pour continuer.";
+            welcomeMessage.innerHTML = "Bienvenue sur Netflox !<br>Pour une meilleure expérience, connectez-vous !";
         }
 
         welcomeOverlay.classList.add('active');
