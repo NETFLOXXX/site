@@ -793,7 +793,12 @@
     <div class="modal" id="authModal">
         <div class="modal-content">
             <button class="close-modal" onclick="closeModal()">&times;</button>
-            <h2 class="modal-title" id="modalTitle" onclick="loginWithGoogle()">Se connecter</h2>
+            <h2 class="modal-title" id="modalTitle" >Se connecter</h2>
+            <form id="authForm">
+                <div class="auth-buttons">
+                    <button type="button" class="modal-title" onclick="loginWithGoogle()">Se connecter avec Google</button>
+                </div>
+            </form>
 
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
