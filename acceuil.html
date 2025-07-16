@@ -717,10 +717,10 @@
   <div class="suggestions" id="suggestions"></div>
 </div>
                 <div class="user-status" id="userStatus">
-                    <a href="#" class="login-btn" onclick="showLoginModal()">Se connecter</a>
+                    <a href="#" class="login-btn" onclick="loginWithGoogle()">Se connecter</a>
                 </div>
                 <div class="user-menu hidden" id="userMenu">
-                    <div class="user-avatar" onclick="toggleUserMenu()">Compte</div>
+                    <div class="user-avatar" onclick="toggleUserMenu()">👤</div>
                     <div class="dropdown" id="userDropdown">
                         <a href="#" onclick="showProfile()">Profil</a>
                         <a href="#" onclick="logout()">Déconnexion</a>
@@ -789,21 +789,7 @@
         </section>
     </main>
 
-    <!-- Login Modal -->
-    <div class="modal" id="authModal">
-        <div class="modal-content">
-            <button class="close-modal" onclick="closeModal()">&times;</button>
-            <h2 class="modal-title" id="modalTitle">Se connecter</h2>
-            <form id="authForm">
-                <div class="form-group">
-                    <label for="email">Email</label>
-                    <input type="email" id="email" name="email" required>
-<div class="form-group" id="prenomGroup" style="display: none;">
-    <label for="prenom">Prénom</label>
-    <input type="text" id="prenom" name="prenom" required>
-</div>
-
-                </div>
+    </div>
                 <div class="form-group">
                     <label for="password">Mot de passe</label>
                     <input type="password" id="password" name="password" required>
@@ -1148,7 +1134,7 @@
                     populateMovies();
                 })
                 .catch((error) => {
-                    showToast('Erreur de connexion: ' + error.message);
+                    alert('Erreur de connexion: ' + error.message);
                 });
         }
 
@@ -1169,10 +1155,10 @@
                         createdAt: firebase.firestore.FieldValue.serverTimestamp()
                     });
                     
-                    showToast('Inscription réussie ! Bienvenue sur Netflox !');
+                    alert('Inscription réussie ! Bienvenue sur Netflox !');
                 })
                 .catch((error) => {
-                    showToast('Erreur d\'inscription: ' + error.message);
+                    alert('Erreur d\'inscription: ' + error.message);
                 });
         }
 
@@ -1196,26 +1182,25 @@
                     }, { merge: true });
                 })
                 .catch((error) => {
-                    showToast('Erreur de connexion Google: ' + error.message);
+                    alert('Erreur de connexion Google: ' + error.message);
                 });
         }
 
         function updateUserInterface() {
-            const userStatus = document.getElementById('userStatus');
-            const userMenu = document.getElementById('userMenu');
-            
-            if (currentUser) {
-                userStatus.classList.add('hidden');
-                userMenu.classList.remove('hidden');
-                
-                // Mettre à jour l'avatar avec l'initiale
-                const avatar = userMenu.querySelector('.user-avatar');
-                avatar.textContent = currentUser.name.charAt(0).toUpperCase();
-            } else {
-                userStatus.classList.remove('hidden');
-                userMenu.classList.add('hidden');
-            }
-        }
+    const userStatus = document.getElementById('userStatus');
+    const userMenu = document.getElementById('userMenu');
+
+    if (currentUser) {
+        userStatus.innerHTML = `<a href="#" class="login-btn" onclick="logout()">Se déconnecter</a>`;
+        userMenu.classList.remove('hidden');
+
+        const avatar = userMenu.querySelector('.user-avatar');
+        avatar.textContent = currentUser.name.charAt(0).toUpperCase();
+    } else {
+        userStatus.innerHTML = `<a href="#" class="login-btn" onclick="loginWithGoogle()">Se connecter</a>`;
+        userMenu.classList.add('hidden');
+    }
+}
 
         function toggleUserMenu() {
             const dropdown = document.getElementById('userDropdown');
@@ -1235,7 +1220,7 @@
                 populateMovies();
                 toggleUserMenu();
             }).catch((error) => {
-                showToast('Erreur de déconnexion: ' + error.message);
+                alert('Erreur de déconnexion: ' + error.message);
             });
         }
 
