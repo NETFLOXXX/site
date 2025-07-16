@@ -717,8 +717,8 @@
   <div class="suggestions" id="suggestions"></div>
 </div>
                 <div class="user-status" id="userStatus">
-                    <a href="#" class="login-btn" onclick="loginWithGoogle()">Se connecter</a>
-                </div>
+        <button class="login-btn" onclick="loginWithGoogle()">Se connecter</button>
+    </div>
                 <div class="user-menu hidden" id="userMenu">
                     <div class="user-avatar" onclick="toggleUserMenu()">👤</div>
                     <div class="dropdown" id="userDropdown">
@@ -913,7 +913,7 @@
             document.getElementById('searchInput').addEventListener('input', handleSearch);
             
             // Form d'authentification
-            document.getElementById('authForm').addEventListener('submit', handleAuth);
+            
         }
 
         function handleScroll() {
@@ -1080,27 +1080,7 @@
         }
 
         // Gestion de l'authentification
-        function showLoginModal() {
-            document.getElementById('authModal').classList.add('active');
-        }
-
-        function closeModal() {
-            document.getElementById('authModal').classList.remove('active');
-        }
-
-        function toggleAuthMode() {
-            isLogin = !isLogin;
-            const modalTitle = document.getElementById('modalTitle');
-            const authSubmit = document.getElementById('authSubmit');
-            const authToggleText = document.getElementById('authToggleText');
-            const authToggleLink = document.getElementById('authToggleLink');
-            
-            if (isLogin) {
-                modalTitle.textContent = 'Se connecter';
-                authSubmit.textContent = 'Se connecter';
-                authToggleText.textContent = 'Nouveau sur Netflox ? ';
-                authToggleLink.textContent = 'Inscrivez-vous maintenant';
-            } else {
+        else {
                 modalTitle.textContent = 'S\'inscrire';
                 authSubmit.textContent = 'S\'inscrire';
                 authToggleText.textContent = 'Déjà un compte ? ';
@@ -1108,28 +1088,14 @@
             }
         }
 
-        function handleAuth(e) {
-            e.preventDefault();
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
-            
-            if (isLogin) {
-                login(email, password);
-            } else {
+        else {
                 register(email, password);
             }
         }
 
-        function login(email, password) {
-            auth.signInWithEmailAndPassword(email, password)
-                .then((userCredential) => {
-                    currentUser = {
-                        id: userCredential.user.uid,
-                        email: userCredential.user.email,
-                        name: userCredential.user.displayName || userCredential.user.email.split('@')[0]
-                    };
+        ;
                     updateUserInterface();
-                    closeModal();
+                    
                     loadUserPreferences();
                     populateMovies();
                 })
@@ -1138,16 +1104,9 @@
                 });
         }
 
-        function register(email, password) {
-            auth.createUserWithEmailAndPassword(email, password)
-                .then((userCredential) => {
-                    currentUser = {
-                        id: userCredential.user.uid,
-                        email: userCredential.user.email,
-                        name: userCredential.user.email.split('@')[0]
-                    };
+        ;
                     updateUserInterface();
-                    closeModal();
+                    
                     
                     // Enregistrer les infos supplémentaires dans Firestore
                     db.collection('users').doc(userCredential.user.uid).set({
@@ -1172,7 +1131,7 @@
                         name: result.user.displayName || result.user.email.split('@')[0]
                     };
                     updateUserInterface();
-                    closeModal();
+                    
                     
                     // Enregistrer les infos supplémentaires dans Firestore
                     db.collection('users').doc(result.user.uid).set({
@@ -1187,20 +1146,21 @@
         }
 
         function updateUserInterface() {
-    const userStatus = document.getElementById('userStatus');
-    const userMenu = document.getElementById('userMenu');
-
-    if (currentUser) {
-        userStatus.innerHTML = `<a href="#" class="login-btn" onclick="logout()">Se déconnecter</a>`;
-        userMenu.classList.remove('hidden');
-
-        const avatar = userMenu.querySelector('.user-avatar');
-        avatar.textContent = currentUser.name.charAt(0).toUpperCase();
-    } else {
-        userStatus.innerHTML = `<a href="#" class="login-btn" onclick="loginWithGoogle()">Se connecter</a>`;
-        userMenu.classList.add('hidden');
-    }
-}
+            const userStatus = document.getElementById('userStatus');
+            const userMenu = document.getElementById('userMenu');
+            
+            if (currentUser) {
+                userStatus.classList.add('hidden');
+                userMenu.classList.remove('hidden');
+                
+                // Mettre à jour l'avatar avec l'initiale
+                const avatar = userMenu.querySelector('.user-avatar');
+                avatar.textContent = currentUser.name.charAt(0).toUpperCase();
+            } else {
+                userStatus.classList.remove('hidden');
+                userMenu.classList.add('hidden');
+            }
+        }
 
         function toggleUserMenu() {
             const dropdown = document.getElementById('userDropdown');
@@ -1237,14 +1197,14 @@
         // Fermer la modal si on clique à l'extérieur
         document.getElementById('authModal').addEventListener('click', function(e) {
             if (e.target === this) {
-                closeModal();
+                
             }
         });
 
         // Gestion des touches
         document.addEventListener('keydown', function(e) {
             if (e.key === 'Escape') {
-                closeModal();
+                
                 document.getElementById('userDropdown').classList.remove('active');
             }
         });
@@ -1294,21 +1254,7 @@ function showToast(message) {
 }
 
 // Affichage du champ prénom selon mode inscription
-function toggleAuthMode() {
-    isLogin = !isLogin;
-    const modalTitle = document.getElementById('modalTitle');
-    const authSubmit = document.getElementById('authSubmit');
-    const authToggleText = document.getElementById('authToggleText');
-    const authToggleLink = document.getElementById('authToggleLink');
-    const prenomGroup = document.getElementById('prenomGroup');
-
-    if (isLogin) {
-        modalTitle.textContent = 'Se connecter';
-        authSubmit.textContent = 'Se connecter';
-        authToggleText.textContent = 'Nouveau sur Netflox ? ';
-        authToggleLink.textContent = 'Inscrivez-vous maintenant';
-        prenomGroup.style.display = 'none';
-    } else {
+else {
         modalTitle.textContent = 'S\'inscrire';
         authSubmit.textContent = 'S\'inscrire';
         authToggleText.textContent = 'Déjà un compte ? ';
@@ -1318,14 +1264,7 @@ function toggleAuthMode() {
 }
 
 // Surcharge de register pour capturer le prénom
-function register(email, password) {
-    const prenom = document.getElementById('prenom').value.trim();
-    if (prenom.length < 2) {
-        showToast("Le prénom doit contenir au moins 2 caractères.");
-        return;
-    }
-
-    auth.createUserWithEmailAndPassword(email, password)
+auth.createUserWithEmailAndPassword(email, password)
         .then((userCredential) => {
             const user = userCredential.user;
             user.updateProfile({ displayName: prenom });
@@ -1336,7 +1275,7 @@ function register(email, password) {
                 name: prenom
             };
             updateUserInterface();
-            closeModal();
+            
 
             db.collection('users').doc(user.uid).set({
                 email: email,
