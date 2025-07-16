@@ -796,6 +796,19 @@
             ]
         };
 
+		document.addEventListener('click', function (e) {
+			const searchContainer = document.querySelector('.search-container');
+			const suggestionsBox = document.getElementById('suggestions');
+			const input = document.getElementById('search-input');
+
+			// Vérifie si le clic est à l'extérieur de la barre de recherche et des suggestions
+			if (!searchContainer.contains(e.target)) {
+			suggestionsBox.innerHTML = '';
+			input.blur(); // facultatif, pour retirer le focus
+			}
+		});
+
+
         // Variables globales
         let currentUser = null;
         let isLogin = true;
