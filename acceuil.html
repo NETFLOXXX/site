@@ -1183,23 +1183,6 @@
                 });
         }
 
-        function updateUserInterface() {
-            const userStatus = document.getElementById('userStatus');
-            const userMenu = document.getElementById('userMenu');
-            
-            if (currentUser) {
-                userStatus.classList.add('hidden');
-                userMenu.classList.remove('hidden');
-                
-                // Mettre à jour l'avatar avec l'initiale
-                const avatar = userMenu.querySelector('.user-avatar');
-                avatar.textContent = currentUser.name.charAt(0).toUpperCase();
-            } else {
-                userStatus.classList.remove('hidden');
-                userMenu.classList.add('hidden');
-            }
-        }
-
         function toggleUserMenu() {
             const dropdown = document.getElementById('userDropdown');
             dropdown.classList.toggle('active');
