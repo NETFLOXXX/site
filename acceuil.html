@@ -696,7 +696,7 @@
     <div class="split-animation left-part" id="leftPart"></div>
     <div class="split-animation right-part" id="rightPart"></div>
 	
-    <div class="site-content" id="siteContent" style="display: none;">
+    <div class="site-content" id="siteContent">
     <!-- Header -->
     <header class="header" id="header">
         <nav class="nav">
@@ -821,142 +821,10 @@
     </div>
 
     <!-- Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js">
-// Nouvelle gestion de l'intro vidéo
-document.addEventListener('DOMContentLoaded', function () {
-    const introContainer = document.getElementById('introContainer');
-    const introVideo = document.getElementById('introVideo');
-    const leftPart = document.getElementById('leftPart');
-    const rightPart = document.getElementById('rightPart');
-    const siteContent = document.getElementById('siteContent');
-
-    siteContent.style.display = 'none';
-
-    function launchSite() {
-        leftPart.classList.add('slide-in');
-        rightPart.classList.add('slide-in');
-
-        setTimeout(function () {
-            introContainer.style.display = 'none';
-            siteContent.style.display = 'block';
-            setTimeout(function () {
-                siteContent.classList.add('fade-in');
-                leftPart.style.display = 'none';
-                rightPart.style.display = 'none';
-            }, 50);
-        }, 1000);
-    }
-
-    introVideo.addEventListener('ended', launchSite);
-    introContainer.addEventListener('click', function () {
-        introVideo.pause();
-        launchSite();
-    });
-});
-
-</script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js">
-// Nouvelle gestion de l'intro vidéo
-document.addEventListener('DOMContentLoaded', function () {
-    const introContainer = document.getElementById('introContainer');
-    const introVideo = document.getElementById('introVideo');
-    const leftPart = document.getElementById('leftPart');
-    const rightPart = document.getElementById('rightPart');
-    const siteContent = document.getElementById('siteContent');
-
-    siteContent.style.display = 'none';
-
-    function launchSite() {
-        leftPart.classList.add('slide-in');
-        rightPart.classList.add('slide-in');
-
-        setTimeout(function () {
-            introContainer.style.display = 'none';
-            siteContent.style.display = 'block';
-            setTimeout(function () {
-                siteContent.classList.add('fade-in');
-                leftPart.style.display = 'none';
-                rightPart.style.display = 'none';
-            }, 50);
-        }, 1000);
-    }
-
-    introVideo.addEventListener('ended', launchSite);
-    introContainer.addEventListener('click', function () {
-        introVideo.pause();
-        launchSite();
-    });
-});
-
-</script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js">
-// Nouvelle gestion de l'intro vidéo
-document.addEventListener('DOMContentLoaded', function () {
-    const introContainer = document.getElementById('introContainer');
-    const introVideo = document.getElementById('introVideo');
-    const leftPart = document.getElementById('leftPart');
-    const rightPart = document.getElementById('rightPart');
-    const siteContent = document.getElementById('siteContent');
-
-    siteContent.style.display = 'none';
-
-    function launchSite() {
-        leftPart.classList.add('slide-in');
-        rightPart.classList.add('slide-in');
-
-        setTimeout(function () {
-            introContainer.style.display = 'none';
-            siteContent.style.display = 'block';
-            setTimeout(function () {
-                siteContent.classList.add('fade-in');
-                leftPart.style.display = 'none';
-                rightPart.style.display = 'none';
-            }, 50);
-        }, 1000);
-    }
-
-    introVideo.addEventListener('ended', launchSite);
-    introContainer.addEventListener('click', function () {
-        introVideo.pause();
-        launchSite();
-    });
-});
-
-</script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-analytics-compat.js">
-// Nouvelle gestion de l'intro vidéo
-document.addEventListener('DOMContentLoaded', function () {
-    const introContainer = document.getElementById('introContainer');
-    const introVideo = document.getElementById('introVideo');
-    const leftPart = document.getElementById('leftPart');
-    const rightPart = document.getElementById('rightPart');
-    const siteContent = document.getElementById('siteContent');
-
-    siteContent.style.display = 'none';
-
-    function launchSite() {
-        leftPart.classList.add('slide-in');
-        rightPart.classList.add('slide-in');
-
-        setTimeout(function () {
-            introContainer.style.display = 'none';
-            siteContent.style.display = 'block';
-            setTimeout(function () {
-                siteContent.classList.add('fade-in');
-                leftPart.style.display = 'none';
-                rightPart.style.display = 'none';
-            }, 50);
-        }, 1000);
-    }
-
-    introVideo.addEventListener('ended', launchSite);
-    introContainer.addEventListener('click', function () {
-        introVideo.pause();
-        launchSite();
-    });
-});
-
-</script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-analytics-compat.js"></script>
 
     <script>
         // Configuration Firebase
@@ -1396,6 +1264,40 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         });
 		
+		// Gestion de l'intro vidéo
+		document.addEventListener('DOMContentLoaded', function() {
+			const introContainer = document.getElementById('introContainer');
+			const introVideo = document.getElementById('introVideo');
+			const leftPart = document.getElementById('leftPart');
+			const rightPart = document.getElementById('rightPart');
+			const siteContent = document.getElementById('siteContent');
+
+			// Masquer le contenu initialement
+			siteContent.style.display = 'none';
+
+			// Quand la vidéo se termine
+			introVideo.addEventListener('ended', function() {
+				// Lancer l'animation split
+				leftPart.classList.add('slide-in');
+				rightPart.classList.add('slide-in');
+        
+				// Après l'animation, afficher le site
+				setTimeout(function() {
+					introContainer.style.display = 'none';
+					siteContent.style.display = 'block';
+					setTimeout(function() {
+						siteContent.classList.add('fade-in');
+						leftPart.style.display = 'none';
+						rightPart.style.display = 'none';
+					}, 50);
+				}, 1000); // Durée de l'animation
+			});
+
+			// Option: sauter l'intro au clic
+			introContainer.addEventListener('click', function() {
+				introVideo.pause();
+				introVideo.dispatchEvent(new Event('ended'));
+			});
 		});
     
 // Toast Message
@@ -1488,75 +1390,9 @@ function enterSite() {
     document.getElementById('welcomeOverlay').classList.remove('active');
 }
 
-
-// Nouvelle gestion de l'intro vidéo
-document.addEventListener('DOMContentLoaded', function () {
-    const introContainer = document.getElementById('introContainer');
-    const introVideo = document.getElementById('introVideo');
-    const leftPart = document.getElementById('leftPart');
-    const rightPart = document.getElementById('rightPart');
-    const siteContent = document.getElementById('siteContent');
-
-    siteContent.style.display = 'none';
-
-    function launchSite() {
-        leftPart.classList.add('slide-in');
-        rightPart.classList.add('slide-in');
-
-        setTimeout(function () {
-            introContainer.style.display = 'none';
-            siteContent.style.display = 'block';
-            setTimeout(function () {
-                siteContent.classList.add('fade-in');
-                leftPart.style.display = 'none';
-                rightPart.style.display = 'none';
-            }, 50);
-        }, 1000);
-    }
-
-    introVideo.addEventListener('ended', launchSite);
-    introContainer.addEventListener('click', function () {
-        introVideo.pause();
-        launchSite();
-    });
-});
-
 </script>
 
-<script src="https://cdn.jsdelivr.net/npm/fuse.js/dist/fuse.min.js">
-// Nouvelle gestion de l'intro vidéo
-document.addEventListener('DOMContentLoaded', function () {
-    const introContainer = document.getElementById('introContainer');
-    const introVideo = document.getElementById('introVideo');
-    const leftPart = document.getElementById('leftPart');
-    const rightPart = document.getElementById('rightPart');
-    const siteContent = document.getElementById('siteContent');
-
-    siteContent.style.display = 'none';
-
-    function launchSite() {
-        leftPart.classList.add('slide-in');
-        rightPart.classList.add('slide-in');
-
-        setTimeout(function () {
-            introContainer.style.display = 'none';
-            siteContent.style.display = 'block';
-            setTimeout(function () {
-                siteContent.classList.add('fade-in');
-                leftPart.style.display = 'none';
-                rightPart.style.display = 'none';
-            }, 50);
-        }, 1000);
-    }
-
-    introVideo.addEventListener('ended', launchSite);
-    introContainer.addEventListener('click', function () {
-        introVideo.pause();
-        launchSite();
-    });
-});
-
-</script>
+<script src="https://cdn.jsdelivr.net/npm/fuse.js/dist/fuse.min.js"></script>
 <script>
   const input = document.getElementById('search-input');
   const suggestions = document.getElementById('suggestions');
@@ -1677,39 +1513,6 @@ document.addEventListener('DOMContentLoaded', function () {
       window.open(`https://netfloxxx.github.io/site/${nameSlug}.html`, '_blank');
     }
   }
-
-// Nouvelle gestion de l'intro vidéo
-document.addEventListener('DOMContentLoaded', function () {
-    const introContainer = document.getElementById('introContainer');
-    const introVideo = document.getElementById('introVideo');
-    const leftPart = document.getElementById('leftPart');
-    const rightPart = document.getElementById('rightPart');
-    const siteContent = document.getElementById('siteContent');
-
-    siteContent.style.display = 'none';
-
-    function launchSite() {
-        leftPart.classList.add('slide-in');
-        rightPart.classList.add('slide-in');
-
-        setTimeout(function () {
-            introContainer.style.display = 'none';
-            siteContent.style.display = 'block';
-            setTimeout(function () {
-                siteContent.classList.add('fade-in');
-                leftPart.style.display = 'none';
-                rightPart.style.display = 'none';
-            }, 50);
-        }, 1000);
-    }
-
-    introVideo.addEventListener('ended', launchSite);
-    introContainer.addEventListener('click', function () {
-        introVideo.pause();
-        launchSite();
-    });
-});
-
 </script>
 
 <div id="toast" class="toast-message"></div>
