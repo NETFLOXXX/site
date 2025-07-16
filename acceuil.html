@@ -1513,6 +1513,77 @@ function enterSite() {
     <h1 id="welcomeMessage">Content de vous revoir !</h1>
     <button onclick="enterSite()">Entrer</button>
 </div>
+<!-- Bouton Surprise -->
+<style>
+#randomBtn {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    background-color: #e50914;
+    color: white;
+    border: none;
+    border-radius: 999px;
+    padding: 16px 32px;
+    font-size: 18px;
+    font-weight: bold;
+    text-align: center;
+    cursor: pointer;
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+    z-index: 999;
+    display: none;
+    max-width: 100%;
+    white-space: nowrap;
+    transition: background 0.3s ease, transform 0.3s ease;
+}
+#randomBtn:hover {
+    background-color: #c40812;
+    transform: scale(1.05);
+}
+</style>
+
+<button id="randomBtn">🎲 Vous ne savez pas quoi regarder ?</button>
+
+<script>
+function slugify(str) {
+    return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+              .toLowerCase()
+              .replace(/[^a-z0-9]+/g, '-')
+              .replace(/(^-|-$)/g, '');
+}
+
+async function goToRandom() {
+    const apiKey = '9bb76e7829aacc0197000636ecf535b1';
+
+    const [movieRes, tvRes] = await Promise.all([
+        fetch(`https://api.themoviedb.org/3/movie/popular?api_key=${apiKey}&language=fr-FR&page=${Math.floor(Math.random() * 10 + 1)}`),
+        fetch(`https://api.themoviedb.org/3/tv/popular?api_key=${apiKey}&language=fr-FR&page=${Math.floor(Math.random() * 10 + 1)}`)
+    ]);
+
+    const movies = await movieRes.json();
+    const series = await tvRes.json();
+
+    const pool = [...movies.results.map(m => ({ ...m, type: 'movie' })), ...series.results.map(s => ({ ...s, type: 'tv' }))];
+    const random = pool[Math.floor(Math.random() * pool.length)];
+
+    if (!random) return alert("Aucun contenu trouvé");
+
+    if (random.type === 'movie') {
+        window.open(`https://movix.site/watch/movie/${random.id}`, '_blank');
+    } else {
+        const slug = slugify(random.name || '');
+        window.open(`https://netfloxxx.github.io/site/${slug}.html`, '_blank');
+    }
+}
+
+document.getElementById('randomBtn').addEventListener('click', goToRandom);
+
+// Affiche le bouton après l’intro vidéo
+document.getElementById('introVideo').addEventListener('ended', () => {
+    setTimeout(() => {
+        document.getElementById('randomBtn').style.display = 'block';
+    }, 1200); // après animation split
+});
+</script>
 
 </body>
 
