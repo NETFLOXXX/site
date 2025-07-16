@@ -1,0 +1,1114 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="https://i.ibb.co/VYfvTC6F/untilted-1752571740-trimmy.png" type="image/png">
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">
+    <title>NETFLOX</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600&display=swap');
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #141414;
+            color: white;
+            overflow-x: hidden;
+        }
+
+        /* Header */
+        .header {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            background: linear-gradient(180deg, rgba(0,0,0,0.7) 10%, transparent);
+            z-index: 1000;
+            padding: 20px 60px;
+            transition: background-color 0.3s ease;
+        }
+
+        .header.scrolled {
+            background-color: #141414;
+        }
+
+        .nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+	.logo {
+	     font-size: 48px;
+	     font-weight: normal; /* Retirez le bold car la police l'a déjà */
+	     color: #e50914;
+	     text-decoration: none;
+	     font-family: 'Bebas Neue', sans-serif; /* Ajoutez cette ligne */
+	     letter-spacing: 1px; /* Optionnel pour un meilleur rendu */
+	     font-family: Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif;
+	}
+
+        .nav-links {
+            display: flex;
+            list-style: none;
+            gap: 30px;
+        }
+
+        .nav-links a {
+            color: white;
+            text-decoration: none;
+            transition: color 0.3s ease;
+	    font-family: 'Montserrat', sans-serif; /* Nouvelle police */
+    	    font-weight: 500;
+    	    font-size: 18px; /* Taille augmentée */
+        }
+
+        .nav-links a:hover {
+            color: #e50914;
+        }
+
+        .nav-right {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .search-box {
+            position: relative;
+        }
+
+        .search-input {
+            background: rgba(0,0,0,0.7);
+            border: 1px solid #333;
+            color: white;
+            padding: 8px 15px;
+            border-radius: 4px;
+            width: 0;
+            transition: width 0.3s ease;
+        }
+
+        .search-input.active {
+            width: 250px;
+        }
+
+        .search-btn {
+            background: none;
+            border: none;
+            color: white;
+            cursor: pointer;
+            font-size: 18px;
+        }
+
+        .user-menu {
+            position: relative;
+        }
+
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 4px;
+            cursor: pointer;
+            background: #e50914;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .dropdown {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            background: #141414;
+            border: 1px solid #333;
+            border-radius: 4px;
+            padding: 10px;
+            display: none;
+            min-width: 150px;
+        }
+
+        .dropdown.active {
+            display: block;
+        }
+
+        .dropdown a {
+            display: block;
+            padding: 5px 0;
+            color: white;
+            text-decoration: none;
+        }
+
+        .dropdown a:hover {
+            color: #e50914;
+        }
+
+        /* Hero Section */
+        .hero {
+            height: 100vh;
+            background: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800"><rect fill="%23333" width="1200" height="800"/><text x="600" y="400" font-family="Arial" font-size="48" fill="%23666" text-anchor="middle">Film Principal</text></svg>');
+            background-size: cover;
+            background-position: center;
+            display: flex;
+            align-items: center;
+            padding: 0 60px;
+        }
+
+        .hero-content {
+            max-width: 500px;
+        }
+
+        .hero-title {
+            font-size: 48px;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+
+        .hero-description {
+            font-size: 18px;
+            margin-bottom: 30px;
+            line-height: 1.6;
+        }
+
+        .hero-buttons {
+            display: flex;
+            gap: 15px;
+        }
+
+        .btn {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-primary {
+            background: #e50914;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #c40812;
+        }
+
+        .btn-secondary {
+            background: rgba(109,109,110,0.7);
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(109,109,110,0.9);
+        }
+
+        /* Content Sections */
+        .content {
+            padding: 60px;
+        }
+
+        .section {
+            margin-bottom: 50px;
+        }
+
+        .section-title {
+            font-size: 24px;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+
+        .row {
+            display: flex;
+            gap: 10px;
+            overflow-x: auto;
+            padding: 10px 0;
+        }
+
+        .row::-webkit-scrollbar {
+            height: 8px;
+        }
+
+        .row::-webkit-scrollbar-track {
+            background: #333;
+        }
+
+        .row::-webkit-scrollbar-thumb {
+            background: #666;
+            border-radius: 4px;
+        }
+
+        .movie-card {
+            min-width: 250px;
+            height: 140px;
+            background: #333;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            background-size: cover;
+            background-position: center;
+        }
+
+        .movie-card:hover {
+            transform: scale(1.05);
+            z-index: 10;
+        }
+
+        .movie-card.expanded {
+            transform: scale(1.2);
+            z-index: 100;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+        }
+
+        .movie-info {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(transparent, rgba(0,0,0,0.8));
+            padding: 20px;
+            transform: translateY(100%);
+            transition: transform 0.3s ease;
+        }
+
+        .movie-card.expanded .movie-info {
+            transform: translateY(0);
+        }
+
+        .movie-title {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .movie-meta {
+            font-size: 12px;
+            color: #999;
+        }
+
+        .trailer-video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            position: absolute;
+            top: 0;
+            left: 0;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .movie-card.expanded .trailer-video {
+            opacity: 1;
+        }
+
+        /* Login Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: #141414;
+            padding: 40px;
+            border-radius: 8px;
+            max-width: 400px;
+            width: 90%;
+        }
+
+        .modal-title {
+            font-size: 24px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 14px;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #333;
+            border-radius: 4px;
+            background: #333;
+            color: white;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #e50914;
+        }
+
+        .auth-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .google-btn {
+            background: #4285f4;
+            color: white;
+            padding: 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .toggle-auth {
+            text-align: center;
+            margin-top: 20px;
+            color: #999;
+        }
+
+        .toggle-auth a {
+            color: #e50914;
+            text-decoration: none;
+        }
+
+        .close-modal {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            background: none;
+            border: none;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header {
+                padding: 15px 20px;
+            }
+
+            .nav-links {
+                display: none;
+            }
+
+            .hero {
+                padding: 0 20px;
+                height: 70vh;
+            }
+
+            .hero-title {
+                font-size: 32px;
+            }
+
+            .content {
+                padding: 30px 20px;
+            }
+
+            .movie-card {
+                min-width: 200px;
+                height: 120px;
+            }
+
+            .row {
+                gap: 5px;
+            }
+        }
+
+        .user-status {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .login-btn {
+            background: #e50914;
+            color: white;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            text-decoration: none;
+        }
+
+        .login-btn:hover {
+            background: #c20712;
+        }
+
+        .hidden {
+            display: none;
+        }
+		
+		/* Video Intro */
+		.intro-container {
+			position: fixed;
+			top: 0;
+			left: 0;
+			width: 100%;
+			height: 100%;
+			background: #000;
+			z-index: 9999;
+			display: flex;
+			justify-content: center;
+			align-items: center;
+		}
+
+		.intro-video {
+			width: 100%;
+			height: 100%;
+			object-fit: contain;
+		}
+
+		.site-content {
+			opacity: 0;
+			transition: opacity 1s ease;
+		}
+
+		/* Animation Split */
+		.split-animation {
+			position: fixed;
+			top: 0;
+			width: 50%;
+			height: 100%;
+			background: #141414;
+			z-index: 10000;
+			transform: translateX(-100%);
+		}
+
+		.left-part {
+			left: 0;
+		}
+
+		.right-part {
+			right: 0;
+			transform: translateX(100%);
+		}
+
+		/* Animations */
+		.slide-in {
+			animation: slideIn 1s forwards;
+		}
+
+		@keyframes slideIn {
+			to { transform: translateX(0); }
+		}
+
+		.fade-in {
+			opacity: 1 !important;
+		}
+    </style>
+</head>
+<body>
+    <!-- Video Intro -->
+	<div class="intro-container" id="introContainer">
+		<video class="intro-video" id="introVideo" autoplay muted>
+			<source src="https://ia800906.us.archive.org/6/items/netflox/Netflix%20New%20Logo%20Animation%202019%20%28online-video-cutter.com%29.mp4" type="video/mp4">
+		</video>
+	</div>
+    <!-- Animation Split -->
+    <div class="split-animation left-part" id="leftPart"></div>
+    <div class="split-animation right-part" id="rightPart"></div>
+	
+    <div class="site-content" id="siteContent">
+    <!-- Header -->
+    <header class="header" id="header">
+        <nav class="nav">
+            <a href="#" class="logo">NETFLOX</a>
+            <ul class="nav-links">
+                <li><a href="#accueil">Accueil</a></li>
+                <li><a href="#series">Séries</a></li>
+                <li><a href="#films">Films</a></li>
+                <li><a href="#nouveautes">Nouveautés</a></li>
+                <li><a href="#ma-liste">Ma liste</a></li>
+            </ul>
+            <div class="nav-right">
+                <div class="search-box">
+                    <button class="search-btn" onclick="toggleSearch()">🔍</button>
+                    <input type="text" class="search-input" placeholder="Rechercher..." id="searchInput">
+                </div>
+                <div class="user-status" id="userStatus">
+                    <a href="#" class="login-btn" onclick="showLoginModal()">Se connecter</a>
+                </div>
+                <div class="user-menu hidden" id="userMenu">
+                    <div class="user-avatar" onclick="toggleUserMenu()">👤</div>
+                    <div class="dropdown" id="userDropdown">
+                        <a href="#" onclick="showProfile()">Profil</a>
+                        <a href="#" onclick="logout()">Déconnexion</a>
+                    </div>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="hero-content">
+            <h1 class="hero-title">Film Vedette</h1>
+            <p class="hero-description">
+                Découvrez le dernier blockbuster qui fait sensation. Une aventure épique vous attend avec des personnages inoubliables et des effets spéciaux à couper le souffle.
+            </p>
+            <div class="hero-buttons">
+                <a href="#" class="btn btn-primary">▶ Lecture</a>
+                <a href="#" class="btn btn-secondary">ℹ Plus d'infos</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Content -->
+    <main class="content">
+        <section class="section">
+            <h2 class="section-title">Tendances actuelles</h2>
+            <div class="row" id="trending">
+                <!-- Movies will be populated by JavaScript -->
+            </div>
+        </section>
+
+        <section class="section">
+            <h2 class="section-title">Continuer à regarder</h2>
+            <div class="row" id="continue-watching">
+                <!-- Movies will be populated by JavaScript -->
+            </div>
+        </section>
+
+        <section class="section">
+            <h2 class="section-title">Recommandé pour vous</h2>
+            <div class="row" id="recommended">
+                <!-- Movies will be populated by JavaScript -->
+            </div>
+        </section>
+
+        <section class="section">
+            <h2 class="section-title">Action et Aventure</h2>
+            <div class="row" id="action">
+                <!-- Movies will be populated by JavaScript -->
+            </div>
+        </section>
+
+        <section class="section">
+            <h2 class="section-title">Comédies</h2>
+            <div class="row" id="comedy">
+                <!-- Movies will be populated by JavaScript -->
+            </div>
+        </section>
+
+        <section class="section">
+            <h2 class="section-title">Documentaires</h2>
+            <div class="row" id="documentaries">
+                <!-- Movies will be populated by JavaScript -->
+            </div>
+        </section>
+    </main>
+
+    <!-- Login Modal -->
+    <div class="modal" id="authModal">
+        <div class="modal-content">
+            <button class="close-modal" onclick="closeModal()">&times;</button>
+            <h2 class="modal-title" id="modalTitle">Se connecter</h2>
+            <form id="authForm">
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" name="email" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">Mot de passe</label>
+                    <input type="password" id="password" name="password" required>
+                </div>
+                <div class="auth-buttons">
+                    <button type="submit" class="btn btn-primary" id="authSubmit">Se connecter</button>
+                    <button type="button" class="google-btn" onclick="loginWithGoogle()">Se connecter avec Google</button>
+                </div>
+            </form>
+            <div class="toggle-auth">
+                <span id="authToggleText">Nouveau sur Netflox ? </span>
+                <a href="#" onclick="toggleAuthMode()" id="authToggleLink">Inscrivez-vous maintenant</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-analytics-compat.js"></script>
+
+    <script>
+        // Configuration Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyAzEq1PX_98dG2fpTpswquuDpduv0Krvyw",
+            authDomain: "netfloxv2.firebaseapp.com",
+            projectId: "netfloxv2",
+            storageBucket: "netfloxv2.appspot.com",
+            messagingSenderId: "507120986585",
+            appId: "1:507120986585:web:4a8a0b646ae565b11c51c8",
+            measurementId: "G-DNXJB7T5SM"
+        };
+
+        // Initialisation Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+        const analytics = firebase.analytics();
+
+        // Données fictives pour les films
+        const moviesData = {
+            trending: [
+                {title: "Action Hero", year: "2024", genre: "Action", rating: "8.5", image: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 250 140'><rect fill='%23e50914' width='250' height='140'/><text x='125' y='75' font-family='Arial' font-size='16' fill='white' text-anchor='middle'>Action Hero</text></svg>"},
+                {title: "Comédie Royale", year: "2024", genre: "Comédie", rating: "7.8", image: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 250 140'><rect fill='%23ff6b35' width='250' height='140'/><text x='125' y='75' font-family='Arial' font-size='16' fill='white' text-anchor='middle'>Comédie Royale</text></svg>"},
+                {title: "Mystère Nocturne", year: "2024", genre: "Thriller", rating: "9.1", image: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 250 140'><rect fill='%232d3436' width='250' height='140'/><text x='125' y='75' font-family='Arial' font-size='16' fill='white' text-anchor='middle'>Mystère Nocturne</text></svg>"},
+                {title: "Romance Parisienne", year: "2024", genre: "Romance", rating: "8.2", image: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 250 140'><rect fill='%23fd79a8' width='250' height='140'/><text x='125' y='75' font-family='Arial' font-size='16' fill='white' text-anchor='middle'>Romance Parisienne</text></svg>"},
+                {title: "Sci-Fi Futur", year: "2024", genre: "Sci-Fi", rating: "8.7", image: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 250 140'><rect fill='%2300b894' width='250' height='140'/><text x='125' y='75' font-family='Arial' font-size='16' fill='white' text-anchor='middle'>Sci-Fi Futur</text></svg>"},
+            ],
+            action: [
+                {title: "Guerre Stellaire", year: "2023", genre: "Action", rating: "8.9", image: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 250 140'><rect fill='%23636e72' width='250' height='140'/><text x='125' y='75' font-family='Arial' font-size='16' fill='white' text-anchor='middle'>Guerre Stellaire</text></svg>"},
+                {title: "Mission Impossible", year: "2023", genre: "Action", rating: "8.4", image: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 250 140'><rect fill='%23a29bfe' width='250' height='140'/><text x='125' y='75' font-family='Arial' font-size='16' fill='white' text-anchor='middle'>Mission Impossible</text></svg>"},
+                {title: "Super Héros", year: "2023", genre: "Action", rating: "8.1", image: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 250 140'><rect fill='%23ffeaa7' width='250' height='140'/><text x='125' y='75' font-family='Arial' font-size='16' fill='black' text-anchor='middle'>Super Héros</text></svg>"},
+            ],
+            comedy: [
+                {title: "Rire aux Éclats", year: "2024", genre: "Comédie", rating: "7.6", image: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 250 140'><rect fill='%23fab1a0' width='250' height='140'/><text x='125' y='75' font-family='Arial' font-size='16' fill='white' text-anchor='middle'>Rire aux Éclats</text></svg>"},
+                {title: "Comédie Familiale", year: "2024", genre: "Comédie", rating: "8.0", image: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 250 140'><rect fill='%2355a3ff' width='250' height='140'/><text x='125' y='75' font-family='Arial' font-size='16' fill='white' text-anchor='middle'>Comédie Familiale</text></svg>"},
+            ],
+            documentaries: [
+                {title: "Nature Sauvage", year: "2024", genre: "Documentaire", rating: "9.2", image: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 250 140'><rect fill='%2300b894' width='250' height='140'/><text x='125' y='75' font-family='Arial' font-size='16' fill='white' text-anchor='middle'>Nature Sauvage</text></svg>"},
+                {title: "Histoire Mondiale", year: "2024", genre: "Documentaire", rating: "8.8", image: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 250 140'><rect fill='%23e17055' width='250' height='140'/><text x='125' y='75' font-family='Arial' font-size='16' fill='white' text-anchor='middle'>Histoire Mondiale</text></svg>"},
+            ]
+        };
+
+        // Variables globales
+        let currentUser = null;
+        let isLogin = true;
+        let expandTimeout = null;
+        let userPreferences = {};
+
+        // Initialisation
+        document.addEventListener('DOMContentLoaded', function() {
+            checkAuthState();
+            populateMovies();
+            setupEventListeners();
+            handleScroll();
+            detectDevice();
+        });
+
+        function checkAuthState() {
+            auth.onAuthStateChanged(user => {
+                if (user) {
+                    currentUser = {
+                        id: user.uid,
+                        email: user.email,
+                        name: user.displayName || user.email.split('@')[0]
+                    };
+                    updateUserInterface();
+                    loadUserPreferences();
+                    analytics.logEvent('login');
+                } else {
+                    currentUser = null;
+                    updateUserInterface();
+                }
+            });
+        }
+
+        function detectDevice() {
+            const isMobile = window.innerWidth <= 768;
+            document.body.classList.toggle('mobile', isMobile);
+        }
+
+        function setupEventListeners() {
+            window.addEventListener('scroll', handleScroll);
+            window.addEventListener('resize', detectDevice);
+            
+            // Recherche
+            document.getElementById('searchInput').addEventListener('input', handleSearch);
+            
+            // Form d'authentification
+            document.getElementById('authForm').addEventListener('submit', handleAuth);
+        }
+
+        function handleScroll() {
+            const header = document.getElementById('header');
+            if (window.scrollY > 50) {
+                header.classList.add('scrolled');
+            } else {
+                header.classList.remove('scrolled');
+            }
+        }
+
+        function toggleSearch() {
+            const searchInput = document.getElementById('searchInput');
+            searchInput.classList.toggle('active');
+            if (searchInput.classList.contains('active')) {
+                searchInput.focus();
+            }
+        }
+
+        function handleSearch() {
+            const query = document.getElementById('searchInput').value.toLowerCase();
+            // Ici vous pouvez implémenter la logique de recherche
+            console.log('Recherche:', query);
+            analytics.logEvent('search', { search_term: query });
+        }
+
+        function populateMovies() {
+            populateSection('trending', moviesData.trending);
+            populateSection('action', moviesData.action);
+            populateSection('comedy', moviesData.comedy);
+            populateSection('documentaries', moviesData.documentaries);
+            
+            // Recommandations personnalisées
+            if (currentUser) {
+                populateSection('recommended', getRecommendations());
+                populateSection('continue-watching', getContinueWatching());
+            } else {
+                populateSection('recommended', moviesData.trending);
+                populateSection('continue-watching', []);
+            }
+        }
+
+        function populateSection(sectionId, movies) {
+            const section = document.getElementById(sectionId);
+            if (!section) return;
+            
+            section.innerHTML = '';
+            movies.forEach(movie => {
+                const card = createMovieCard(movie);
+                section.appendChild(card);
+            });
+        }
+
+        function createMovieCard(movie) {
+            const card = document.createElement('div');
+            card.className = 'movie-card';
+            card.style.backgroundImage = `url('${movie.image}')`;
+            
+            card.innerHTML = `
+                <div class="movie-info">
+                    <div class="movie-title">${movie.title}</div>
+                    <div class="movie-meta">${movie.year} • ${movie.genre} • ★ ${movie.rating}</div>
+                </div>
+                <video class="trailer-video" muted preload="none">
+                    <source src="path/to/trailer.mp4" type="video/mp4">
+                </video>
+            `;
+            
+            // Gestion du hover avec délai
+            card.addEventListener('mouseenter', () => {
+                expandTimeout = setTimeout(() => {
+                    card.classList.add('expanded');
+                    playTrailer(card);
+                    trackView(movie);
+                }, 500);
+            });
+            
+            card.addEventListener('mouseleave', () => {
+                clearTimeout(expandTimeout);
+                card.classList.remove('expanded');
+                stopTrailer(card);
+            });
+            
+            card.addEventListener('click', () => {
+                analytics.logEvent('select_content', {
+                    content_type: 'movie',
+                    item_id: movie.title
+                });
+                alert(`Vous avez sélectionné : ${movie.title}`);
+            });
+            
+            return card;
+        }
+
+        function playTrailer(card) {
+            const video = card.querySelector('.trailer-video');
+            if (video) {
+                video.play().catch(e => console.log('Autoplay prevented'));
+            }
+        }
+
+        function stopTrailer(card) {
+            const video = card.querySelector('.trailer-video');
+            if (video) {
+                video.pause();
+                video.currentTime = 0;
+            }
+        }
+
+        function trackView(movie) {
+            if (currentUser) {
+                if (!userPreferences.viewHistory) {
+                    userPreferences.viewHistory = [];
+                }
+                userPreferences.viewHistory.push({
+                    title: movie.title,
+                    timestamp: new Date().toISOString(),
+                    genre: movie.genre
+                });
+                saveUserPreferences();
+            }
+        }
+
+        function getRecommendations() {
+            if (!userPreferences.viewHistory) return moviesData.trending;
+            
+            // Logique simple de recommandation basée sur les genres vus
+            const genres = userPreferences.viewHistory.map(item => item.genre);
+            const favoriteGenre = genres.sort((a,b) =>
+                genres.filter(v => v===a).length - genres.filter(v => v===b).length
+            ).pop();
+            
+            // Retourner des films du genre favori
+            return Object.values(moviesData).flat().filter(movie => movie.genre === favoriteGenre);
+        }
+
+        function getContinueWatching() {
+            if (!userPreferences.watchProgress) return [];
+            
+            return Object.keys(userPreferences.watchProgress).map(title => {
+                const movie = Object.values(moviesData).flat().find(m => m.title === title);
+                return movie;
+            }).filter(Boolean);
+        }
+
+        function saveUserPreferences() {
+            if (currentUser) {
+                db.collection('userPreferences').doc(currentUser.id).set(userPreferences)
+                    .then(() => console.log('Préférences sauvegardées'))
+                    .catch(error => console.error('Erreur de sauvegarde:', error));
+            }
+        }
+
+        function loadUserPreferences() {
+            if (currentUser) {
+                db.collection('userPreferences').doc(currentUser.id).get()
+                    .then(doc => {
+                        if (doc.exists) {
+                            userPreferences = doc.data();
+                        }
+                    })
+                    .catch(error => console.error('Erreur de chargement:', error));
+            }
+        }
+
+        // Gestion de l'authentification
+        function showLoginModal() {
+            document.getElementById('authModal').classList.add('active');
+        }
+
+        function closeModal() {
+            document.getElementById('authModal').classList.remove('active');
+        }
+
+        function toggleAuthMode() {
+            isLogin = !isLogin;
+            const modalTitle = document.getElementById('modalTitle');
+            const authSubmit = document.getElementById('authSubmit');
+            const authToggleText = document.getElementById('authToggleText');
+            const authToggleLink = document.getElementById('authToggleLink');
+            
+            if (isLogin) {
+                modalTitle.textContent = 'Se connecter';
+                authSubmit.textContent = 'Se connecter';
+                authToggleText.textContent = 'Nouveau sur Netflox ? ';
+                authToggleLink.textContent = 'Inscrivez-vous maintenant';
+            } else {
+                modalTitle.textContent = 'S\'inscrire';
+                authSubmit.textContent = 'S\'inscrire';
+                authToggleText.textContent = 'Déjà un compte ? ';
+                authToggleLink.textContent = 'Connectez-vous';
+            }
+        }
+
+        function handleAuth(e) {
+            e.preventDefault();
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            
+            if (isLogin) {
+                login(email, password);
+            } else {
+                register(email, password);
+            }
+        }
+
+        function login(email, password) {
+            auth.signInWithEmailAndPassword(email, password)
+                .then((userCredential) => {
+                    currentUser = {
+                        id: userCredential.user.uid,
+                        email: userCredential.user.email,
+                        name: userCredential.user.displayName || userCredential.user.email.split('@')[0]
+                    };
+                    updateUserInterface();
+                    closeModal();
+                    loadUserPreferences();
+                    populateMovies();
+                })
+                .catch((error) => {
+                    alert('Erreur de connexion: ' + error.message);
+                });
+        }
+
+        function register(email, password) {
+            auth.createUserWithEmailAndPassword(email, password)
+                .then((userCredential) => {
+                    currentUser = {
+                        id: userCredential.user.uid,
+                        email: userCredential.user.email,
+                        name: userCredential.user.email.split('@')[0]
+                    };
+                    updateUserInterface();
+                    closeModal();
+                    
+                    // Enregistrer les infos supplémentaires dans Firestore
+                    db.collection('users').doc(userCredential.user.uid).set({
+                        email: email,
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                    
+                    alert('Inscription réussie ! Bienvenue sur Netflox !');
+                })
+                .catch((error) => {
+                    alert('Erreur d\'inscription: ' + error.message);
+                });
+        }
+
+        function loginWithGoogle() {
+            const provider = new firebase.auth.GoogleAuthProvider();
+            auth.signInWithPopup(provider)
+                .then((result) => {
+                    currentUser = {
+                        id: result.user.uid,
+                        email: result.user.email,
+                        name: result.user.displayName || result.user.email.split('@')[0]
+                    };
+                    updateUserInterface();
+                    closeModal();
+                    
+                    // Enregistrer les infos supplémentaires dans Firestore
+                    db.collection('users').doc(result.user.uid).set({
+                        email: result.user.email,
+                        name: result.user.displayName,
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    }, { merge: true });
+                })
+                .catch((error) => {
+                    alert('Erreur de connexion Google: ' + error.message);
+                });
+        }
+
+        function updateUserInterface() {
+            const userStatus = document.getElementById('userStatus');
+            const userMenu = document.getElementById('userMenu');
+            
+            if (currentUser) {
+                userStatus.classList.add('hidden');
+                userMenu.classList.remove('hidden');
+                
+                // Mettre à jour l'avatar avec l'initiale
+                const avatar = userMenu.querySelector('.user-avatar');
+                avatar.textContent = currentUser.name.charAt(0).toUpperCase();
+            } else {
+                userStatus.classList.remove('hidden');
+                userMenu.classList.add('hidden');
+            }
+        }
+
+        function toggleUserMenu() {
+            const dropdown = document.getElementById('userDropdown');
+            dropdown.classList.toggle('active');
+        }
+
+        function showProfile() {
+            alert('Profil de ' + currentUser.name + '\nEmail: ' + currentUser.email);
+            toggleUserMenu();
+        }
+
+        function logout() {
+            auth.signOut().then(() => {
+                currentUser = null;
+                userPreferences = {};
+                updateUserInterface();
+                populateMovies();
+                toggleUserMenu();
+            }).catch((error) => {
+                alert('Erreur de déconnexion: ' + error.message);
+            });
+        }
+
+        // Fermer le dropdown si on clique ailleurs
+        document.addEventListener('click', function(e) {
+            const userMenu = document.getElementById('userMenu');
+            const dropdown = document.getElementById('userDropdown');
+            
+            if (!userMenu.contains(e.target)) {
+                dropdown.classList.remove('active');
+            }
+        });
+
+        // Fermer la modal si on clique à l'extérieur
+        document.getElementById('authModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeModal();
+            }
+        });
+
+        // Gestion des touches
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeModal();
+                document.getElementById('userDropdown').classList.remove('active');
+            }
+        });
+		
+		// Gestion de l'intro vidéo
+		document.addEventListener('DOMContentLoaded', function() {
+			const introContainer = document.getElementById('introContainer');
+			const introVideo = document.getElementById('introVideo');
+			const leftPart = document.getElementById('leftPart');
+			const rightPart = document.getElementById('rightPart');
+			const siteContent = document.getElementById('siteContent');
+
+			// Masquer le contenu initialement
+			siteContent.style.display = 'none';
+
+			// Quand la vidéo se termine
+			introVideo.addEventListener('ended', function() {
+				// Lancer l'animation split
+				leftPart.classList.add('slide-in');
+				rightPart.classList.add('slide-in');
+        
+				// Après l'animation, afficher le site
+				setTimeout(function() {
+					introContainer.style.display = 'none';
+					siteContent.style.display = 'block';
+					setTimeout(function() {
+						siteContent.classList.add('fade-in');
+						leftPart.style.display = 'none';
+						rightPart.style.display = 'none';
+					}, 50);
+				}, 1000); // Durée de l'animation
+			});
+
+			// Option: sauter l'intro au clic
+			introContainer.addEventListener('click', function() {
+				introVideo.pause();
+				introVideo.dispatchEvent(new Event('ended'));
+			});
+		});
+    </script>
+</body>
+</html>
