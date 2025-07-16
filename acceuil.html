@@ -788,7 +788,21 @@
             </div>
         </section>
     </main>
-
+	
+    <!-- Login Modal -->
+    <div class="modal" id="authModal">
+        <div class="modal-content">
+            <button class="close-modal" onclick="closeModal()">&times;</button>
+            <h2 class="modal-title" id="modalTitle">Se connecter</h2>
+            <form id="authForm">
+                <div class="auth-buttons">
+                    <button type="submit" class="btn btn-primary" id="authSubmit">Se connecter</button>
+                    <button type="button" class="google-btn" onclick="loginWithGoogle()">Se connecter avec Google</button>
+                </div>
+            </form>
+        </div>
+    </div>
+	
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
