@@ -522,7 +522,7 @@
 		}
 
 #search-input {
-  width: 100%;
+  width: 400px;
   padding: 10px 15px;
   font-size: 16px;
   border: none;
@@ -535,6 +535,8 @@
 
 .suggestions {
   position: absolute;
+  top: 100%;
+  left: 0;
   width: 100%;
   background: rgba(0, 0, 0, 0.8);
   border-radius: 20px;
@@ -599,6 +601,21 @@
   background: rgba(50, 50, 50, 0.6);
 }
 
+
+.search-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+  background: rgba(0, 0, 0, 0.5);
+  border-radius: 50px;
+  padding: 5px 15px;
+}
+
+.search-icon {
+  margin-right: 10px;
+  flex-shrink: 0;
+}
+
 </style>
 </head>
 <body>
@@ -626,6 +643,9 @@
             </ul>
             <div class="nav-right">
                 <div class="search-container">
+  <svg xmlns="http://www.w3.org/2000/svg" class="search-icon" width="22" height="22" fill="white" viewBox="0 0 24 24">
+    <path d="M21.53 20.47l-4.7-4.7a8 8 0 10-1.06 1.06l4.7 4.7a.75.75 0 101.06-1.06zM4 10a6 6 0 1112 0A6 6 0 014 10z"/>
+  </svg>
   <input type="text" id="search-input" placeholder="Rechercher films, séries..." autocomplete="off" />
   <div class="suggestions" id="suggestions"></div>
 </div>
@@ -633,7 +653,7 @@
                     <a href="#" class="login-btn" onclick="showLoginModal()">Se connecter</a>
                 </div>
                 <div class="user-menu hidden" id="userMenu">
-                    <div class="user-avatar" id="userFullName" onclick="toggleUserMenu()">👤</div>
+                    <div class="user-avatar" onclick="toggleUserMenu()">👤</div>
                     <div class="dropdown" id="userDropdown">
                         <a href="#" onclick="showProfile()">Profil</a>
                         <a href="#" onclick="logout()">Déconnexion</a>
@@ -819,7 +839,7 @@
             window.addEventListener('resize', detectDevice);
             
             // Recherche
-            document.getElementById('search-input').addEventListener('input', handleSearch);
+            document.getElementById('searchInput').addEventListener('input', handleSearch);
             
             // Form d'authentification
             document.getElementById('authForm').addEventListener('submit', handleAuth);
@@ -835,7 +855,7 @@
         }
 
         function toggleSearch() {
-            const searchInput = document.getElementById('search-input');
+            const searchInput = document.getElementById('searchInput');
             searchInput.classList.toggle('active');
             if (searchInput.classList.contains('active')) {
                 searchInput.focus();
@@ -843,7 +863,7 @@
         }
 
         function handleSearch() {
-            const query = document.getElementById('search-input').value.toLowerCase();
+            const query = document.getElementById('searchInput').value.toLowerCase();
             // Ici vous pouvez implémenter la logique de recherche
             console.log('Recherche:', query);
             analytics.logEvent('search', { search_term: query });
@@ -1105,7 +1125,7 @@
                 
                 // Mettre à jour l'avatar avec l'initiale
                 const avatar = userMenu.querySelector('.user-avatar');
-                avatar.textContent = currentUser.name;
+                avatar.textContent = currentUser.name.charAt(0).toUpperCase();
             } else {
                 userStatus.classList.remove('hidden');
                 userMenu.classList.add('hidden');
