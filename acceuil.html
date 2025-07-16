@@ -717,7 +717,7 @@
   <div class="suggestions" id="suggestions"></div>
 </div>
                 <div class="user-status" id="userStatus">
-                    <a href="#" class="login-btn" onclick="showLoginModal()">Se connecter</a>
+                    <a href="#" class="login-btn" onclick="loginWithGoogle()">Se connecter</a>
                 </div>
                 <div class="user-menu hidden" id="userMenu">
                     <div class="user-avatar" onclick="toggleUserMenu()">👤</div>
@@ -788,14 +788,6 @@
             </div>
         </section>
     </main>
-
-    <!-- Login Modal -->
-    <div class="modal" id="authModal">
-        <div class="modal-content">
-            <button class="close-modal" onclick="loginWithGoogle()">&times;</button>
-            <h2 class="modal-title" id="modalTitle" >Se connecter</h2>
-            <form id="authForm">
-            </form>
 
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
