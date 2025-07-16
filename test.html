@@ -40,6 +40,7 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            padding: 0 20px;
         }
 
 	.logo {
@@ -157,7 +158,7 @@
         }
 
         .hero-content {
-            max-width: 500px;
+            max-width: 400px;
         }
 
         .hero-title {
@@ -514,7 +515,138 @@
 		.fade-in {
 			opacity: 1 !important;
 		}
-    </style>
+    
+.search-container {
+  position: relative;
+  max-width: 400px;
+  flex: 1;
+}
+
+#search-input {
+  width: 100%;
+  padding: 10px 15px;
+  font-size: 16px;
+  border: none;
+  border-radius: 50px;
+  background: rgba(0, 0, 0, 0.5);
+  color: white;
+  outline: none;
+  transition: all 0.3s ease;
+}
+
+.suggestions {
+  position: absolute;
+  width: 100%;
+  background: rgba(0, 0, 0, 0.8);
+  border-radius: 20px;
+  margin-top: 5px;
+  overflow: hidden;
+  max-height: 400px;
+  overflow-y: auto;
+  z-index: 999;
+}
+
+.suggestion {
+  display: flex;
+  align-items: center;
+  padding: 10px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.suggestion:hover,
+.suggestion.active {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.suggestion img {
+  width: 50px;
+  height: 75px;
+  object-fit: cover;
+  border-radius: 10px;
+  margin-right: 15px;
+}
+
+.suggestion-details {
+  display: flex;
+  flex-direction: column;
+}
+
+.suggestion-title {
+  font-size: 16px;
+  font-weight: bold;
+}
+
+.suggestion-year {
+  font-size: 14px;
+  font-weight: bold;
+  color: #aaa;
+}
+
+#load-more-btn {
+  width: 100%;
+  padding: 10px 0;
+  background: rgba(0, 0, 0, 0.5);
+  border: none;
+  border-top: 1px solid #444;
+  color: white;
+  font-size: 16px;
+  cursor: pointer;
+  border-radius: 0 0 20px 20px;
+  transition: background 0.2s;
+}
+
+#load-more-btn:hover {
+  background: rgba(50, 50, 50, 0.6);
+}
+
+
+.nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.nav-left {
+    flex: 1;
+    display: flex;
+    align-items: center;
+}
+
+.nav-center {
+    flex: 2;
+    display: flex;
+    justify-content: center;
+}
+
+.nav-right {
+    flex: 3;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 20px;
+}
+
+
+.search-container {
+  position: relative;
+  max-width: 400px;
+  flex: 1;
+  display: flex;
+  align-items: center;
+}
+
+.search-icon {
+  position: absolute;
+  left: 15px;
+  pointer-events: none;
+}
+
+#search-input {
+  padding-left: 35px;
+}
+
+</style>
 </head>
 <body>
     <!-- Video Intro -->
@@ -531,7 +663,10 @@
     <!-- Header -->
     <header class="header" id="header">
         <nav class="nav">
-            <a href="#" class="logo">NETFLOX</a>
+    <div class="nav-left">
+        <a href="#" class="logo">NETFLOX</a>
+    </div>
+    <div class="nav-center">
             <ul class="nav-links">
                 <li><a href="#accueil">Accueil</a></li>
                 <li><a href="#series">Séries</a></li>
@@ -539,11 +674,17 @@
                 <li><a href="#nouveautes">Nouveautés</a></li>
                 <li><a href="#ma-liste">Ma liste</a></li>
             </ul>
+    </div>
+    <div class="nav-right">
             <div class="nav-right">
-                <div class="search-box">
-                    <button class="search-btn" onclick="toggleSearch()">🔍</button>
-                    <input type="text" class="search-input" placeholder="Rechercher..." id="searchInput">
-                </div>
+                <div class="search-container">
+<svg xmlns="http://www.w3.org/2000/svg" class="search-icon" fill="white" viewBox="0 0 24 24" width="20" height="20">
+  <path d="M10,2A8,8 0 0,1 18,10C18,11.85 17.3,13.55 16.11,14.89L21.71,20.5L20.29,21.91L14.69,16.31C13.35,17.5 11.65,18.2 9.8,18.2A8,8 0 0,1 2,10A8,8 0 0,1 10,2M10,4A6,6 0 0,0 4,10A6,6 0 0,0 10,16A6,6 0 0,0 16,10A6,6 0 0,0 10,4Z" />
+</svg>
+
+  <input type="text" id="search-input" placeholder="Rechercher films, séries..." autocomplete="off" />
+  <div class="suggestions" id="suggestions"></div>
+</div>
                 <div class="user-status" id="userStatus">
                     <a href="#" class="login-btn" onclick="showLoginModal()">Se connecter</a>
                 </div>
@@ -1110,5 +1251,138 @@
 			});
 		});
     </script>
+
+<script src="https://cdn.jsdelivr.net/npm/fuse.js/dist/fuse.min.js"></script>
+<script>
+  const input = document.getElementById('search-input');
+  const suggestions = document.getElementById('suggestions');
+  const apiKey = '9bb76e7829aacc0197000636ecf535b1';
+  let activeIndex = -1;
+  let currentResults = [];
+  let resultsToShow = 5;
+
+  function removeAccents(str) {
+    return str.normalize("NFD").replace(/[̀-ͯ]/g, "");
+  }
+
+  input.addEventListener('input', async () => {
+    const queryRaw = input.value.trim();
+    if (queryRaw.length < 2) {
+      suggestions.innerHTML = '';
+      currentResults = [];
+      activeIndex = -1;
+      resultsToShow = 5;
+      return;
+    }
+
+    const query = removeAccents(queryRaw);
+
+    const [movieData, seriesData] = await Promise.all([
+      fetch(`https://api.themoviedb.org/3/search/movie?api_key=${apiKey}&query=${encodeURIComponent(query)}&language=fr-FR&page=1`).then(res => res.json()),
+      fetch(`https://api.themoviedb.org/3/search/tv?api_key=${apiKey}&query=${encodeURIComponent(query)}&language=fr-FR&page=1`).then(res => res.json())
+    ]);
+
+    const movies = (movieData.results || []).map(m => ({...m, type: 'movie'}));
+    const series = (seriesData.results || []).map(s => ({...s, type: 'tv'}));
+
+    const allResults = [...movies, ...series];
+
+    const fuse = new Fuse(allResults, {
+      keys: ['title', 'name'],
+      threshold: 0.4,
+      ignoreLocation: true,
+      getFn: (obj, path) => {
+        const value = Fuse.config.getFn(obj, path);
+        return value ? removeAccents(value.toString()) : '';
+      }
+    });
+
+    const fuzzyResults = fuse.search(query).map(r => r.item);
+    fuzzyResults.sort((a, b) => (b.popularity || 0) - (a.popularity || 0));
+
+    currentResults = fuzzyResults;
+    activeIndex = 0;
+    resultsToShow = 5;
+    showSuggestions(currentResults.slice(0, resultsToShow));
+  });
+
+  input.addEventListener('keydown', (e) => {
+    const items = document.querySelectorAll('.suggestion');
+
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      activeIndex = (activeIndex + 1) % Math.min(currentResults.length, resultsToShow);
+      updateActive(items);
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      activeIndex = (activeIndex - 1 + Math.min(currentResults.length, resultsToShow)) % Math.min(currentResults.length, resultsToShow);
+      updateActive(items);
+    } else if (e.key === 'Enter' && activeIndex !== -1) {
+      e.preventDefault();
+      openLink(currentResults[activeIndex]);
+    }
+  });
+
+  function updateActive(items) {
+    items.forEach((item, index) => {
+      item.classList.toggle('active', index === activeIndex);
+    });
+  }
+
+  function showSuggestions(results) {
+    suggestions.innerHTML = '';
+    results.forEach((item, index) => {
+      const title = item.title || item.name;
+      const year = (item.release_date || item.first_air_date || '').slice(0, 4);
+      const image = item.poster_path ? `https://image.tmdb.org/t/p/w92${item.poster_path}` : '';
+      const div = document.createElement('div');
+      div.className = 'suggestion';
+      if (index === activeIndex) div.classList.add('active');
+      div.innerHTML = `
+        <img src="${image}" alt="">
+        <div class="suggestion-details">
+          <div class="suggestion-title">${title}</div>
+          <div class="suggestion-year">${year || 'Année inconnue'}</div>
+        </div>
+      `;
+      div.addEventListener('click', () => openLink(item));
+      suggestions.appendChild(div);
+    });
+
+    if (currentResults.length > results.length) {
+      const btn = document.createElement('button');
+      btn.id = 'load-more-btn';
+      btn.textContent = 'Afficher plus';
+      btn.addEventListener('click', () => {
+        resultsToShow += 5;
+        showSuggestions(currentResults.slice(0, resultsToShow));
+      });
+      suggestions.appendChild(btn);
+    }
+  }
+
+  function openLink(item) {
+    if (item.type === 'movie') {
+      window.open(`https://movix.site/watch/movie/${item.id}`, '_blank');
+    } else if (item.type === 'tv') {
+      const rawName = item.name || '';
+      const nameSlug = removeAccents(rawName)
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/(^-|-$)/g, '');
+      window.open(`https://netfloxxx.github.io/site/${nameSlug}.html`, '_blank');
+    }
+  }
+
+document.addEventListener('click', function(e) {
+  const input = document.getElementById('search-input');
+  const suggestionsBox = document.getElementById('suggestions');
+  if (!input.contains(e.target) && !suggestionsBox.contains(e.target)) {
+    suggestionsBox.innerHTML = '';
+  }
+});
+
+</script>
 </body>
+
 </html>
