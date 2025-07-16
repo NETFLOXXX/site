@@ -158,7 +158,7 @@
         }
 
         .hero-content {
-            max-width: 400px;
+            max-width: 360px;
         }
 
         .hero-title {
@@ -329,7 +329,7 @@
             background: #141414;
             padding: 40px;
             border-radius: 8px;
-            max-width: 400px;
+            max-width: 360px;
             width: 90%;
         }
 
@@ -518,7 +518,7 @@
     
 .search-container {
   position: relative;
-  max-width: 400px;
+  max-width: 360px;
   flex: 1;
 }
 
@@ -539,7 +539,7 @@
   width: 100%;
   background: rgba(0, 0, 0, 0.8);
   border-radius: 20px;
-  margin-top: 5px;
+  margin-top: 8px;
   overflow: hidden;
   max-height: 400px;
   overflow-y: auto;
@@ -630,7 +630,7 @@
 
 .search-container {
   position: relative;
-  max-width: 400px;
+  max-width: 360px;
   flex: 1;
   display: flex;
   align-items: center;
@@ -643,7 +643,17 @@
 }
 
 #search-input {
-  padding-left: 35px;
+  padding-left: 40px;
+}
+
+
+.username-display {
+  white-space: nowrap;
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-weight: 500;
+  font-family: 'Montserrat', sans-serif;
 }
 
 </style>
@@ -689,7 +699,10 @@
                     <a href="#" class="login-btn" onclick="showLoginModal()">Se connecter</a>
                 </div>
                 <div class="user-menu hidden" id="userMenu">
-                    <div class="user-avatar" onclick="toggleUserMenu()">👤</div>
+                    
+<div class="username-display" id="userFullName"></div>
+<div class="user-avatar" onclick="toggleUserMenu()">👤</div>
+
                     <div class="dropdown" id="userDropdown">
                         <a href="#" onclick="showProfile()">Profil</a>
                         <a href="#" onclick="logout()">Déconnexion</a>
@@ -1162,6 +1175,11 @@
                 // Mettre à jour l'avatar avec l'initiale
                 const avatar = userMenu.querySelector('.user-avatar');
                 avatar.textContent = currentUser.name.charAt(0).toUpperCase();
+
+if (currentUser && currentUser.name) {
+    document.getElementById('userFullName').textContent = currentUser.name;
+}
+
             } else {
                 userStatus.classList.remove('hidden');
                 userMenu.classList.add('hidden');
