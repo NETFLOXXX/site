@@ -685,6 +685,67 @@
     background: #c40812;
 }
 
+.show-genres {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 14px;
+  color: #ccc;
+  margin-bottom: 10px;
+  font-style: italic;
+}
+
+.season-list.text-mode {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.season-thumb.no-image {
+  background: #222;
+  padding: 10px 15px;
+  border-radius: 8px;
+  border: 1px solid #444;
+}
+
+.season-thumb.no-image .season-label.only-text {
+  background: none;
+  position: static;
+  text-align: center;
+  font-weight: bold;
+  font-size: 14px;
+  color: #e50914;
+}
+
+.show-genres {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 14px;
+  color: #ccc;
+  margin-bottom: 10px;
+  font-style: italic;
+}
+
+.tv-popup, .episode-popup {
+  animation: popupFadeIn 0.3s ease-out forwards;
+  transform: scale(0.8);
+  opacity: 0;
+}
+
+@keyframes popupFadeIn {
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes popupFadeOut {
+  from { transform: scale(1); opacity: 1; }
+  to { transform: scale(0.8); opacity: 0; }
+}
+
+.tv-popup.closing,
+.episode-popup.closing {
+  animation: popupFadeOut 0.25s ease forwards;
+}
+
 </style>
 </head>
 <body>
@@ -705,10 +766,10 @@
             <a href="https://netfloxxx.github.io/site/acceuil.html" class="logo">NETFLOX</a>
             <ul class="nav-links">
                 <li><a href="#accueil">Accueil</a></li>
-                <li><a href="#series">Séries</a></li>
-                <li><a href="#films">Films</a></li>
-                <li><a href="#nouveautes">Nouveautés</a></li>
-                <li><a href="#ma-liste">Ma liste</a></li>
+                <li><a href="#series">Films</a></li>
+                <li><a href="#films">Séries</a></li>
+                <li><a href="#nouveautes">Historique</a></li>
+                <li><a href="#ma-liste">En direct</a></li>
             </ul>
             <div class="nav-right">
                 <div class="search-container">
@@ -722,7 +783,7 @@
                     <button type="button" class="google-btn" onclick="loginWithGoogle()">Se connecter</a>
                 </div>
                 <div class="user-menu hidden" id="userMenu">
-                    <div class="user-avatar" onclick="logout()">Déconnexion</div>
+                    <div class="google-btn" onclick="logout()">Déconnexion</div>
                     <div class="dropdown" id="userDropdown">
                         <a href="#" onclick="showProfile()">Profil</a>
                         <a href="#" onclick="logout()">Déconnexion</a>
@@ -1494,18 +1555,44 @@ function enterSite() {
     }
   }
 
-  function openLink(item) {
-    if (item.type === 'movie') {
-      window.open(`https://movix.site/watch/movie/${item.id}`, '_blank');
-    } else if (item.type === 'tv') {
-      const rawName = item.name || '';
-      const nameSlug = removeAccents(rawName)
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, '-')
-        .replace(/(^-|-$)/g, '');
-      window.open(`https://netfloxxx.github.io/site/${nameSlug}.html`, '_blank');
-    }
+async function openLink(item) {
+  const apiKey = '9bb76e7829aacc0197000636ecf535b1';
+
+  if (item.type === 'movie') {
+    // Requête complète pour obtenir les genres et résumé
+    const details = await fetch(`https://api.themoviedb.org/3/movie/${item.id}?api_key=${apiKey}&language=fr-FR`)
+        .then(res => res.json());
+
+    const genres = (details.genres || []).map(g => g.name).join(', ');
+
+    const overlay = document.createElement('div');
+    overlay.className = 'tv-overlay';
+    overlay.innerHTML = `
+      <div class="tv-popup"><span class="close-btn">&times;</span>
+        <div class="tv-content" style="display:flex;gap:20px;">
+          <div class="popup-left">
+            <img src="https://image.tmdb.org/t/p/w342${details.poster_path}" class="main-poster"/>
+          </div>
+          <div class="popup-right">
+            <h2>${details.title}</h2>
+            <div class="show-genres">${genres}</div>
+            <p>${details.overview || 'Aucun résumé disponible.'}</p>
+            <a href="https://movix.site/watch/movie/${details.id}" target="_blank" class="btn btn-primary">▶ Lecture</a>
+          </div>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(overlay);
+
+    const closeBtn = overlay.querySelector('.close-btn');
+    closeBtn.addEventListener('click', () => document.body.removeChild(overlay));
+    overlay.addEventListener('click', e => { if (e.target === overlay) document.body.removeChild(overlay); });
+
+  } else if (item.type === 'tv') {
+    showTvPopup(item);
   }
+}
+
 </script>
 
 <div id="toast" class="toast-message"></div>
@@ -1555,8 +1642,8 @@ async function goToRandom() {
     const apiKey = '9bb76e7829aacc0197000636ecf535b1';
 
     const [movieRes, tvRes] = await Promise.all([
-        fetch(`https://api.themoviedb.org/3/movie/popular?api_key=${apiKey}&language=fr-FR&page=${Math.floor(Math.random() * 10 + 1)}`),
-        fetch(`https://api.themoviedb.org/3/tv/popular?api_key=${apiKey}&language=fr-FR&page=${Math.floor(Math.random() * 10 + 1)}`)
+        fetch(`https://api.themoviedb.org/3/movie/popular?api_key=${apiKey}&language=fr-FR&page=${Math.floor(Math.random() * 500 + 1)}`),
+        fetch(`https://api.themoviedb.org/3/tv/popular?api_key=${apiKey}&language=fr-FR&page=${Math.floor(Math.random() * 500 + 1)}`)
     ]);
 
     const movies = await movieRes.json();
@@ -1568,12 +1655,94 @@ async function goToRandom() {
     if (!random) return alert("Aucun contenu trouvé");
 
     if (random.type === 'movie') {
-        window.open(`https://movix.site/watch/movie/${random.id}`, '_blank');
+        // Requête complète pour avoir les genres et le résumé correct
+        const details = await fetch(`https://api.themoviedb.org/3/movie/${random.id}?api_key=${apiKey}&language=fr-FR`)
+            .then(res => res.json());
+
+        const genres = (details.genres || []).map(g => g.name).join(', ');
+
+        const overlay = document.createElement('div');
+        overlay.className = 'tv-overlay';
+        overlay.innerHTML = `
+          <div class="tv-popup"><span class="close-btn">&times;</span>
+            <div class="tv-content" style="display:flex;gap:20px;">
+              <div class="popup-left">
+                <img src="https://image.tmdb.org/t/p/w342${details.poster_path}" class="main-poster"/>
+              </div>
+              <div class="popup-right">
+                <h2>${details.title}</h2>
+                <div class="show-genres">${genres}</div>
+                <p>${details.overview || 'Aucun résumé disponible.'}</p>
+                <a href="https://movix.site/watch/movie/${details.id}" target="_blank" class="btn btn-primary">▶ Lecture</a>
+              </div>
+            </div>
+          </div>
+        `;
+        document.body.appendChild(overlay);
+
+        const closeBtn = overlay.querySelector('.close-btn');
+        closeBtn.addEventListener('click', () => document.body.removeChild(overlay));
+        overlay.addEventListener('click', e => { if (e.target === overlay) document.body.removeChild(overlay); });
+
     } else {
-        const slug = slugify(random.name || '');
-        window.open(`https://netfloxxx.github.io/site/${slug}.html`, '_blank');
+        showTvPopup(random); // série → utilise la fonction popup stylisé
     }
 }
+
+
+function goToRandom() {
+    const apiKey = '9bb76e7829aacc0197000636ecf535b1';
+
+    Promise.all([
+        fetch(`https://api.themoviedb.org/3/movie/popular?api_key=${apiKey}&language=fr-FR&page=${Math.floor(Math.random() * 500 + 1)}`),
+        fetch(`https://api.themoviedb.org/3/tv/popular?api_key=${apiKey}&language=fr-FR&page=${Math.floor(Math.random() * 500 + 1)}`)
+    ]).then(async ([movieRes, tvRes]) => {
+        const movies = await movieRes.json();
+        const series = await tvRes.json();
+
+        const pool = [...movies.results.map(m => ({ ...m, type: 'movie' })), ...series.results.map(s => ({ ...s, type: 'tv' }))];
+        const random = pool[Math.floor(Math.random() * pool.length)];
+
+        if (!random) return alert("Aucun contenu trouvé");
+
+        if (random.type === 'movie') {
+            const [details, videos] = await Promise.all([
+                fetch(`https://api.themoviedb.org/3/movie/${random.id}?api_key=${apiKey}&language=fr-FR`).then(res => res.json()),
+                fetch(`https://api.themoviedb.org/3/movie/${random.id}/videos?api_key=${apiKey}&language=fr-FR`).then(res => res.json())
+            ]);
+
+            const genres = (details.genres || []).map(g => g.name).join(', ');
+            const trailer = (videos.results || []).find(v => v.type === 'Trailer' && v.site === 'YouTube');
+
+            const overlay = document.createElement('div');
+            overlay.className = 'tv-overlay';
+            overlay.innerHTML = `
+                <div class="tv-popup"><span class="close-btn">&times;</span>
+                    <div class="tv-content" style="display:flex;gap:20px;">
+                        <div class="popup-left">
+                            <img src="https://image.tmdb.org/t/p/w342${details.poster_path}" class="main-poster"/>
+                        </div>
+                        <div class="popup-right">
+                            <h2>${details.title}</h2>
+                            <div class="show-genres">${genres}</div>
+                            <p>${details.overview || 'Aucun résumé disponible.'}</p>
+                            <a href="https://movix.site/watch/movie/${details.id}" target="_blank" class="btn btn-primary">▶ Lecture</a>
+                            ${trailer ? `<a href="https://www.youtube.com/watch?v=${trailer.key}" target="_blank" class="btn btn-secondary" style="margin-top:10px;">🎬 Bande-annonce</a>` : ''}
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(overlay);
+
+            const closeBtn = overlay.querySelector('.close-btn');
+            closeBtn.addEventListener('click', () => document.body.removeChild(overlay));
+            overlay.addEventListener('click', e => { if (e.target === overlay) document.body.removeChild(overlay); });
+        } else {
+            showTvPopup(random);
+        }
+    });
+}
+
 
 document.getElementById('randomBtn').addEventListener('click', goToRandom);
 
@@ -1586,139 +1755,44 @@ document.getElementById('introVideo').addEventListener('ended', () => {
 </script>
 
 
-
 <script>
-function openLink(item) {
-  if (item.type === 'movie') {
-    window.open(`https://movix.site/watch/movie/${item.id}`, '_blank');
-  } else if (item.type === 'tv') {
-    document.getElementById('welcomeOverlay')?.classList.remove('active');
-    showTvPopup(item);
-  }
-}
-
-function showTvPopup(item) {
-  const overlay = document.createElement('div');
-  overlay.className = 'tv-overlay';
-  overlay.innerHTML = '<div class="tv-popup animated"><span class="close-btn">&times;</span><div class="tv-content">Chargement...</div></div>';
-  document.body.appendChild(overlay);
-
-  const closeBtn = overlay.querySelector('.close-btn');
-  closeBtn.addEventListener('click', () => document.body.removeChild(overlay));
-  overlay.addEventListener('click', e => { if (e.target === overlay) document.body.removeChild(overlay); });
-
-  fetch(`https://api.themoviedb.org/3/tv/${item.id}?api_key=${apiKey}&language=fr-FR`)
-    .then(res => res.json())
-    .then(show => {
-      fetch(`https://api.themoviedb.org/3/tv/${item.id}/season/1?api_key=${apiKey}&language=fr-FR`)
-        .then(res => res.json())
-        .then(season1 => {
-          fetch(`https://api.themoviedb.org/3/tv/${item.id}/external_ids?api_key=${apiKey}`)
-            .then(res => res.json())
-            .then(ids => {
-              const imdbId = ids.imdb_id || item.id;
-
-              const seasonsHTML = show.seasons.map(season => {
-                const sNum = season.season_number;
-                const poster = season.poster_path ? `https://image.tmdb.org/t/p/w154${season.poster_path}` : '';
-                return `<div class="season-thumb" data-season="${sNum}" data-id="${item.id}">
-                          <img src="${poster}" />
-                          <div class="season-label">Saison ${sNum}</div>
-                        </div>`;
-              }).join('');
-
-              overlay.querySelector('.tv-content').innerHTML = `
-                <div class="popup-left">
-                  <img src="https://image.tmdb.org/t/p/w342${season1.poster_path}" class="main-poster"/>
-                </div>
-                <div class="popup-right">
-                  <h2>${show.name}</h2>
-                  <p class="overview">${show.overview || 'Aucun résumé disponible.'}</p>
-                  <div class="season-list">${seasonsHTML}</div>
-                </div>
-              `;
-
-              overlay.querySelectorAll('.season-thumb').forEach(thumb => {
-                thumb.addEventListener('click', () => {
-                  const seasonNum = thumb.dataset.season;
-                  const tvId = thumb.dataset.id;
-
-                  fetch(`https://api.themoviedb.org/3/tv/${tvId}/season/${seasonNum}?api_key=${apiKey}&language=fr-FR`)
-                    .then(res => res.json())
-                    .then(data => {
-                      const epOverlay = document.createElement('div');
-                      epOverlay.className = 'episode-overlay';
-                      epOverlay.innerHTML = '<div class="episode-popup animated"><span class="close-btn">&times;</span><div class="episode-content"></div></div>';
-                      document.body.appendChild(epOverlay);
-
-                      const closeEp = epOverlay.querySelector('.close-btn');
-                      closeEp.addEventListener('click', () => document.body.removeChild(epOverlay));
-                      epOverlay.addEventListener('click', e => { if (e.target === epOverlay) document.body.removeChild(epOverlay); });
-
-                      const episodesHTML = data.episodes.map(ep => {
-                        return `<div class="episode-link"><a href="https://movix.site/watch/tv/${item.id}/s/${seasonNum}/e/${ep.episode_number}" target="_blank">Épisode ${ep.episode_number} : ${ep.name}</a></div>`;
-                      }).join('');
-                      epOverlay.querySelector('.episode-content').innerHTML = `<h3>${data.name}</h3>${episodesHTML}`;
-                    });
-                });
-              });
-            });
-        });
-    });
-}
-</script>
-<style>
-.tv-overlay, .episode-overlay {
-  position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-  background: rgba(0,0,0,0.75); display: flex; align-items: center; justify-content: center;
-  z-index: 9999; backdrop-filter: blur(3px);
-}
-.tv-popup, .episode-popup {
-  background: #1e1e1e; padding: 30px; border-radius: 14px; max-width: 85%;
-  max-height: 90%; overflow-y: auto; position: relative; display: flex; gap: 24px;
-  border: 2px solid #e50914; box-shadow: 0 0 30px rgba(0,0,0,0.6);
-  transition: transform 0.3s ease, opacity 0.3s ease;
-  font-family: 'Montserrat', sans-serif;
-}
-.tv-popup.animated, .episode-popup.animated { animation: fadeInUp 0.4s ease; }
-@keyframes fadeInUp {
-  from { opacity: 0; transform: translateY(40px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-.close-btn {
-  position: absolute; top: 12px; right: 20px; color: white; font-size: 28px; cursor: pointer;
-}
-.popup-left img.main-poster { width: 260px; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.5); }
-.popup-right { color: white; max-width: 600px; }
-.popup-right h2 { font-size: 34px; color: #e50914; margin-bottom: 15px; }
-.popup-right .overview { font-size: 16px; margin-bottom: 25px; line-height: 1.6; color: #ccc; }
-.season-list { display: flex; gap: 12px; flex-wrap: wrap; }
-.season-thumb { position: relative; cursor: pointer; transition: transform 0.2s; }
-.season-thumb:hover { transform: scale(1.05); }
-.season-thumb img { width: 100px; border-radius: 6px; }
-.season-label {
-  position: absolute; bottom: 5px; left: 0; right: 0;
-  background: rgba(0,0,0,0.6); color: #e50914; font-weight: bold;
-  text-align: center; font-size: 14px; border-bottom-left-radius: 6px; border-bottom-right-radius: 6px;
-}
-
-.episode-popup { flex-direction: column; align-items: flex-start; }
-.episode-popup h3 { color: white; margin-bottom: 10px; font-size: 20px; }
-.episode-link a {
-  color: white; text-decoration: none; display: block; padding: 6px 0;
-  transition: color 0.2s, text-decoration 0.2s;
-}
-.episode-link a:hover {
-  color: #e50914; text-decoration: underline;
-}
-</style>
+async function openLink(item) {
+  const apiKey = '9bb76e7829aacc0197000636ecf535b1';
 
   if (item.type === 'movie') {
-    window.open(`https://movix.site/watch/movie/${item.id}`, '_blank');
+    const details = await fetch(`https://api.themoviedb.org/3/movie/${item.id}?api_key=${apiKey}&language=fr-FR`)
+        .then(res => res.json());
+
+    const genres = (details.genres || []).map(g => g.name).join(', ');
+
+    const overlay = document.createElement('div');
+    overlay.className = 'tv-overlay';
+    overlay.innerHTML = `
+      <div class="tv-popup"><span class="close-btn">&times;</span>
+        <div class="tv-content" style="display:flex;gap:20px;">
+          <div class="popup-left">
+            <img src="https://image.tmdb.org/t/p/w342${details.poster_path}" class="main-poster"/>
+          </div>
+          <div class="popup-right">
+            <h2>${details.title}</h2>
+            <div class="show-genres">${genres}</div>
+            <p>${details.overview || 'Aucun résumé disponible.'}</p>
+            <a href="https://movix.site/watch/movie/${details.id}" target="_blank" class="btn btn-primary">▶ Lecture</a>
+          </div>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(overlay);
+
+    const closeBtn = overlay.querySelector('.close-btn');
+    closeBtn.addEventListener('click', () => document.body.removeChild(overlay));
+    overlay.addEventListener('click', e => { if (e.target === overlay) document.body.removeChild(overlay); });
+
   } else if (item.type === 'tv') {
     showTvPopup(item);
   }
 }
+
 
 function showTvPopup(item) {
   const overlay = document.createElement('div');
@@ -1736,60 +1810,77 @@ function showTvPopup(item) {
       fetch(`https://api.themoviedb.org/3/tv/${item.id}/season/1?api_key=${apiKey}&language=fr-FR`)
         .then(res => res.json())
         .then(season1 => {
-          const imdbFetch = fetch(`https://api.themoviedb.org/3/tv/${item.id}/external_ids?api_key=${apiKey}`)
-            .then(res => res.json());
+          fetch(`https://api.themoviedb.org/3/tv/${item.id}/external_ids?api_key=${apiKey}`)
+            .then(res => res.json())
+            .then(ids => {
+              const imdbId = ids.imdb_id || item.id;
 
-          Promise.all([imdbFetch]).then(([ids]) => {
-            const imdbId = ids.imdb_id || item.id;
+              const season1Poster = season1.poster_path ? `https://image.tmdb.org/t/p/w154${season1.poster_path}` : null;
+              const validSeasons = show.seasons.filter(season => season.season_number !== 0);
 
-            const seasonsHTML = show.seasons.map(season => {
-              const sNum = season.season_number;
-              const poster = season.poster_path ? `https://image.tmdb.org/t/p/w154${season.poster_path}` : '';
-              return `<div class="season-thumb" data-season="${sNum}" data-id="${item.id}">
-                        <img src="${poster}" />
-                        <div class="season-label">Saison ${sNum}</div>
-                      </div>`;
-            }).join('');
+              const allSeasonsHaveNoImages = validSeasons.every(season => !season.poster_path);
 
-            overlay.querySelector('.tv-content').innerHTML = `
-              <div class="popup-left">
-                <img src="https://image.tmdb.org/t/p/w342${season1.poster_path}" class="main-poster"/>
-              </div>
-              <div class="popup-right">
-                <h2>${show.name}</h2>
-                <p>${show.overview || 'Aucun résumé disponible.'}</p>
-                <div class="season-list">${seasonsHTML}</div>
-              </div>
-            `;
+              const genres = (show.genres || []).map(g => g.name).join(', ');
 
-            overlay.querySelectorAll('.season-thumb').forEach(thumb => {
-              thumb.addEventListener('click', () => {
-                const seasonNum = thumb.dataset.season;
-                const tvId = thumb.dataset.id;
+              const seasonsHTML = validSeasons.map(season => {
+                const sNum = season.season_number;
+                const poster = season.poster_path 
+                  ? `https://image.tmdb.org/t/p/w154${season.poster_path}` 
+                  : (season1Poster || null);
 
-                fetch(`https://api.themoviedb.org/3/tv/${tvId}/season/${seasonNum}?api_key=${apiKey}&language=fr-FR`)
-                  .then(res => res.json())
-                  .then(data => {
-                    const epOverlay = document.createElement('div');
-                    epOverlay.className = 'episode-overlay';
-                    epOverlay.innerHTML = '<div class="episode-popup"><span class="close-btn">&times;</span><div class="episode-content"></div></div>';
-                    document.body.appendChild(epOverlay);
+                if (!poster) {
+                  return `<div class="season-thumb text-only no-image" data-season="${sNum}" data-id="${item.id}">
+                    <div class="season-label only-text">Saison ${sNum}</div>
+                  </div>`;
+                } else {
+                  return `<div class="season-thumb" data-season="${sNum}" data-id="${item.id}">
+                    <img src="${poster}" />
+                    <div class="season-label">Saison ${sNum}</div>
+                  </div>`;
+                }
+              }).join('');
 
-                    const closeEp = epOverlay.querySelector('.close-btn');
-                    closeEp.addEventListener('click', () => document.body.removeChild(epOverlay));
-                    epOverlay.addEventListener('click', e => { if (e.target === epOverlay) document.body.removeChild(epOverlay); });
+              overlay.querySelector('.tv-content').innerHTML = `
+                <div class="popup-left">
+                  ${season1.poster_path ? `<img src="https://image.tmdb.org/t/p/w342${season1.poster_path}" class="main-poster"/>` : ''}
+                </div>
+                <div class="popup-right">
+                  <h2>${show.name}</h2>
+                  <div class="show-genres">${genres}</div>
+                  <p>${show.overview || 'Aucun résumé disponible.'}</p>
+                  <div class="season-list ${allSeasonsHaveNoImages ? 'text-mode' : ''}">${seasonsHTML}</div>
+                </div>
+              `;
 
-                    const episodesHTML = data.episodes.map(ep => {
-                      return `<div class="episode-link"><a href="https://movix.site/watch/tv/${item.id}/s/${seasonNum}/e/${ep.episode_number}" target="_blank">Épisode ${ep.episode_number} : ${ep.name}</a></div>`;
-                    }).join('');
-                    epOverlay.querySelector('.episode-content').innerHTML = `<h3>${data.name}</h3>${episodesHTML}`;
-                  });
+              overlay.querySelectorAll('.season-thumb').forEach(thumb => {
+                thumb.addEventListener('click', () => {
+                  const seasonNum = thumb.dataset.season;
+                  const tvId = thumb.dataset.id;
+
+                  fetch(`https://api.themoviedb.org/3/tv/${tvId}/season/${seasonNum}?api_key=${apiKey}&language=fr-FR`)
+                    .then(res => res.json())
+                    .then(data => {
+                      const epOverlay = document.createElement('div');
+                      epOverlay.className = 'episode-overlay';
+                      epOverlay.innerHTML = '<div class="episode-popup"><span class="close-btn">&times;</span><div class="episode-content"></div></div>';
+                      document.body.appendChild(epOverlay);
+
+                      const closeEp = epOverlay.querySelector('.close-btn');
+                      closeEp.addEventListener('click', () => document.body.removeChild(epOverlay));
+                      epOverlay.addEventListener('click', e => { if (e.target === epOverlay) document.body.removeChild(epOverlay); });
+
+                      const episodesHTML = data.episodes.map(ep => {
+                        return `<div class="episode-link"><a href="https://movix.site/watch/tv/${item.id}/s/${seasonNum}/e/${ep.episode_number}" target="_blank">Épisode ${ep.episode_number} : ${ep.name}</a></div>`;
+                      }).join('');
+                      epOverlay.querySelector('.episode-content').innerHTML = `<h3>${data.name}</h3>${episodesHTML}`;
+                    });
+                });
               });
             });
-          });
         });
     });
 }
+
 </script>
 <style>
 .tv-overlay, .episode-overlay {
@@ -1827,6 +1918,122 @@ function showTvPopup(item) {
   color: #e50914; text-decoration: underline;
 }
 </style>
+
+
+<script>
+// Fonction pour ajouter un bouton de bande-annonce pour les FILMS
+async function openLink(item) {
+  const apiKey = '9bb76e7829aacc0197000636ecf535b1';
+  if (item.type === 'movie') {
+    const [details, videos] = await Promise.all([
+      fetch(`https://api.themoviedb.org/3/movie/${item.id}?api_key=${apiKey}&language=fr-FR`).then(r => r.json()),
+      fetch(`https://api.themoviedb.org/3/movie/${item.id}/videos?api_key=${apiKey}&language=fr-FR`).then(r => r.json())
+    ]);
+
+    const trailer = (videos.results || []).find(v => v.type === 'Trailer' && v.site === 'YouTube');
+    const genres = (details.genres || []).map(g => g.name).join(', ');
+
+    const overlay = document.createElement('div');
+    overlay.className = 'tv-overlay';
+    overlay.innerHTML = `
+      <div class="tv-popup"><span class="close-btn">&times;</span>
+        <div class="tv-content" style="display:flex;gap:20px;">
+          <div class="popup-left">
+            <img src="https://image.tmdb.org/t/p/w342${details.poster_path}" class="main-poster"/>
+          </div>
+          <div class="popup-right">
+            <h2>${details.title}</h2>
+            <div class="show-genres">${genres}</div>
+            <p>${details.overview || 'Aucun résumé disponible.'}</p>
+            <a href="https://movix.site/watch/movie/${details.id}" target="_blank" class="btn btn-primary">▶ Lecture</a>
+            ${trailer ? `<a href="https://www.youtube.com/watch?v=${trailer.key}" target="_blank" class="btn btn-secondary" style="margin-top:10px;">🎬 Bande-annonce</a>` : ''}
+          </div>
+        </div>
+      </div>`;
+    document.body.appendChild(overlay);
+    const closeBtn = overlay.querySelector('.close-btn');
+    closeBtn.addEventListener('click', () => document.body.removeChild(overlay));
+    overlay.addEventListener('click', e => { if (e.target === overlay) document.body.removeChild(overlay); });
+  } else if (item.type === 'tv') {
+    showTvPopup(item);
+  }
+}
+
+// Fonction modifiée pour les SERIES avec bouton de bande-annonce au-dessus des saisons
+async function showTvPopup(item) {
+  const apiKey = '9bb76e7829aacc0197000636ecf535b1';
+  const overlay = document.createElement('div');
+  overlay.className = 'tv-overlay';
+  overlay.innerHTML = '<div class="tv-popup"><span class="close-btn">&times;</span><div class="tv-content">Chargement...</div></div>';
+  document.body.appendChild(overlay);
+  const closeBtn = overlay.querySelector('.close-btn');
+  closeBtn.addEventListener('click', () => document.body.removeChild(overlay));
+  overlay.addEventListener('click', e => { if (e.target === overlay) document.body.removeChild(overlay); });
+
+  const [show, season1, ids, videos] = await Promise.all([
+    fetch(`https://api.themoviedb.org/3/tv/${item.id}?api_key=${apiKey}&language=fr-FR`).then(r => r.json()),
+    fetch(`https://api.themoviedb.org/3/tv/${item.id}/season/1?api_key=${apiKey}&language=fr-FR`).then(r => r.json()),
+    fetch(`https://api.themoviedb.org/3/tv/${item.id}/external_ids?api_key=${apiKey}`).then(r => r.json()),
+    fetch(`https://api.themoviedb.org/3/tv/${item.id}/videos?api_key=${apiKey}&language=fr-FR`).then(r => r.json())
+  ]);
+
+  const imdbId = ids.imdb_id || item.id;
+  const trailer = (videos.results || []).find(v => v.type === 'Trailer' && v.site === 'YouTube');
+  const genres = (show.genres || []).map(g => g.name).join(', ');
+  const validSeasons = show.seasons.filter(season => season.season_number !== 0);
+  const allSeasonsHaveNoImages = validSeasons.every(season => !season.poster_path);
+
+  const seasonsHTML = validSeasons.map(season => {
+    const sNum = season.season_number;
+    const poster = season.poster_path ? `https://image.tmdb.org/t/p/w154${season.poster_path}` : null;
+    return poster
+      ? `<div class="season-thumb" data-season="${sNum}" data-id="${item.id}">
+            <img src="${poster}" />
+            <div class="season-label">Saison ${sNum}</div>
+         </div>`
+      : `<div class="season-thumb text-only no-image" data-season="${sNum}" data-id="${item.id}">
+            <div class="season-label only-text">Saison ${sNum}</div>
+         </div>`;
+  }).join('');
+
+  overlay.querySelector('.tv-content').innerHTML = `
+    <div class="popup-left">
+      ${season1.poster_path ? `<img src="https://image.tmdb.org/t/p/w342${season1.poster_path}" class="main-poster"/>` : ''}
+    </div>
+    <div class="popup-right">
+      <h2>${show.name}</h2>
+      <div class="show-genres">${genres}</div>
+      <p>${show.overview || 'Aucun résumé disponible.'}</p>
+      ${trailer ? `<a href="https://www.youtube.com/watch?v=${trailer.key}" target="_blank" class="btn btn-secondary" style="margin-bottom:10px;">🎬 Bande-annonce</a>` : ''}
+      <div class="season-list ${allSeasonsHaveNoImages ? 'text-mode' : ''}">${seasonsHTML}</div>
+    </div>`;
+
+  overlay.querySelectorAll('.season-thumb').forEach(thumb => {
+    thumb.addEventListener('click', () => {
+      const seasonNum = thumb.dataset.season;
+      const tvId = thumb.dataset.id;
+
+      fetch(`https://api.themoviedb.org/3/tv/${tvId}/season/${seasonNum}?api_key=${apiKey}&language=fr-FR`)
+        .then(res => res.json())
+        .then(data => {
+          const epOverlay = document.createElement('div');
+          epOverlay.className = 'episode-overlay';
+          epOverlay.innerHTML = '<div class="episode-popup"><span class="close-btn">&times;</span><div class="episode-content"></div></div>';
+          document.body.appendChild(epOverlay);
+
+          const closeEp = epOverlay.querySelector('.close-btn');
+          closeEp.addEventListener('click', () => document.body.removeChild(epOverlay));
+          epOverlay.addEventListener('click', e => { if (e.target === epOverlay) document.body.removeChild(epOverlay); });
+
+          const episodesHTML = data.episodes.map(ep => {
+            return `<div class="episode-link"><a href="https://movix.site/watch/tv/${item.id}/s/${seasonNum}/e/${ep.episode_number}" target="_blank">Épisode ${ep.episode_number} : ${ep.name}</a></div>`;
+          }).join('');
+          epOverlay.querySelector('.episode-content').innerHTML = `<h3>${data.name}</h3>${episodesHTML}`;
+        });
+    });
+  });
+}
+</script>
 
 </body>
 
