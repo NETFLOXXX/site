@@ -1354,8 +1354,8 @@ document.getElementById("popupMessage").addEventListener("click", function(e) {
                     }, { merge: true });
                 })
                 .catch((error) => {
-                    alert('Erreur de connexion Google: ' + error.message);
-                });
+    console.warn('Connexion Google échouée:', error.message);
+});
         }
 
         function updateUserInterface() {
