@@ -974,42 +974,10 @@
     </div>
 	
     <!-- Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js">
-function showThankYouPopup(name) {
-    const popup = document.getElementById('thankYouPopup');
-    const message = document.getElementById('thankYouMessage');
-    message.textContent = `Merci ${name} de vous être connecté`;
-    popup.style.display = 'flex';
-}
-
-</script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js">
-function showThankYouPopup(name) {
-    const popup = document.getElementById('thankYouPopup');
-    const message = document.getElementById('thankYouMessage');
-    message.textContent = `Merci ${name} de vous être connecté`;
-    popup.style.display = 'flex';
-}
-
-</script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js">
-function showThankYouPopup(name) {
-    const popup = document.getElementById('thankYouPopup');
-    const message = document.getElementById('thankYouMessage');
-    message.textContent = `Merci ${name} de vous être connecté`;
-    popup.style.display = 'flex';
-}
-
-</script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-analytics-compat.js">
-function showThankYouPopup(name) {
-    const popup = document.getElementById('thankYouPopup');
-    const message = document.getElementById('thankYouMessage');
-    message.textContent = `Merci ${name} de vous être connecté`;
-    popup.style.display = 'flex';
-}
-
-</script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-analytics-compat.js"></script>
 
     <script>
         // Configuration Firebase
@@ -1376,17 +1344,6 @@ document.getElementById("popupMessage").addEventListener("click", function(e) {
                         name: result.user.displayName || result.user.email.split('@')[0]
                     };
                     updateUserInterface();
-if (siteContent.style.display === 'block') {
-    showThankYouPopup(currentUser.name);
-} else {
-    const interval = setInterval(() => {
-        if (siteContent.style.display === 'block') {
-            showThankYouPopup(currentUser.name);
-            clearInterval(interval);
-        }
-    }, 500);
-}
-
                     closeModal();
                     
                     // Enregistrer les infos supplémentaires dans Firestore
@@ -1603,25 +1560,9 @@ function enterSite() {
     document.getElementById('welcomeOverlay').classList.remove('active');
 }
 
-
-function showThankYouPopup(name) {
-    const popup = document.getElementById('thankYouPopup');
-    const message = document.getElementById('thankYouMessage');
-    message.textContent = `Merci ${name} de vous être connecté`;
-    popup.style.display = 'flex';
-}
-
 </script>
 
-<script src="https://cdn.jsdelivr.net/npm/fuse.js/dist/fuse.min.js">
-function showThankYouPopup(name) {
-    const popup = document.getElementById('thankYouPopup');
-    const message = document.getElementById('thankYouMessage');
-    message.textContent = `Merci ${name} de vous être connecté`;
-    popup.style.display = 'flex';
-}
-
-</script>
+<script src="https://cdn.jsdelivr.net/npm/fuse.js/dist/fuse.min.js"></script>
 <script>
   const input = document.getElementById('search-input');
   const suggestions = document.getElementById('suggestions');
@@ -1766,14 +1707,6 @@ async function openLink(item) {
   } else if (item.type === 'tv') {
     showTvPopup(item);
   }
-}
-
-
-function showThankYouPopup(name) {
-    const popup = document.getElementById('thankYouPopup');
-    const message = document.getElementById('thankYouMessage');
-    message.textContent = `Merci ${name} de vous être connecté`;
-    popup.style.display = 'flex';
 }
 
 </script>
@@ -2063,14 +1996,6 @@ document.getElementById("popupMessage").addEventListener("click", function(e) {
         document.getElementById('randomBtn').style.display = 'block';
     }, 1200); // après animation split
 });
-
-function showThankYouPopup(name) {
-    const popup = document.getElementById('thankYouPopup');
-    const message = document.getElementById('thankYouMessage');
-    message.textContent = `Merci ${name} de vous être connecté`;
-    popup.style.display = 'flex';
-}
-
 </script>
 
 
@@ -2198,14 +2123,6 @@ function showTvPopup(item) {
             });
         });
     });
-}
-
-
-function showThankYouPopup(name) {
-    const popup = document.getElementById('thankYouPopup');
-    const message = document.getElementById('thankYouMessage');
-    message.textContent = `Merci ${name} de vous être connecté`;
-    popup.style.display = 'flex';
 }
 
 </script>
@@ -2483,14 +2400,6 @@ async function showTvPopup(item) {
     });
   });
 }
-
-function showThankYouPopup(name) {
-    const popup = document.getElementById('thankYouPopup');
-    const message = document.getElementById('thankYouMessage');
-    message.textContent = `Merci ${name} de vous être connecté`;
-    popup.style.display = 'flex';
-}
-
 </script>
 
 
@@ -2514,14 +2423,16 @@ function showThankYouPopup(name) {
     <p id="popupMessageText">Contenu du message...</p>
   </div>
 </div>
-
-
-<div id="thankYouPopup" class="tv-message-overlay" style="display: none;">
-  <div class="tv-message-box success">
-    <span class="close-btn" onclick="document.getElementById('thankYouPopup').style.display='none'">×</span>
-    <h3 id="thankYouMessage">Merci de vous être connecté</h3>
-  </div>
-</div>
+<footer style="text-align: center; padding: 50px 20px 30px; color: #ccc;">
+    <div style="width: 80%; max-width: 900px; height: 2px; background-color: #444; margin: 0 auto 25px auto; border-radius: 2px;"></div>
+    <p style="font-size: 14px; line-height: 1.6; max-width: 700px; margin: 0 auto; font-style: italic;">
+        <strong>Avertissement légal :</strong><br>
+        NETFLOX n'héberge aucun fichier sur ses serveurs.<br>
+        Nous fournissons uniquement des liens vers des services externes.<br>
+        Nous ne sommes pas responsables du contenu hébergé par ces services tiers.<br>
+        En cas de problème avec la justice, veuillez contacter directement les hébergeurs des contenus concernés.
+    </p>
+</footer>
 
 </body>
 
@@ -2584,14 +2495,6 @@ document.getElementById("popupMessage").addEventListener("click", function(e) {
     showToast("❗ Impossible d'envoyer le message.");
   });
 }
-
-function showThankYouPopup(name) {
-    const popup = document.getElementById('thankYouPopup');
-    const message = document.getElementById('thankYouMessage');
-    message.textContent = `Merci ${name} de vous être connecté`;
-    popup.style.display = 'flex';
-}
-
 </script>
 
 
@@ -2666,14 +2569,6 @@ function sendBugReport() {
     showPopupMessage("error", "❗ Impossible d'envoyer le message.");
   });
 }
-
-function showThankYouPopup(name) {
-    const popup = document.getElementById('thankYouPopup');
-    const message = document.getElementById('thankYouMessage');
-    message.textContent = `Merci ${name} de vous être connecté`;
-    popup.style.display = 'flex';
-}
-
 </script>
 
 </html>
