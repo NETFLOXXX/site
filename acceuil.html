@@ -2425,6 +2425,7 @@ async function showTvPopup(item) {
 
 <script>
 document.addEventListener('DOMContentLoaded', () => {
+  try {
   const bugBtn = document.getElementById('bugReportBtn');
   const overlay = document.getElementById('bugPopupOverlay');
   bugBtn.style.display = 'block';
@@ -2437,6 +2438,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
+    } catch(e) { console.warn("Erreur Google Connect:", e); }
   overlay.addEventListener('click', (e) => {
     if (e.target === overlay) overlay.style.display = 'none';
   });
@@ -2447,7 +2449,7 @@ function sendBugReport() {
   if (!description) return showToast("Merci d'écrire une description.");
   if (!currentUser || !currentUser.email) return showToast("❗ Vous devez être connecté.");
 
-  fetch('https://formspree.io/f/mnqekbpp', {
+  fetch('https://formspree.io/f/xqalabrv', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -2510,6 +2512,7 @@ document.getElementById("popupMessage").addEventListener("click", function(e) {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+  try {
   const bugBtn = document.getElementById('bugReportBtn');
   const overlay = document.getElementById('bugPopupOverlay');
   bugBtn.style.display = 'block';
@@ -2522,6 +2525,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
+    } catch(e) { console.warn("Erreur Google Connect:", e); }
   overlay.addEventListener('click', (e) => {
     if (e.target === overlay) overlay.style.display = 'none';
   });
@@ -2532,7 +2536,7 @@ function sendBugReport() {
   if (!description) return showPopupMessage("error", "Merci d'écrire une description.");
   if (!currentUser || !currentUser.email) return showPopupMessage("error", "❗ Vous devez être connecté.");
 
-  fetch('https://formspree.io/f/mnqekbpp', {
+  fetch('https://formspree.io/f/xqalabrv', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
