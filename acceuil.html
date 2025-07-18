@@ -997,6 +997,26 @@
         const db = firebase.firestore();
         const analytics = firebase.analytics();
 
+
+// === Connexion Réussie Popup ===
+let justLoggedIn = false;
+
+function showLoginSuccess(name) {
+    const popup = document.getElementById('loginSuccessPopup');
+    const message = document.getElementById('loginSuccessText');
+    if (message && name) message.textContent = `Bienvenue sur Netflox, ${name} !`;
+    popup.style.display = 'flex';
+
+    popup.addEventListener('click', function(e) {
+        if (e.target === popup) popup.style.display = 'none';
+    });
+}
+
+function closeLoginPopup() {
+    document.getElementById('loginSuccessPopup').style.display = 'none';
+}
+
+
         // Données fictives pour les films
         const moviesData = {
             trending: [
@@ -1301,6 +1321,7 @@ document.getElementById("popupMessage").addEventListener("click", function(e) {
                         name: userCredential.user.displayName || userCredential.user.email.split('@')[0]
                     };
                     updateUserInterface();
+                    justLoggedIn = true;
                     closeModal();
                     loadUserPreferences();
                     populateMovies();
@@ -1319,6 +1340,7 @@ document.getElementById("popupMessage").addEventListener("click", function(e) {
                         name: userCredential.user.email.split('@')[0]
                     };
                     updateUserInterface();
+                    justLoggedIn = true;
                     closeModal();
                     
                     // Enregistrer les infos supplémentaires dans Firestore
@@ -1344,6 +1366,7 @@ document.getElementById("popupMessage").addEventListener("click", function(e) {
                         name: result.user.displayName || result.user.email.split('@')[0]
                     };
                     updateUserInterface();
+                    justLoggedIn = true;
                     closeModal();
                     
                     // Enregistrer les infos supplémentaires dans Firestore
@@ -1445,6 +1468,14 @@ document.getElementById("popupMessage").addEventListener("click", function(e) {
 					siteContent.style.display = 'block';
 					setTimeout(function() {
 						siteContent.classList.add('fade-in');
+
+if (justLoggedIn && currentUser) {
+    setTimeout(() => {
+        showLoginSuccess(currentUser.name || "invité");
+        justLoggedIn = false;
+    }, 800);
+}
+
 						leftPart.style.display = 'none';
 						rightPart.style.display = 'none';
 					}, 50);
@@ -2421,6 +2452,16 @@ async function showTvPopup(item) {
     <span class="close-btn" onclick="document.getElementById('popupMessage').style.display='none'">&times;</span>
     <h3 id="popupMessageTitle">Message</h3>
     <p id="popupMessageText">Contenu du message...</p>
+  </div>
+</div>
+
+
+<!-- Popup Connexion Réussie -->
+<div id="loginSuccessPopup" class="tv-message-overlay" style="display:none;">
+  <div class="tv-message-box success">
+    <span class="close-btn" onclick="closeLoginPopup()">&times;</span>
+    <h3>Connexion réussie</h3>
+    <p id="loginSuccessText">Bienvenue sur Netflox !</p>
   </div>
 </div>
 
