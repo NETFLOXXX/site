@@ -974,7 +974,66 @@
     </div>
 	
     <!-- Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js">
+// Affiche le popup de connexion après connexion réussie (une seule fois)
+let justLoggedIn = false;
+
+function showLoginPopup(name) {
+    const popup = document.getElementById('loginSuccessPopup');
+    const text = document.getElementById('popupMessageText');
+    if (name && text) text.textContent = "Bienvenue sur Netflox, " + name + " !";
+    if (popup) popup.style.display = 'flex';
+    document.addEventListener('click', outsideClickClosePopup);
+}
+
+function closeLoginPopup() {
+    const popup = document.getElementById('loginSuccessPopup');
+    if (popup) popup.style.display = 'none';
+    document.removeEventListener('click', outsideClickClosePopup);
+}
+
+function outsideClickClosePopup(e) {
+    const popupBox = document.querySelector('.tv-message-box');
+    if (!popupBox.contains(e.target)) {
+        closeLoginPopup();
+    }
+}
+
+// Ajouter au moment de connexion Google
+function loginWithGoogle() {
+    const provider = new firebase.auth.GoogleAuthProvider();
+    auth.signInWithPopup(provider)
+        .then((result) => {
+            currentUser = {
+                id: result.user.uid,
+                email: result.user.email,
+                name: result.user.displayName || result.user.email.split('@')[0]
+            };
+            updateUserInterface();
+            closeModal();
+            db.collection('users').doc(result.user.uid).set({
+                email: result.user.email,
+                name: result.user.displayName,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            }, { merge: true });
+
+            justLoggedIn = true; // Flag utilisé pour afficher le popup après vidéo
+        })
+        .catch((error) => {
+            console.warn('Connexion Google échouée:', error.message);
+        });
+}
+
+// Après la vidéo d’intro, afficher popup si juste connecté
+introVideo.addEventListener('ended', () => {
+    setTimeout(() => {
+        if (justLoggedIn && currentUser && currentUser.name) {
+            showLoginPopup(currentUser.name);
+            justLoggedIn = false;
+        }
+    }, 1500); // attendre que le site soit visible
+});
+</script>
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-analytics-compat.js"></script>
@@ -996,26 +1055,6 @@
         const auth = firebase.auth();
         const db = firebase.firestore();
         const analytics = firebase.analytics();
-
-
-// === Connexion Réussie Popup ===
-let justLoggedIn = false;
-
-function showLoginSuccess(name) {
-    const popup = document.getElementById('loginSuccessPopup');
-    const message = document.getElementById('loginSuccessText');
-    if (message && name) message.textContent = `Bienvenue sur Netflox, ${name} !`;
-    popup.style.display = 'flex';
-
-    popup.addEventListener('click', function(e) {
-        if (e.target === popup) popup.style.display = 'none';
-    });
-}
-
-function closeLoginPopup() {
-    document.getElementById('loginSuccessPopup').style.display = 'none';
-}
-
 
         // Données fictives pour les films
         const moviesData = {
@@ -1321,7 +1360,6 @@ document.getElementById("popupMessage").addEventListener("click", function(e) {
                         name: userCredential.user.displayName || userCredential.user.email.split('@')[0]
                     };
                     updateUserInterface();
-                    justLoggedIn = true;
                     closeModal();
                     loadUserPreferences();
                     populateMovies();
@@ -1340,7 +1378,6 @@ document.getElementById("popupMessage").addEventListener("click", function(e) {
                         name: userCredential.user.email.split('@')[0]
                     };
                     updateUserInterface();
-                    justLoggedIn = true;
                     closeModal();
                     
                     // Enregistrer les infos supplémentaires dans Firestore
@@ -1366,7 +1403,6 @@ document.getElementById("popupMessage").addEventListener("click", function(e) {
                         name: result.user.displayName || result.user.email.split('@')[0]
                     };
                     updateUserInterface();
-                    justLoggedIn = true;
                     closeModal();
                     
                     // Enregistrer les infos supplémentaires dans Firestore
@@ -1468,14 +1504,6 @@ document.getElementById("popupMessage").addEventListener("click", function(e) {
 					siteContent.style.display = 'block';
 					setTimeout(function() {
 						siteContent.classList.add('fade-in');
-
-if (justLoggedIn && currentUser) {
-    setTimeout(() => {
-        showLoginSuccess(currentUser.name || "invité");
-        justLoggedIn = false;
-    }, 800);
-}
-
 						leftPart.style.display = 'none';
 						rightPart.style.display = 'none';
 					}, 50);
@@ -2456,15 +2484,14 @@ async function showTvPopup(item) {
 </div>
 
 
-<!-- Popup Connexion Réussie -->
+<!-- Connexion Popup -->
 <div id="loginSuccessPopup" class="tv-message-overlay" style="display:none;">
   <div class="tv-message-box success">
     <span class="close-btn" onclick="closeLoginPopup()">&times;</span>
-    <h3>Connexion réussie</h3>
-    <p id="loginSuccessText">Bienvenue sur Netflox !</p>
+    <h3>✅ Connexion réussie</h3>
+    <p id="popupMessageText">Bienvenue sur Netflox !</p>
   </div>
 </div>
-
 </body>
 
 
