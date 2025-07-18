@@ -873,9 +873,9 @@
             <a href="https://netfloxxx.github.io/site/acceuil.html" class="logo">NETFLOX</a>
             <ul class="nav-links">
                 <li><a href="#accueil">Accueil</a></li>
-                <li><a href="#nouveautes">Historique</a></li>
                 <li><a href="#series">Films</a></li>
                 <li><a href="#films">Séries</a></li>
+                <li><a href="#nouveautes">Historique</a></li>
                 <li><a href="https://netfloxxx.github.io/site/canal.html">En direct</a></li>
             </ul>
             <div class="nav-right">
@@ -1542,13 +1542,17 @@ document.addEventListener('DOMContentLoaded', function() {
         const welcomeMessage = document.getElementById('welcomeMessage');
         const name = currentUser?.name || null;
 
-        if (name) {
-            welcomeMessage.textContent = "Ravie de vous revoir, " + name + " !";
-        } else {
-            welcomeMessage.innerHTML = "Bienvenue sur Netflox !<br>Pour une meilleure expérience, connectez-vous !";
+        if (welcomeMessage) {
+            if (name) {
+                welcomeMessage.textContent = "Ravie de vous revoir, " + name + " !";
+            } else {
+                welcomeMessage.innerHTML = "Bienvenue sur Netflox !<br>Pour une meilleure expérience, connectez-vous !";
+            }
         }
 
-        welcomeOverlay.classList.add('active');
+        if (welcomeOverlay) {
+            welcomeOverlay.classList.add('active');
+        }
     }
 });
 
