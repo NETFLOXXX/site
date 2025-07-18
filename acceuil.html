@@ -620,25 +620,9 @@
 
 
 /* Popup Message */
-.toast-message {
-    position: fixed;
-    bottom: 30px;
-    right: 30px;
-    background: #e50914;
-    color: white;
-    padding: 15px 25px;
-    border-radius: 6px;
-    font-weight: bold;
-    z-index: 9999;
-    opacity: 0;
-    transform: translateY(20px);
-    transition: opacity 0.5s ease, transform 0.5s ease;
-}
 
-.toast-message.show {
-    opacity: 1;
-    transform: translateY(0);
-}
+
+
 
 /* Welcome Overlay */
 .welcome-overlay {
@@ -744,6 +728,129 @@
 .tv-popup.closing,
 .episode-popup.closing {
   animation: popupFadeOut 0.25s ease forwards;
+}
+
+
+/* BUG REPORT BUTTON */
+#bugReportBtn {
+    position: fixed;
+    bottom: 30px;
+    left: 30px;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background-color: #e50914;
+    color: white;
+    font-size: 30px;
+    font-weight: bold;
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+    z-index: 999;
+    display: none;
+}
+#bugReportBtn:hover {
+    background-color: #c40812;
+}
+.bug-overlay {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0,0,0,0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+}
+.bug-popup {
+    background: #141414;
+    padding: 30px;
+    border-radius: 12px;
+    max-width: 500px;
+    width: 90%;
+    position: relative;
+    border: 2px solid #e50914;
+    color: white;
+}
+.bug-popup h2 {
+    color: #e50914;
+    margin-bottom: 15px;
+    font-size: 24px;
+}
+.bug-popup textarea {
+    width: 100%;
+    height: 100px;
+    background: #222;
+    color: white;
+    border: 1px solid #555;
+    border-radius: 8px;
+    padding: 10px;
+    resize: none;
+}
+.bug-popup button.send-btn {
+    margin-top: 15px;
+    background: #e50914;
+    border: none;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 6px;
+    font-weight: bold;
+    cursor: pointer;
+}
+.bug-popup button.send-btn:hover {
+    background: #c40812;
+}
+.bug-popup .close-btn {
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    font-size: 24px;
+    color: white;
+    cursor: pointer;
+}
+
+
+
+
+.tv-message-overlay {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: rgba(0, 0, 0, 0.7);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.tv-message-box {
+  background: #141414;
+  border: 2px solid #e50914;
+  border-radius: 10px;
+  padding: 30px;
+  max-width: 400px;
+  width: 90%;
+  text-align: center;
+  color: white;
+  position: relative;
+  animation: popupFadeIn 0.3s ease-out forwards;
+}
+.tv-message-box.success {
+  border-color: #28a745;
+}
+.tv-message-box .close-btn {
+  position: absolute;
+  top: 10px; right: 20px;
+  font-size: 24px;
+  color: white;
+  cursor: pointer;
+}
+.tv-message-box h3 {
+  margin-bottom: 10px;
+  font-size: 22px;
+  color: #e50914;
+}
+.tv-message-box.success h3 {
+  color: #28a745;
 }
 
 </style>
@@ -1044,7 +1151,12 @@
             
             // Gestion du hover avec délai
             card.addEventListener('mouseenter', () => {
-                expandTimeout = setTimeout(() => {
+                expandTimeout = 
+document.getElementById("popupMessage").addEventListener("click", function(e) {
+  if (e.target === this) this.style.display = "none";
+});
+
+  setTimeout(() => {
                     card.classList.add('expanded');
                     playTrailer(card);
                     trackView(movie);
@@ -1595,7 +1707,7 @@ async function openLink(item) {
 
 </script>
 
-<div id="toast" class="toast-message"></div>
+
 <div id="welcomeOverlay" class="welcome-overlay">
     <h1 id="welcomeMessage">Content de vous revoir !</h1>
     <button onclick="enterSite()">Entrer</button>
@@ -1626,6 +1738,129 @@ async function openLink(item) {
     background-color: #c40812;
     transform: scale(1.05);
 }
+
+/* BUG REPORT BUTTON */
+#bugReportBtn {
+    position: fixed;
+    bottom: 30px;
+    left: 30px;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background-color: #e50914;
+    color: white;
+    font-size: 30px;
+    font-weight: bold;
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+    z-index: 999;
+    display: none;
+}
+#bugReportBtn:hover {
+    background-color: #c40812;
+}
+.bug-overlay {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0,0,0,0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+}
+.bug-popup {
+    background: #141414;
+    padding: 30px;
+    border-radius: 12px;
+    max-width: 500px;
+    width: 90%;
+    position: relative;
+    border: 2px solid #e50914;
+    color: white;
+}
+.bug-popup h2 {
+    color: #e50914;
+    margin-bottom: 15px;
+    font-size: 24px;
+}
+.bug-popup textarea {
+    width: 100%;
+    height: 100px;
+    background: #222;
+    color: white;
+    border: 1px solid #555;
+    border-radius: 8px;
+    padding: 10px;
+    resize: none;
+}
+.bug-popup button.send-btn {
+    margin-top: 15px;
+    background: #e50914;
+    border: none;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 6px;
+    font-weight: bold;
+    cursor: pointer;
+}
+.bug-popup button.send-btn:hover {
+    background: #c40812;
+}
+.bug-popup .close-btn {
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    font-size: 24px;
+    color: white;
+    cursor: pointer;
+}
+
+
+
+
+.tv-message-overlay {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: rgba(0, 0, 0, 0.7);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.tv-message-box {
+  background: #141414;
+  border: 2px solid #e50914;
+  border-radius: 10px;
+  padding: 30px;
+  max-width: 400px;
+  width: 90%;
+  text-align: center;
+  color: white;
+  position: relative;
+  animation: popupFadeIn 0.3s ease-out forwards;
+}
+.tv-message-box.success {
+  border-color: #28a745;
+}
+.tv-message-box .close-btn {
+  position: absolute;
+  top: 10px; right: 20px;
+  font-size: 24px;
+  color: white;
+  cursor: pointer;
+}
+.tv-message-box h3 {
+  margin-bottom: 10px;
+  font-size: 22px;
+  color: #e50914;
+}
+.tv-message-box.success h3 {
+  color: #28a745;
+}
+
 </style>
 
 <button id="randomBtn">🎲 Vous ne savez pas quoi regarder ?</button>
@@ -1748,7 +1983,12 @@ document.getElementById('randomBtn').addEventListener('click', goToRandom);
 
 // Affiche le bouton après l’intro vidéo
 document.getElementById('introVideo').addEventListener('ended', () => {
-    setTimeout(() => {
+    
+document.getElementById("popupMessage").addEventListener("click", function(e) {
+  if (e.target === this) this.style.display = "none";
+});
+
+  setTimeout(() => {
         document.getElementById('randomBtn').style.display = 'block';
     }, 1200); // après animation split
 });
@@ -1917,6 +2157,129 @@ function showTvPopup(item) {
 .episode-link a:hover {
   color: #e50914; text-decoration: underline;
 }
+
+/* BUG REPORT BUTTON */
+#bugReportBtn {
+    position: fixed;
+    bottom: 30px;
+    left: 30px;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background-color: #e50914;
+    color: white;
+    font-size: 30px;
+    font-weight: bold;
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+    z-index: 999;
+    display: none;
+}
+#bugReportBtn:hover {
+    background-color: #c40812;
+}
+.bug-overlay {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0,0,0,0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+}
+.bug-popup {
+    background: #141414;
+    padding: 30px;
+    border-radius: 12px;
+    max-width: 500px;
+    width: 90%;
+    position: relative;
+    border: 2px solid #e50914;
+    color: white;
+}
+.bug-popup h2 {
+    color: #e50914;
+    margin-bottom: 15px;
+    font-size: 24px;
+}
+.bug-popup textarea {
+    width: 100%;
+    height: 100px;
+    background: #222;
+    color: white;
+    border: 1px solid #555;
+    border-radius: 8px;
+    padding: 10px;
+    resize: none;
+}
+.bug-popup button.send-btn {
+    margin-top: 15px;
+    background: #e50914;
+    border: none;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 6px;
+    font-weight: bold;
+    cursor: pointer;
+}
+.bug-popup button.send-btn:hover {
+    background: #c40812;
+}
+.bug-popup .close-btn {
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    font-size: 24px;
+    color: white;
+    cursor: pointer;
+}
+
+
+
+
+.tv-message-overlay {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: rgba(0, 0, 0, 0.7);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.tv-message-box {
+  background: #141414;
+  border: 2px solid #e50914;
+  border-radius: 10px;
+  padding: 30px;
+  max-width: 400px;
+  width: 90%;
+  text-align: center;
+  color: white;
+  position: relative;
+  animation: popupFadeIn 0.3s ease-out forwards;
+}
+.tv-message-box.success {
+  border-color: #28a745;
+}
+.tv-message-box .close-btn {
+  position: absolute;
+  top: 10px; right: 20px;
+  font-size: 24px;
+  color: white;
+  cursor: pointer;
+}
+.tv-message-box h3 {
+  margin-bottom: 10px;
+  font-size: 22px;
+  color: #e50914;
+}
+.tv-message-box.success h3 {
+  color: #28a745;
+}
+
 </style>
 
 
@@ -2035,6 +2398,159 @@ async function showTvPopup(item) {
 }
 </script>
 
+
+<button id="bugReportBtn">?</button>
+
+<div id="bugPopupOverlay" class="bug-overlay" style="display:none;">
+  <div class="bug-popup">
+    <span class="close-btn" onclick="document.getElementById('bugPopupOverlay').style.display='none'">&times;</span>
+    <h2>Signaler un bug ou une suggestion</h2>
+    <p>Décrivez ici un bug, une erreur ou une suggestion d'amélioration pour le site. Merci !</p>
+    <textarea id="bugDescription" placeholder="Décrivez votre problème ou idée ici..."></textarea>
+    <button class="send-btn" onclick="sendBugReport()">Envoyer</button>
+  </div>
+</div>
+
+
+<div id="popupMessage" class="tv-message-overlay" style="display: none;">
+  <div id="popupMessageBox" class="tv-message-box">
+    <span class="close-btn" onclick="document.getElementById('popupMessage').style.display='none'">&times;</span>
+    <h3 id="popupMessageTitle">Message</h3>
+    <p id="popupMessageText">Contenu du message...</p>
+  </div>
+</div>
+
 </body>
+
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const bugBtn = document.getElementById('bugReportBtn');
+  const overlay = document.getElementById('bugPopupOverlay');
+  bugBtn.style.display = 'block';
+
+  bugBtn.addEventListener('click', () => {
+    if (!currentUser || !currentUser.email) {
+      showToast("❗ Connectez-vous pour signaler un bug ou une suggestion.");
+    } else {
+      overlay.style.display = 'flex';
+    }
+  });
+
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay) overlay.style.display = 'none';
+  });
+});
+
+function sendBugReport() {
+  const description = document.getElementById('bugDescription').value.trim();
+  if (!description) return showToast("Merci d'écrire une description.");
+  if (!currentUser || !currentUser.email) return showToast("❗ Vous devez être connecté.");
+
+  fetch('https://formspree.io/f/mnqekbpp', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      message: description,
+      _replyto: currentUser.email
+    })
+  }).then(res => {
+    if (res.ok) {
+      const toast = document.getElementById('toast');
+      toast.classList.add('toast-success');
+      toast.textContent = "✅ Merci ! Nous avons bien reçu votre message. Nous vous recontacterons si besoin.";
+      toast.classList.add('show');
+
+      
+document.getElementById("popupMessage").addEventListener("click", function(e) {
+  if (e.target === this) this.style.display = "none";
+});
+
+  setTimeout(() => {
+        toast.classList.remove('show', 'toast-success');
+      }, 5000);
+
+      document.getElementById('bugPopupOverlay').style.display = 'none';
+      document.getElementById('bugDescription').value = '';
+    } else {
+      showToast("❗ Erreur lors de l'envoi.");
+    }
+  }).catch(() => {
+    showToast("❗ Impossible d'envoyer le message.");
+  });
+}
+</script>
+
+
+<script>
+function showPopupMessage(type, message) {
+  const overlay = document.getElementById("popupMessage");
+  const box = document.getElementById("popupMessageBox");
+  const title = document.getElementById("popupMessageTitle");
+  const text = document.getElementById("popupMessageText");
+
+  box.classList.remove("success");
+  title.textContent = "❗ Erreur";
+  if (type === "success") {
+    box.classList.add("success");
+    title.textContent = "✅ Merci !";
+  }
+
+  text.textContent = message;
+  overlay.style.display = "flex";
+
+  
+document.getElementById("popupMessage").addEventListener("click", function(e) {
+  if (e.target === this) this.style.display = "none";
+});
+
+  setTimeout(() => {
+    overlay.style.display = "none";
+  }, 5000);
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  const bugBtn = document.getElementById('bugReportBtn');
+  const overlay = document.getElementById('bugPopupOverlay');
+  bugBtn.style.display = 'block';
+
+  bugBtn.addEventListener('click', () => {
+    if (!currentUser || !currentUser.email) {
+      showPopupMessage("error", "❗ Connectez-vous pour signaler un bug ou une suggestion.");
+    } else {
+      overlay.style.display = 'flex';
+    }
+  });
+
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay) overlay.style.display = 'none';
+  });
+});
+
+function sendBugReport() {
+  const description = document.getElementById('bugDescription').value.trim();
+  if (!description) return showPopupMessage("error", "Merci d'écrire une description.");
+  if (!currentUser || !currentUser.email) return showPopupMessage("error", "❗ Vous devez être connecté.");
+
+  fetch('https://formspree.io/f/mnqekbpp', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      message: description,
+      _replyto: currentUser.email
+    })
+  }).then(res => {
+    if (res.ok) {
+      showPopupMessage("success", "Nous vous recontacterons à : " + currentUser.email);
+      document.getElementById('bugPopupOverlay').style.display = 'none';
+      document.getElementById('bugDescription').value = '';
+    } else {
+      showPopupMessage("error", "❗ Erreur lors de l'envoi.");
+    }
+  }).catch(() => {
+    showPopupMessage("error", "❗ Impossible d'envoyer le message.");
+  });
+}
+</script>
 
 </html>
