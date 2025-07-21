@@ -148,15 +148,15 @@
         }
 
         /* Hero Section */
-        .hero {
-            height: 100vh;
-            background: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800"><rect fill="%23333" width="1200" height="800"/><text x="600" y="400" font-family="Arial" font-size="48" fill="%23666" text-anchor="middle">Film Principal</text></svg>');
-            background-size: cover;
-            background-position: center;
-            display: flex;
-            align-items: center;
-            padding: 0 60px;
-        }
+.hero {
+    position: relative;
+    height: 100vh;
+    background-size: cover;
+    background-position: center;
+    transition: background-image 1s ease-in-out;
+    width: 100vw; /* Ajoutez cette ligne */
+    margin-left: calc(-50vw + 50%); /* Centrage correct */
+}
 
         .hero-content {
             max-width: 500px;
@@ -853,6 +853,175 @@
   color: #28a745;
 }
 
+
+.hero {
+    position: relative;
+    height: 100vh;
+    background-size: cover;
+    background-position: center;
+    transition: background-image 1s ease-in-out;
+}
+.hero-overlay {
+    background: linear-gradient(to top, #141414 0%, transparent 100%);
+    height: 100%;
+    width: 100vw; /* Modifiez cette ligne */
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 60px;
+    position: relative;
+    margin-left: calc(-50vw + 50%); /* Ajoutez cette ligne */
+}
+.hero-nav {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(20,20,20,0.5);
+    color: white;
+    font-size: 32px;
+    border: none;
+    padding: 10px;
+    cursor: pointer;
+    z-index: 5;
+}
+.hero-prev { left: 20px; }
+.hero-next { right: 20px; }
+
+
+.hero-nav {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(20,20,20,0.7);
+    color: white;
+    font-size: 24px;
+    border: none;
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    cursor: pointer;
+    z-index: 10;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: background 0.3s;
+}
+.hero-nav:hover {
+    background: rgba(229, 9, 20, 0.8);
+}
+.hero-overlay {
+    background: linear-gradient(to top, rgba(20, 20, 20, 0.9), rgba(20, 20, 20, 0.6), transparent);
+    position: relative;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 60px;
+}
+.hero-content {
+    max-width: 40%;
+    z-index: 2;
+}
+.hero-poster {
+    width: 250px;
+    border-radius: 10px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.5);
+    transition: transform 0.3s ease;
+    cursor: pointer;
+}
+.hero-poster:hover {
+    transform: scale(1.1);
+}
+.hero-poster-container {
+    z-index: 2;
+}
+
+
+.hero-overlay {
+    background: linear-gradient(to top, #141414 0%, transparent 100%);
+    height: 100%;
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 60px;
+    position: relative;
+}
+
+.hero-content {
+    max-width: 50%;
+    z-index: 2;
+    animation: fadeInText 1s ease-in-out forwards;
+    opacity: 0;
+}
+
+.hero-poster {
+    width: 250px;
+    height: auto;
+    border-radius: 12px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform 0.4s ease;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+}
+
+.hero-poster:hover {
+    transform: scale(1.1);
+}
+
+.hero-nav {
+    background: rgba(20,20,20,0.6);
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    font-size: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.3s;
+}
+
+.hero-nav:hover {
+    background: rgba(229,9,20,0.9);
+}
+
+@keyframes fadeInText {
+    0% { opacity: 0; transform: translateY(20px); }
+    100% { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeInPoster {
+    0% { opacity: 0; transform: translateX(20px); }
+    100% { opacity: 1; transform: translateX(0); }
+}
+
+.hero-content.fade-out {
+    animation: fadeOutText 1s ease-in-out forwards;
+}
+
+.hero-poster.fade-out {
+    animation: fadeOutPoster 1s ease-in-out forwards;
+}
+
+@keyframes fadeOutText {
+    0% { opacity: 1; transform: translateY(0); }
+    100% { opacity: 0; transform: translateY(-20px); }
+}
+
+@keyframes fadeOutPoster {
+    0% { opacity: 1; transform: translateX(0); }
+    100% { opacity: 0; transform: translateX(-20px); }
+}
+
+.hero-content.fade-in {
+    animation: fadeInText 1s ease-out forwards;
+}
+
+.hero-poster.fade-in {
+    animation: fadeInPoster 1s ease-out forwards;
+}
+
 </style>
 </head>
 <body>
@@ -872,7 +1041,7 @@
         <nav class="nav">
             <a href="https://netfloxxx.github.io/site/acceuil.html" class="logo">NETFLOX</a>
             <ul class="nav-links">
-                <li><a href="#accueil">Accueil</a></li>
+                <li><a href="#accueil">A la une</a></li>
 				<li><a href="#nouveautes">Historique</a></li>
                 <li><a href="#series">Films</a></li>
                 <li><a href="#films">Séries</a></li>
@@ -901,58 +1070,159 @@
     </header>
 
     <!-- Hero Section -->
-    <section class="hero">
-        <div class="hero-content">
-            <h1 class="hero-title">Film Vedette</h1>
-            <p class="hero-description">
-                Découvrez le dernier blockbuster qui fait sensation. Une aventure épique vous attend avec des personnages inoubliables et des effets spéciaux à couper le souffle.
-            </p>
-            <div class="hero-buttons">
-                <a href="#" class="btn btn-primary">▶ Lecture</a>
-                <a href="#" class="btn btn-secondary">ℹ Plus d'infos</a>
-            </div>
-        </div>
-    </section>
+    
+
+<section class="hero" id="heroCarousel">
+  <div class="hero-overlay">
+    <div class="hero-content">
+      <h1 class="hero-title" id="heroTitle">Chargement...</h1>
+      <p class="hero-description" id="heroDescription"></p>
+      <div class="hero-buttons">
+        <a href="#" class="btn btn-primary" id="heroPlayBtn">▶ Lecture</a>
+        <a href="#" class="btn btn-secondary" id="heroInfoBtn">ℹ Plus d'infos</a>
+      </div>
+    </div>
+    <div class="hero-visual">
+      <img src="" alt="Affiche" id="heroPoster" class="hero-poster" />
+    </div>
+    <button class="hero-nav hero-prev" title="Précédent">❮</button>
+    <button class="hero-nav hero-next" title="Suivant">❯</button>
+  </div>
+</section>
+
+
 
     <!-- Content -->
     <main class="content">
-        <section class="section">
-            <h2 class="section-title">Tendances actuelles</h2>
-            <div class="row" id="trending">
-                <!-- Movies will be populated by JavaScript -->
-            </div>
-        </section>
-
+	
         <section class="section">
             <h2 class="section-title">Continuer à regarder</h2>
             <div class="row" id="continue-watching">
                 <!-- Movies will be populated by JavaScript -->
             </div>
         </section>
-
+		
         <section class="section">
             <h2 class="section-title">Recommandé pour vous</h2>
             <div class="row" id="recommended">
                 <!-- Movies will be populated by JavaScript -->
             </div>
         </section>
+		
+        <section class="section">
+            <h2 class="section-title">Votre Historique</h2>
+            <div class="row" id="trending">
+                <!-- Movies will be populated by JavaScript -->
+            </div>
+        </section>
 
         <section class="section">
-            <h2 class="section-title">Action et Aventure</h2>
+            <h2 class="section-title">Films d'Action</h2>
             <div class="row" id="action">
                 <!-- Movies will be populated by JavaScript -->
             </div>
         </section>
 
         <section class="section">
-            <h2 class="section-title">Comédies</h2>
+            <h2 class="section-title">Films d'Aventure</h2>
             <div class="row" id="comedy">
                 <!-- Movies will be populated by JavaScript -->
             </div>
         </section>
 
         <section class="section">
-            <h2 class="section-title">Documentaires</h2>
+            <h2 class="section-title">Films d'Animation</h2>
+            <div class="row" id="documentaries">
+                <!-- Movies will be populated by JavaScript -->
+            </div>
+        </section>
+
+        <section class="section">
+            <h2 class="section-title">Film de Comédies</h2>
+            <div class="row" id="documentaries">
+                <!-- Movies will be populated by JavaScript -->
+            </div>
+        </section>
+
+        <section class="section">
+            <h2 class="section-title">Film de Science-fiction</h2>
+            <div class="row" id="documentaries">
+                <!-- Movies will be populated by JavaScript -->
+            </div>
+        </section>
+		
+        <section class="section">
+            <h2 class="section-title">Film Dramatique</h2>
+            <div class="row" id="documentaries">
+                <!-- Movies will be populated by JavaScript -->
+            </div>
+        </section>
+			
+        <section class="section">
+            <h2 class="section-title">Film d'Horreur</h2>
+            <div class="row" id="documentaries">
+                <!-- Movies will be populated by JavaScript -->
+            </div>
+        </section>
+		
+        <section class="section">
+            <h2 class="section-title">Autres Films</h2>
+            <div class="row" id="documentaries">
+                <!-- Movies will be populated by JavaScript -->
+            </div>
+        </section>
+
+        <section class="section">
+            <h2 class="section-title">Séries d'Action</h2>
+            <div class="row" id="action">
+                <!-- Movies will be populated by JavaScript -->
+            </div>
+        </section>
+
+        <section class="section">
+            <h2 class="section-title">Séries d'Aventure</h2>
+            <div class="row" id="comedy">
+                <!-- Movies will be populated by JavaScript -->
+            </div>
+        </section>
+
+        <section class="section">
+            <h2 class="section-title">Séries d'Animation</h2>
+            <div class="row" id="documentaries">
+                <!-- Movies will be populated by JavaScript -->
+            </div>
+        </section>
+
+        <section class="section">
+            <h2 class="section-title">Séries de Comédies</h2>
+            <div class="row" id="documentaries">
+                <!-- Movies will be populated by JavaScript -->
+            </div>
+        </section>
+
+        <section class="section">
+            <h2 class="section-title">Séries de Science-fiction</h2>
+            <div class="row" id="documentaries">
+                <!-- Movies will be populated by JavaScript -->
+            </div>
+        </section>
+		
+        <section class="section">
+            <h2 class="section-title">Séries Dramatique</h2>
+            <div class="row" id="documentaries">
+                <!-- Movies will be populated by JavaScript -->
+            </div>
+        </section>
+			
+        <section class="section">
+            <h2 class="section-title">Séries d'Horreur</h2>
+            <div class="row" id="documentaries">
+                <!-- Movies will be populated by JavaScript -->
+            </div>
+        </section>
+		
+        <section class="section">
+            <h2 class="section-title">Autres Séries</h2>
             <div class="row" id="documentaries">
                 <!-- Movies will be populated by JavaScript -->
             </div>
@@ -1546,7 +1816,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (name) {
                 welcomeMessage.textContent = "Ravie de vous revoir, " + name + " !";
             } else {
-                welcomeMessage.innerHTML = "Bienvenue sur Netflox !<br>Pour une meilleure expérience, connectez-vous !";
+                welcomeMessage.innerHTML = "Bienvenue sur Netflox !<br>Pour bénéficiez d'un historique, de suggestions personnalisés, et bien plus encore...<br>Connectez-vous !";
             }
         }
 
@@ -1863,6 +2133,147 @@ async function openLink(item) {
 }
 .tv-message-box.success h3 {
   color: #28a745;
+}
+
+
+.hero {
+    position: relative;
+    height: 100vh;
+    background-size: cover;
+    background-position: center;
+    transition: background-image 1s ease-in-out;
+}
+.hero-overlay {
+    background: linear-gradient(to top, #141414 20%, transparent 80%);
+    height: 100%;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    padding: 0 60px;
+    position: relative;
+}
+.hero-nav {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(20,20,20,0.5);
+    color: white;
+    font-size: 32px;
+    border: none;
+    padding: 10px;
+    cursor: pointer;
+    z-index: 5;
+}
+.hero-prev { left: 20px; }
+.hero-next { right: 20px; }
+
+
+.hero-nav {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(20,20,20,0.7);
+    color: white;
+    font-size: 24px;
+    border: none;
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    cursor: pointer;
+    z-index: 10;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: background 0.3s;
+}
+.hero-nav:hover {
+    background: rgba(229, 9, 20, 0.8);
+}
+.hero-overlay {
+    background: linear-gradient(to top, rgba(20, 20, 20, 0.9), rgba(20, 20, 20, 0.6), transparent);
+    position: relative;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 60px;
+}
+.hero-content {
+    max-width: 40%;
+    z-index: 2;
+}
+.hero-poster {
+    width: 250px;
+    border-radius: 10px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.5);
+    transition: transform 0.3s ease;
+    cursor: pointer;
+}
+.hero-poster:hover {
+    transform: scale(1.1);
+}
+.hero-poster-container {
+    z-index: 2;
+}
+
+
+.hero-overlay {
+    background: linear-gradient(to top, #141414 0%, transparent 100%);
+    height: 100%;
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 60px;
+    position: relative;
+}
+
+.hero-content {
+    max-width: 50%;
+    z-index: 2;
+    animation: fadeInText 1s ease-in-out forwards;
+    opacity: 0;
+}
+
+.hero-poster {
+    width: 250px;
+    height: auto;
+    border-radius: 12px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform 0.4s ease;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+}
+
+.hero-poster:hover {
+    transform: scale(1.1);
+}
+
+.hero-nav {
+    background: rgba(20,20,20,0.6);
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    font-size: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.3s;
+}
+
+.hero-nav:hover {
+    background: rgba(229,9,20,0.9);
+}
+
+@keyframes fadeInText {
+    0% { opacity: 0; transform: translateY(20px); }
+    100% { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeInPoster {
+    0% { opacity: 0; transform: translateX(20px); }
+    100% { opacity: 1; transform: translateX(0); }
 }
 
 </style>
@@ -2284,6 +2695,147 @@ function showTvPopup(item) {
   color: #28a745;
 }
 
+
+.hero {
+    position: relative;
+    height: 100vh;
+    background-size: cover;
+    background-position: center;
+    transition: background-image 1s ease-in-out;
+}
+.hero-overlay {
+    background: linear-gradient(to top, #141414 20%, transparent 80%);
+    height: 100%;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    padding: 0 60px;
+    position: relative;
+}
+.hero-nav {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(20,20,20,0.5);
+    color: white;
+    font-size: 32px;
+    border: none;
+    padding: 10px;
+    cursor: pointer;
+    z-index: 5;
+}
+.hero-prev { left: 20px; }
+.hero-next { right: 20px; }
+
+
+.hero-nav {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(20,20,20,0.7);
+    color: white;
+    font-size: 24px;
+    border: none;
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    cursor: pointer;
+    z-index: 10;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: background 0.3s;
+}
+.hero-nav:hover {
+    background: rgba(229, 9, 20, 0.8);
+}
+.hero-overlay {
+    background: linear-gradient(to top, rgba(20, 20, 20, 0.9), rgba(20, 20, 20, 0.6), transparent);
+    position: relative;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 60px;
+}
+.hero-content {
+    max-width: 40%;
+    z-index: 2;
+}
+.hero-poster {
+    width: 250px;
+    border-radius: 10px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.5);
+    transition: transform 0.3s ease;
+    cursor: pointer;
+}
+.hero-poster:hover {
+    transform: scale(1.1);
+}
+.hero-poster-container {
+    z-index: 2;
+}
+
+
+.hero-overlay {
+    background: linear-gradient(to top, #141414 0%, transparent 100%);
+    height: 100%;
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 60px;
+    position: relative;
+}
+
+.hero-content {
+    max-width: 50%;
+    z-index: 2;
+    animation: fadeInText 1s ease-in-out forwards;
+    opacity: 0;
+}
+
+.hero-poster {
+    width: 250px;
+    height: auto;
+    border-radius: 12px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform 0.4s ease;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+}
+
+.hero-poster:hover {
+    transform: scale(1.1);
+}
+
+.hero-nav {
+    background: rgba(20,20,20,0.6);
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    font-size: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.3s;
+}
+
+.hero-nav:hover {
+    background: rgba(229,9,20,0.9);
+}
+
+@keyframes fadeInText {
+    0% { opacity: 0; transform: translateY(20px); }
+    100% { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeInPoster {
+    0% { opacity: 0; transform: translateX(20px); }
+    100% { opacity: 1; transform: translateX(0); }
+}
+
 </style>
 
 
@@ -2434,6 +2986,92 @@ async function showTvPopup(item) {
     </p>
 </footer>
 
+
+
+
+
+<script>
+const tmdbApiKey = "9bb76e7829aacc0197000636ecf535b1";
+let heroIndex = 0;
+let heroMovies = [];
+let heroTimer = null;
+
+async function fetchFeaturedMovies() {
+    const res = await fetch(`https://api.themoviedb.org/3/movie/now_playing?api_key=${tmdbApiKey}&language=fr-FR&page=1`);
+    const data = await res.json();
+    heroMovies = data.results.slice(0, 10).filter(m => m.backdrop_path && m.poster_path);
+
+    if (heroMovies.length > 0) {
+        updateHeroSlide();
+        resetHeroTimer();
+    }
+}
+
+function resetHeroTimer() {
+    clearInterval(heroTimer);
+    heroTimer = setInterval(() => {
+        heroIndex = (heroIndex + 1) % heroMovies.length;
+        updateHeroSlide();
+    }, 5000);
+}
+
+function updateHeroSlide() {
+    const movie = heroMovies[heroIndex];
+    const backdrop = `https://image.tmdb.org/t/p/original${movie.backdrop_path}`;
+    const poster = `https://image.tmdb.org/t/p/w342${movie.poster_path}`;
+    const title = movie.title;
+    const desc = movie.overview || "Aucun résumé disponible.";
+    const playUrl = `https://movix.site/watch/movie/${movie.id}`;
+
+    const hero = document.getElementById("heroCarousel");
+    const content = document.querySelector(".hero-content");
+    const posterEl = document.getElementById("heroPoster");
+
+    // Animation de sortie
+    content.classList.add("fade-out");
+    posterEl.classList.add("fade-out");
+
+    // Après la fin de l'animation de sortie
+    setTimeout(() => {
+        // Mettre à jour le contenu
+        hero.style.backgroundImage = `url('${backdrop}')`;
+        document.getElementById("heroTitle").textContent = title;
+        document.getElementById("heroDescription").textContent = desc;
+        document.getElementById("heroPlayBtn").href = playUrl;
+        document.getElementById("heroInfoBtn").onclick = () => openLink({ id: movie.id, type: 'movie' });
+        posterEl.src = poster;
+        posterEl.onclick = () => openLink({ id: movie.id, type: 'movie' });
+
+        // Retirer les classes de sortie et démarrer l'entrée
+        content.classList.remove("fade-out");
+        posterEl.classList.remove("fade-out");
+        content.classList.add("fade-in");
+        posterEl.classList.add("fade-in");
+
+        // Retirer les classes d'entrée après l'animation
+        setTimeout(() => {
+            content.classList.remove("fade-in");
+            posterEl.classList.remove("fade-in");
+        }, 800);
+    }, 500); // Doit correspondre à la durée de l'animation de sortie
+}
+
+document.querySelector(".hero-prev").addEventListener("click", () => {
+    heroIndex = (heroIndex - 1 + heroMovies.length) % heroMovies.length;
+    updateHeroSlide();
+    resetHeroTimer();
+});
+document.querySelector(".hero-next").addEventListener("click", () => {
+    heroIndex = (heroIndex + 1) % heroMovies.length;
+    updateHeroSlide();
+    resetHeroTimer();
+});
+
+document.getElementById("introVideo").addEventListener("ended", () => {
+    fetchFeaturedMovies();
+});
+</script>
+
 </body>
 
 
@@ -2446,7 +3084,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   bugBtn.addEventListener('click', () => {
     if (!currentUser || !currentUser.email) {
-      showToast("❗ Connectez-vous pour signaler un bug ou une suggestion.");
+      showToast("Connectez-vous pour signaler un bug ou une suggestion.");
     } else {
       overlay.style.display = 'flex';
     }
@@ -2489,10 +3127,10 @@ document.getElementById("popupMessage").addEventListener("click", function(e) {
       document.getElementById('bugPopupOverlay').style.display = 'none';
       document.getElementById('bugDescription').value = '';
     } else {
-      showToast("❗ Erreur lors de l'envoi.");
+      showToast("Erreur lors de l'envoi.");
     }
   }).catch(() => {
-    showToast("❗ Impossible d'envoyer le message.");
+    showToast("Impossible d'envoyer le message.");
   });
 }
 </script>
@@ -2506,7 +3144,7 @@ function showPopupMessage(type, message) {
   const text = document.getElementById("popupMessageText");
 
   box.classList.remove("success");
-  title.textContent = "❗ Erreur";
+  title.textContent = "Erreur";
   if (type === "success") {
     box.classList.add("success");
     title.textContent = "✅ Merci !";
@@ -2533,7 +3171,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   bugBtn.addEventListener('click', () => {
     if (!currentUser || !currentUser.email) {
-      showPopupMessage("error", "❗ Connectez-vous pour signaler un bug ou une suggestion.");
+      showPopupMessage("error", "Connectez-vous pour signaler un bug ou une suggestion.");
     } else {
       overlay.style.display = 'flex';
     }
@@ -2548,7 +3186,7 @@ document.addEventListener('DOMContentLoaded', () => {
 function sendBugReport() {
   const description = document.getElementById('bugDescription').value.trim();
   if (!description) return showPopupMessage("error", "Merci d'écrire une description.");
-  if (!currentUser || !currentUser.email) return showPopupMessage("error", "❗ Vous devez être connecté.");
+  if (!currentUser || !currentUser.email) return showPopupMessage("error", "Vous devez être connecté.");
 
   fetch('https://formspree.io/f/xqalabrv', {
     method: 'POST',
@@ -2563,10 +3201,10 @@ function sendBugReport() {
       document.getElementById('bugPopupOverlay').style.display = 'none';
       document.getElementById('bugDescription').value = '';
     } else {
-      showPopupMessage("error", "❗ Erreur lors de l'envoi.");
+      showPopupMessage("error", "Erreur lors de l'envoi.");
     }
   }).catch(() => {
-    showPopupMessage("error", "❗ Impossible d'envoyer le message.");
+    showPopupMessage("error", "Impossible d'envoyer le message.");
   });
 }
 </script>
