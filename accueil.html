@@ -589,18 +589,18 @@
 #load-more-btn {
   width: 100%;
   padding: 10px 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.5); /* Fond semi-transparent comme la barre */
   border: none;
-  border-top: 1px solid #444;
+  border-top: 1px solid rgba(255, 255, 255, 0.1); /* Bordure très subtile */
   color: white;
   font-size: 16px;
   cursor: pointer;
-  border-radius: 0 0 20px 20px;
+  border-radius: 0 0 20px 20px; /* Pour correspondre aux coins arrondis */
   transition: background 0.2s;
 }
 
 #load-more-btn:hover {
-  background: rgba(50, 50, 50, 0.6);
+  background: rgba(255, 255, 255, 0.1); /* Léger effet au survol */
 }
 
 
@@ -1022,6 +1022,83 @@
     animation: fadeInPoster 1s ease-out forwards;
 }
 
+#load-more-btn {
+  width: 100%;
+  padding: 10px 0;
+  background: rgba(0, 0, 0, 0.5); /* Fond semi-transparent comme la barre */
+  border: none;
+  border-top: 1px solid rgba(255, 255, 255, 0.1); /* Bordure très subtile */
+  color: white;
+  font-size: 16px;
+  cursor: pointer;
+  border-radius: 0 0 20px 20px; /* Pour correspondre aux coins arrondis */
+  transition: background 0.2s;
+}
+
+#load-more-btn:hover {
+  background: rgba(255, 255, 255, 0.1); /* Léger effet au survol */
+}
+
+/* Ajoutez ceci dans votre section style */
+.tv-popup {
+  max-width: 90%;
+  width: 1000px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.episode-popup {
+  background: #141414;
+  border: 2px solid #e50914;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+}
+
+.season-thumb:hover {
+  transform: scale(1.05);
+  transition: transform 0.2s ease;
+}
+
+/* Style pour le défilement horizontal des saisons */
+.season-scroll-container {
+  scrollbar-width: thin;
+  scrollbar-color: #e50914 #333;
+}
+
+.season-scroll-container::-webkit-scrollbar {
+  height: 8px;
+}
+
+.season-scroll-container::-webkit-scrollbar-track {
+  background: #333;
+  border-radius: 10px;
+}
+
+.season-scroll-container::-webkit-scrollbar-thumb {
+  background: #e50914;
+  border-radius: 10px;
+}
+
+.tv-popup, .episode-popup {
+  max-height: 90vh;
+  overflow-y: auto;
+  padding: 20px;
+}
+
+/* Style pour la barre de défilement */
+.tv-popup::-webkit-scrollbar, .episode-popup::-webkit-scrollbar {
+  width: 8px;
+}
+
+.tv-popup::-webkit-scrollbar-track, .episode-popup::-webkit-scrollbar-track {
+  background: #333;
+  border-radius: 10px;
+}
+
+.tv-popup::-webkit-scrollbar-thumb, .episode-popup::-webkit-scrollbar-thumb {
+  background: #e50914;
+  border-radius: 10px;
+}
+
 </style>
 </head>
 <body>
@@ -1039,12 +1116,12 @@
     <!-- Header -->
     <header class="header" id="header">
         <nav class="nav">
-            <a href="https://netfloxxx.github.io/site/acceuil.html" class="logo">NETFLOX</a>
+            <a href="https://netfloxxx.github.io/site/accueil.html" class="logo">NETFLOX</a>
             <ul class="nav-links">
                 <li><a href="#accueil">A la une</a></li>
-				<li><a href="#nouveautes">Historique</a></li>
-                <li><a href="#series">Films</a></li>
-                <li><a href="#films">Séries</a></li>
+				<li><a href="#historique">Historique</a></li>
+                <li><a href="#films">Films</a></li>
+                <li><a href="#séries">Séries</a></li>
                 <li><a href="https://netfloxxx.github.io/site/canal.html">En direct</a></li>
             </ul>
             <div class="nav-right">
@@ -1071,7 +1148,7 @@
 
     <!-- Hero Section -->
     
-
+<section id="accueil" class="home section-1">
 <section class="hero" id="heroCarousel">
   <div class="hero-overlay">
     <div class="hero-content">
@@ -1093,9 +1170,10 @@
 
 
     <!-- Content -->
-    <main class="content">
+
+<main class="content">
 	
-        <section class="section">
+        <section id="historique" class="home section-1">
             <h2 class="section-title">Continuer à regarder</h2>
             <div class="row" id="continue-watching">
                 <!-- Movies will be populated by JavaScript -->
@@ -1108,15 +1186,37 @@
                 <!-- Movies will be populated by JavaScript -->
             </div>
         </section>
-		
-        <section class="section">
-            <h2 class="section-title">Votre Historique</h2>
-            <div class="row" id="trending">
+
+<section class="section" style="height: 360px;">
+  <h2 class="section-title">Populaire en ce moment</h2>
+  <div class="row" id="popular-now" style="height: 320px; overflow-x: auto; overflow-y: hidden;">
+    <div id="voir-plus-card" class="movie-card" style="
+        min-width: 180px;
+        height: 270px;
+        background-color: #444;
+        color: white;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-size: 48px;
+        font-weight: bold;
+        cursor: pointer;
+        border-radius: 6px;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+    ">
+      +
+    </div>
+  </div>
+</section>
+
+        <section id="films" class="home section-1">
+            <h2 class="section-title">Films Récents</h2>
+            <div class="row" id="action">
                 <!-- Movies will be populated by JavaScript -->
             </div>
         </section>
-
-        <section class="section">
+		
+		<section class="section">
             <h2 class="section-title">Films d'Action</h2>
             <div class="row" id="action">
                 <!-- Movies will be populated by JavaScript -->
@@ -1172,6 +1272,13 @@
             </div>
         </section>
 
+        <section id="séries" class="home section-1">
+            <h2 class="section-title">Séries Récentes</h2>
+            <div class="row" id="action">
+                <!-- Movies will be populated by JavaScript -->
+            </div>
+        </section>
+		
         <section class="section">
             <h2 class="section-title">Séries d'Action</h2>
             <div class="row" id="action">
@@ -1244,7 +1351,104 @@
     </div>
 	
     <!-- Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js">
+
+function showRandomPopup(item) {
+  if (!window.introFinished) return; // ✅ Ne rien faire avant la fin de l’intro
+
+  const isMovie = item.media_type === 'movie';
+  const typeLabel = isMovie ? 'Film' : 'Série';
+  const backdrop = item.backdrop_path ? `https://image.tmdb.org/t/p/w780${item.backdrop_path}` : '';
+  const poster = item.poster_path ? `https://image.tmdb.org/t/p/w342${item.poster_path}` : '';
+  const genres = (item.genre_ids || []).join(', ');
+  const overview = item.overview || 'Aucun résumé disponible.';
+
+  const backgroundStyle = backdrop
+    ? `background-image:url('${backdrop}');background-size:cover;background-position:center;`
+    : poster
+    ? `background-image:url('${poster}');background-size:cover;background-position:center;`
+    : 'background:#000;';
+
+  const overlay = document.createElement('div');
+  overlay.className = 'tv-overlay';
+
+  overlay.innerHTML = `
+<div class="tv-overlay">
+  <div class="tv-popup" style="
+    position: relative;
+    border-radius: 16px;
+    overflow: hidden;
+    background-image: url('https://image.tmdb.org/t/p/w1280${item.backdrop_path}');
+    background-size: cover;
+    background-position: center;
+  ">
+    <div style="
+      background-color: rgba(0, 0, 0, 0.75);
+      padding: 20px;
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+      border-radius: 16px;
+    ">
+      <div class="popup-left">
+        <img src="https://image.tmdb.org/t/p/w342${item.poster_path}" class="main-poster" style="border-radius: 10px;" />
+      </div>
+      <div class="popup-right">
+        <h2>${item.title || item.name}</h2>
+        <div class="show-genres"><strong>${item.media_type === 'movie' ? 'Film' : 'Série'}</strong></div>
+        <div class="show-genres">${(item.genre_ids || []).join(', ')}</div>
+        <p>${item.overview || 'Aucun résumé disponible.'}</p>
+        <a href="https://movix.site/watch/${item.media_type === 'movie' ? 'movie' : 'tv'}/${item.id}" target="_blank" class="btn btn-primary">▶ Lecture</a>
+      </div>
+    </div>
+    <span class="close-btn" style="position:absolute;top:10px;right:20px;font-size:28px;cursor:pointer;color:white;">&times;</span>
+  </div>
+</div>
+
+  `;
+
+  document.body.appendChild(overlay);
+
+  overlay.querySelector('.close-btn').addEventListener('click', () => {
+    document.body.removeChild(overlay);
+  });
+  overlay.addEventListener('click', e => {
+    if (e.target === overlay) document.body.removeChild(overlay);
+  });
+}
+
+let popularPage = 1;
+const apiKey = '9bb76e7829aacc0197000636ecf535b1';
+const popularContainer = document.getElementById("popular-now");
+const voirPlusCard = document.getElementById("voir-plus-card");
+
+voirPlusCard.addEventListener("click", loadMorePopular);
+
+async function loadMorePopular() {
+  popularPage++;
+  const url = `https://api.themoviedb.org/3/trending/all/week?api_key=${apiKey}&language=fr-FR&page=${popularPage}`;
+
+  try {
+    const response = await fetch(url);
+    const data = await response.json();
+
+    (data.results || []).forEach(movie => {
+      const card = createMovieCard({
+        title: movie.title || movie.name,
+        year: (movie.release_date || movie.first_air_date || '').slice(0, 4),
+        genre: "Populaire",
+        rating: movie.vote_average,
+        image: movie.backdrop_path
+          ? `https://image.tmdb.org/t/p/w500${movie.backdrop_path}`
+          : "https://via.placeholder.com/250x140?text=No+Image",
+      });
+      popularContainer.insertBefore(card, voirPlusCard);
+    });
+  } catch (err) {
+    console.error("Erreur chargement films populaires :", err);
+  }
+}
+</script>
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-analytics-compat.js"></script>
@@ -1407,12 +1611,13 @@
         function createMovieCard(movie) {
             const card = document.createElement('div');
             card.className = 'movie-card';
+    const typeLabel = movie.type === 'tv' ? 'Série' : 'Film';
             card.style.backgroundImage = `url('${movie.image}')`;
             
             card.innerHTML = `
                 <div class="movie-info">
                     <div class="movie-title">${movie.title}</div>
-                    <div class="movie-meta">${movie.year} • ${movie.genre} • ★ ${movie.rating}</div>
+                    <div class="movie-meta">${movie.year} • \${typeLabel} • ${movie.genre} • ★ ${movie.rating}</div>
                 </div>
                 <video class="trailer-video" muted preload="none">
                     <source src="path/to/trailer.mp4" type="video/mp4">
@@ -1692,7 +1897,43 @@ document.getElementById("popupMessage").addEventListener("click", function(e) {
             }
         });
 		
-		// Gestion de l'intro vidéo
+		
+function initSectionFadeIn() {
+  const sections = document.querySelectorAll('.section');
+  function revealSectionsOnScroll() {
+    sections.forEach(section => {
+      const rect = section.getBoundingClientRect();
+      if (rect.top < window.innerHeight - 100 && rect.bottom > 100) {
+        section.classList.add('visible');
+        section.classList.remove('fade-out');
+      } else {
+        section.classList.remove('visible');
+        section.classList.add('fade-out');
+      }
+    });
+  }
+  window.addEventListener('scroll', revealSectionsOnScroll);
+  window.addEventListener('resize', revealSectionsOnScroll);
+  revealSectionsOnScroll();
+}
+
+function initAnchorScrollOffset() {
+  document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+    anchor.addEventListener('click', function (e) {
+      const targetId = this.getAttribute('href').slice(1);
+      const targetEl = document.getElementById(targetId);
+      if (targetEl) {
+        e.preventDefault();
+        const yOffset = -160; // très haut
+        const y = targetEl.getBoundingClientRect().top + window.scrollY + yOffset;
+        window.scrollTo({ top: y, behavior: 'smooth' });
+      }
+    });
+  });
+}
+
+
+// Gestion de l'intro vidéo
 		document.addEventListener('DOMContentLoaded', function() {
 			const introContainer = document.getElementById('introContainer');
 			const introVideo = document.getElementById('introVideo');
@@ -1705,6 +1946,7 @@ document.getElementById("popupMessage").addEventListener("click", function(e) {
 
 			// Quand la vidéo se termine
 			introVideo.addEventListener('ended', function() {
+    window.introFinished = true;
 				// Lancer l'animation split
 				leftPart.classList.add('slide-in');
 				rightPart.classList.add('slide-in');
@@ -1715,6 +1957,8 @@ document.getElementById("popupMessage").addEventListener("click", function(e) {
 					siteContent.style.display = 'block';
 					setTimeout(function() {
 						siteContent.classList.add('fade-in');
+        initSectionFadeIn();
+        initAnchorScrollOffset();
 						leftPart.style.display = 'none';
 						rightPart.style.display = 'none';
 					}, 50);
@@ -1883,7 +2127,7 @@ function enterSite() {
     currentResults = fuzzyResults;
     activeIndex = 0;
     resultsToShow = 5;
-    showSuggestions(currentResults.slice(0, resultsToShow));
+    showSuggestions(currentResults);
   });
 
   input.addEventListener('keydown', (e) => {
@@ -1909,37 +2153,42 @@ function enterSite() {
     });
   }
 
-  function showSuggestions(results) {
-    suggestions.innerHTML = '';
-    results.forEach((item, index) => {
-      const title = item.title || item.name;
-      const year = (item.release_date || item.first_air_date || '').slice(0, 4);
-      const image = item.poster_path ? `https://image.tmdb.org/t/p/w92${item.poster_path}` : '';
-      const div = document.createElement('div');
-      div.className = 'suggestion';
-      if (index === activeIndex) div.classList.add('active');
-      div.innerHTML = `
-        <img src="${image}" alt="">
-        <div class="suggestion-details">
-          <div class="suggestion-title">${title}</div>
-          <div class="suggestion-year">${year || 'Année inconnue'}</div>
-        </div>
-      `;
-      div.addEventListener('click', () => openLink(item));
-      suggestions.appendChild(div);
-    });
+function showSuggestions(results) {
+  suggestions.innerHTML = '';
+  const displayedResults = results.slice(0, resultsToShow);
+  
+  displayedResults.forEach((item, index) => {
+    const title = item.title || item.name;
+    const year = (item.release_date || item.first_air_date || '').slice(0, 4);
+    const image = item.poster_path ? `https://image.tmdb.org/t/p/w92${item.poster_path}` : '';
+    const typeLabel = getTypeLabel(item.type);
+    const div = document.createElement('div');
+    div.className = 'suggestion';
+    if (index === activeIndex) div.classList.add('active');
+    div.innerHTML = `
+      <img src="${image}" alt="">
+      <div class="suggestion-details">
+        <div class="suggestion-title">${title}</div>
+        <div class="suggestion-year">${year || 'Année inconnue'} | ${typeLabel}</div>
+      </div>
+    `;
+    div.addEventListener('click', () => openLink(item));
+    suggestions.appendChild(div);
+  });
 
-    if (currentResults.length > results.length) {
-      const btn = document.createElement('button');
-      btn.id = 'load-more-btn';
-      btn.textContent = 'Afficher plus';
-      btn.addEventListener('click', () => {
-        resultsToShow += 5;
-        showSuggestions(currentResults.slice(0, resultsToShow));
-      });
-      suggestions.appendChild(btn);
-    }
+  // Correction ici - afficher le bouton seulement s'il reste des résultats à afficher
+  if (results.length > resultsToShow) {
+    const btn = document.createElement('button');
+    btn.id = 'load-more-btn';
+    btn.textContent = 'Afficher plus';
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation(); // Empêche la fermeture des suggestions
+      resultsToShow += 5;
+      showSuggestions(currentResults);
+    });
+    suggestions.appendChild(btn);
   }
+}
 
 async function openLink(item) {
   const apiKey = '9bb76e7829aacc0197000636ecf535b1';
@@ -2423,19 +2672,38 @@ async function openLink(item) {
     const overlay = document.createElement('div');
     overlay.className = 'tv-overlay';
     overlay.innerHTML = `
-      <div class="tv-popup"><span class="close-btn">&times;</span>
-        <div class="tv-content" style="display:flex;gap:20px;">
-          <div class="popup-left">
-            <img src="https://image.tmdb.org/t/p/w342${details.poster_path}" class="main-poster"/>
-          </div>
-          <div class="popup-right">
-            <h2>${details.title}</h2>
-            <div class="show-genres">${genres}</div>
-            <p>${details.overview || 'Aucun résumé disponible.'}</p>
-            <a href="https://movix.site/watch/movie/${details.id}" target="_blank" class="btn btn-primary">▶ Lecture</a>
-          </div>
-        </div>
+<div class="tv-overlay">
+  <div class="tv-popup" style="
+    position: relative;
+    border-radius: 16px;
+    overflow: hidden;
+    background-image: url('https://image.tmdb.org/t/p/w1280${item.backdrop_path}');
+    background-size: cover;
+    background-position: center;
+  ">
+    <div style="
+      background-color: rgba(0, 0, 0, 0.75);
+      padding: 20px;
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+      border-radius: 16px;
+    ">
+      <div class="popup-left">
+        <img src="https://image.tmdb.org/t/p/w342${item.poster_path}" class="main-poster" style="border-radius: 10px;" />
       </div>
+      <div class="popup-right">
+        <h2>${item.title || item.name}</h2>
+        <div class="show-genres"><strong>${item.media_type === 'movie' ? 'Film' : 'Série'}</strong></div>
+        <div class="show-genres">${(item.genre_ids || []).join(', ')}</div>
+        <p>${item.overview || 'Aucun résumé disponible.'}</p>
+        <a href="https://movix.site/watch/${item.media_type === 'movie' ? 'movie' : 'tv'}/${item.id}" target="_blank" class="btn btn-primary">▶ Lecture</a>
+      </div>
+    </div>
+    <span class="close-btn" style="position:absolute;top:10px;right:20px;font-size:28px;cursor:pointer;color:white;">&times;</span>
+  </div>
+</div>
+
     `;
     document.body.appendChild(overlay);
 
@@ -2877,79 +3145,155 @@ async function openLink(item) {
     showTvPopup(item);
   }
 }
-
+<script>
 // Fonction modifiée pour les SERIES avec bouton de bande-annonce au-dessus des saisons
 async function showTvPopup(item) {
   const apiKey = '9bb76e7829aacc0197000636ecf535b1';
-  const overlay = document.createElement('div');
-  overlay.className = 'tv-overlay';
-  overlay.innerHTML = '<div class="tv-popup"><span class="close-btn">&times;</span><div class="tv-content">Chargement...</div></div>';
-  document.body.appendChild(overlay);
-  const closeBtn = overlay.querySelector('.close-btn');
-  closeBtn.addEventListener('click', () => document.body.removeChild(overlay));
-  overlay.addEventListener('click', e => { if (e.target === overlay) document.body.removeChild(overlay); });
-
-  const [show, season1, ids, videos] = await Promise.all([
+  const [show, videos] = await Promise.all([
     fetch(`https://api.themoviedb.org/3/tv/${item.id}?api_key=${apiKey}&language=fr-FR`).then(r => r.json()),
-    fetch(`https://api.themoviedb.org/3/tv/${item.id}/season/1?api_key=${apiKey}&language=fr-FR`).then(r => r.json()),
-    fetch(`https://api.themoviedb.org/3/tv/${item.id}/external_ids?api_key=${apiKey}`).then(r => r.json()),
     fetch(`https://api.themoviedb.org/3/tv/${item.id}/videos?api_key=${apiKey}&language=fr-FR`).then(r => r.json())
   ]);
 
-  const imdbId = ids.imdb_id || item.id;
-  const trailer = (videos.results || []).find(v => v.type === 'Trailer' && v.site === 'YouTube');
   const genres = (show.genres || []).map(g => g.name).join(', ');
-  const validSeasons = show.seasons.filter(season => season.season_number !== 0);
-  const allSeasonsHaveNoImages = validSeasons.every(season => !season.poster_path);
+  const backdrop = show.backdrop_path ? `https://image.tmdb.org/t/p/w1280${show.backdrop_path}` : '';
+  const trailer = (videos.results || []).find(v => v.type === 'Trailer' && v.site === 'YouTube');
 
-  const seasonsHTML = validSeasons.map(season => {
-    const sNum = season.season_number;
-    const poster = season.poster_path ? `https://image.tmdb.org/t/p/w154${season.poster_path}` : null;
-    return poster
-      ? `<div class="season-thumb" data-season="${sNum}" data-id="${item.id}">
-            <img src="${poster}" />
-            <div class="season-label">Saison ${sNum}</div>
-         </div>`
-      : `<div class="season-thumb text-only no-image" data-season="${sNum}" data-id="${item.id}">
-            <div class="season-label only-text">Saison ${sNum}</div>
-         </div>`;
-  }).join('');
-
-  overlay.querySelector('.tv-content').innerHTML = `
-    <div class="popup-left">
-      ${season1.poster_path ? `<img src="https://image.tmdb.org/t/p/w342${season1.poster_path}" class="main-poster"/>` : ''}
+  const overlay = document.createElement('div');
+  overlay.className = 'tv-overlay';
+  overlay.innerHTML = `
+    <div class="tv-popup" style="background-image:url('${backdrop}');background-size:cover;background-position:center;border-radius:16px;position:relative;overflow:hidden;">
+      <div style="background:rgba(0,0,0,0.85);padding:30px;border-radius:16px;">
+        <div style="display:flex;gap:30px;flex-wrap:wrap;margin-bottom:20px;">
+          <div style="flex:0 0 250px;">
+            <img src="https://image.tmdb.org/t/p/w500${show.poster_path}" style="width:100%;border-radius:10px;box-shadow:0 5px 15px rgba(0,0,0,0.5);"/>
+          </div>
+          <div style="flex:1;min-width:300px;">
+            <h2 style="font-family:'Bebas Neue', sans-serif;font-size:2.5rem;color:#e50914;margin-bottom:10px;">${show.name}</h2>
+            <div style="display:flex;gap:15px;margin-bottom:15px;flex-wrap:wrap;">
+              <span style="background:#e50914;padding:3px 10px;border-radius:4px;font-size:0.9rem;">Série</span>
+              <span style="color:#ccc;font-size:0.9rem;">${genres}</span>
+            </div>
+            <p style="line-height:1.6;margin-bottom:20px;">${show.overview || 'Aucun résumé disponible.'}</p>
+            
+            ${trailer ? `
+              <a href="https://www.youtube.com/watch?v=${trailer.key}" 
+                 target="_blank" 
+                 style="background:#e50914;color:white;padding:10px 20px;border-radius:6px;text-decoration:none;display:inline-block;margin-right:10px;">
+                🎬 Bande-annonce
+              </a>
+            ` : ''}
+            
+            <a href="https://movix.site/watch/tv/${show.id}" 
+               target="_blank" 
+               style="background:#fff;color:#000;padding:10px 20px;border-radius:6px;text-decoration:none;display:inline-block;">
+              ▶ Lecture
+            </a>
+          </div>
+        </div>
+        
+        <div style="margin-top:30px;">
+          <h3 style="font-family:'Bebas Neue', sans-serif;font-size:1.8rem;color:#fff;margin-bottom:15px;border-bottom:2px solid #e50914;padding-bottom:5px;display:inline-block;">
+            Saisons
+          </h3>
+          <div style="display:flex;gap:15px;overflow-x:auto;padding:15px 5px;scrollbar-width:thin;">
+            ${show.seasons.filter(s => s.season_number > 0).map(season => `
+              <div class="season-thumb" 
+                   data-season="${season.season_number}" 
+                   data-id="${show.id}"
+                   style="flex:0 0 150px;cursor:pointer;position:relative;">
+                <img src="${season.poster_path ? `https://image.tmdb.org/t/p/w300${season.poster_path}` : 'https://via.placeholder.com/150x225?text=No+Image'}" 
+                     style="width:100%;border-radius:8px;box-shadow:0 4px 10px rgba(0,0,0,0.3);"/>
+                <div style="position:absolute;bottom:0;left:0;right:0;background:linear-gradient(transparent, rgba(0,0,0,0.8));padding:10px;text-align:center;">
+                  <span style="font-weight:bold;color:#fff;">Saison ${season.season_number}</span>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      </div>
+      <span class="close-btn" style="position:absolute;top:15px;right:25px;font-size:32px;cursor:pointer;color:white;">&times;</span>
     </div>
-    <div class="popup-right">
-      <h2>${show.name}</h2>
-      <div class="show-genres">${genres}</div>
-      <p>${show.overview || 'Aucun résumé disponible.'}</p>
-      ${trailer ? `<a href="https://www.youtube.com/watch?v=${trailer.key}" target="_blank" class="btn btn-secondary" style="margin-bottom:10px;">🎬 Bande-annonce</a>` : ''}
-      <div class="season-list ${allSeasonsHaveNoImages ? 'text-mode' : ''}">${seasonsHTML}</div>
-    </div>`;
-
+  `;
+  
+  document.body.appendChild(overlay);
+  
+  // Gestion du clic sur les saisons
   overlay.querySelectorAll('.season-thumb').forEach(thumb => {
-    thumb.addEventListener('click', () => {
+    thumb.addEventListener('click', async () => {
       const seasonNum = thumb.dataset.season;
       const tvId = thumb.dataset.id;
-
-      fetch(`https://api.themoviedb.org/3/tv/${tvId}/season/${seasonNum}?api_key=${apiKey}&language=fr-FR`)
-        .then(res => res.json())
-        .then(data => {
-          const epOverlay = document.createElement('div');
-          epOverlay.className = 'episode-overlay';
-          epOverlay.innerHTML = '<div class="episode-popup"><span class="close-btn">&times;</span><div class="episode-content"></div></div>';
-          document.body.appendChild(epOverlay);
-
-          const closeEp = epOverlay.querySelector('.close-btn');
-          closeEp.addEventListener('click', () => document.body.removeChild(epOverlay));
-          epOverlay.addEventListener('click', e => { if (e.target === epOverlay) document.body.removeChild(epOverlay); });
-
-          const episodesHTML = data.episodes.map(ep => {
-            return `<div class="episode-link"><a href="https://movix.site/watch/tv/${item.id}/s/${seasonNum}/e/${ep.episode_number}" target="_blank">Épisode ${ep.episode_number} : ${ep.name}</a></div>`;
-          }).join('');
-          epOverlay.querySelector('.episode-content').innerHTML = `<h3>${data.name}</h3>${episodesHTML}`;
-        });
+      
+      // Charger les infos de la saison
+      const [seasonData, seasonVideos] = await Promise.all([
+        fetch(`https://api.themoviedb.org/3/tv/${tvId}/season/${seasonNum}?api_key=${apiKey}&language=fr-FR`).then(r => r.json()),
+        fetch(`https://api.themoviedb.org/3/tv/${tvId}/season/${seasonNum}/videos?api_key=${apiKey}&language=fr-FR`).then(r => r.json())
+      ]);
+      
+      const seasonTrailer = (seasonVideos.results || []).find(v => v.type === 'Trailer' && v.site === 'YouTube');
+      
+      // Créer le popup des épisodes
+      const epOverlay = document.createElement('div');
+      epOverlay.className = 'episode-overlay';
+      epOverlay.innerHTML = `
+        <div class="episode-popup" style="background:#141414;border-radius:12px;padding:25px;max-width:800px;width:90%;max-height:90vh;overflow-y:auto;position:relative;">
+          <h3 style="font-family:'Bebas Neue', sans-serif;font-size:2rem;color:#e50914;margin-bottom:20px;">
+            ${seasonData.name || `Saison ${seasonNum}`}
+          </h3>
+          
+          ${seasonTrailer ? `
+            <div style="margin-bottom:20px;">
+              <a href="https://www.youtube.com/watch?v=${seasonTrailer.key}" 
+                 target="_blank" 
+                 style="background:#e50914;color:white;padding:8px 15px;border-radius:4px;text-decoration:none;display:inline-block;">
+                🎬 Bande-annonce Saison ${seasonNum}
+              </a>
+            </div>
+          ` : ''}
+          
+<div style="display:grid;grid-template-columns:repeat(auto-fill, minmax(300px, 1fr));gap:15px;">
+  ${seasonData.episodes.map(ep => `
+    <div style="background:#222;border-radius:8px;overflow:hidden;cursor:pointer;" 
+         onclick="window.open('https://movix.site/watch/tv/${tvId}/s/${seasonNum}/e/${ep.episode_number}', '_blank')">
+      <div style="position:relative;height:169px;">
+        <img src="${ep.still_path ? `https://image.tmdb.org/t/p/w300${ep.still_path}` : 
+             (seasonData.poster_path ? `https://image.tmdb.org/t/p/w300${seasonData.poster_path}` : 
+             'https://via.placeholder.com/300x169?text=No+Image')}" 
+             style="width:100%;height:100%;object-fit:cover;"/>
+      </div>
+      <div style="padding:15px;">
+        <h4 style="margin:0;font-size:1.1rem;color:white;">
+          Épisode ${ep.episode_number}: ${ep.name}
+        </h4>
+      </div>
+    </div>
+  `).join('')}
+</div>
+          <span class="close-btn" style="position:absolute;top:10px;right:20px;font-size:28px;cursor:pointer;color:white;">&times;</span>
+        </div>
+      `;
+      
+      document.body.appendChild(epOverlay);
+      
+      epOverlay.querySelector('.close-btn').addEventListener('click', () => {
+        document.body.removeChild(epOverlay);
+      });
+      
+      epOverlay.addEventListener('click', e => {
+        if (e.target === epOverlay) {
+          document.body.removeChild(epOverlay);
+        }
+      });
     });
+  });
+  
+  overlay.querySelector('.close-btn').addEventListener('click', () => {
+    document.body.removeChild(overlay);
+  });
+  
+  overlay.addEventListener('click', e => {
+    if (e.target === overlay) {
+      document.body.removeChild(overlay);
+    }
   });
 }
 </script>
@@ -3070,6 +3414,768 @@ document.querySelector(".hero-next").addEventListener("click", () => {
 document.getElementById("introVideo").addEventListener("ended", () => {
     fetchFeaturedMovies();
 });
+</script>
+
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const actionSection = document.getElementById('action');
+  const apiKey = '9bb76e7829aacc0197000636ecf535b1';
+
+  async function fetchActionMovies() {
+    const response = await fetch(`https://api.themoviedb.org/3/discover/movie?api_key=${apiKey}&with_genres=28&language=fr-FR&&primary_release_date.lte=2025-07-21&sort_by=popularity.desc&page=1`);
+    const data = await response.json();
+    const movies = removeDuplicateMovies(data.results).slice(0, 20);
+
+    actionSection.innerHTML = '';
+
+    movies.forEach(movie => {
+      const card = document.createElement('div');
+      card.className = 'movie-card';
+      card.style.minWidth = '180px';
+      card.style.height = '270px';
+      card.style.backgroundImage = `url(https://image.tmdb.org/t/p/w500${movie.poster_path})`;
+      card.style.backgroundSize = 'cover';
+      card.style.backgroundPosition = 'center';
+      card.style.position = 'relative';
+      card.style.transition = 'transform 0.3s ease, filter 0.3s ease';
+
+      const overlay = document.createElement('div');
+      overlay.style.position = 'absolute';
+      overlay.style.top = 0;
+      overlay.style.left = 0;
+      overlay.style.right = 0;
+      overlay.style.bottom = 0;
+      overlay.style.background = 'rgba(0,0,0,0.6)';
+      overlay.style.color = 'white';
+      overlay.style.opacity = 0;
+      overlay.style.display = 'flex';
+      overlay.style.flexDirection = 'column';
+      overlay.style.justifyContent = 'flex-end';
+      overlay.style.padding = '15px';
+      overlay.style.transition = 'opacity 0.3s ease';
+      overlay.innerHTML = `
+        <div style="font-weight: bold; font-size: 16px;">${movie.title}</div>
+        <div style="font-size: 13px; color: #ccc;">${(movie.release_date || '').slice(0,4)}</div>
+      `;
+
+      card.addEventListener('mouseenter', () => {
+        card.style.transform = 'scale(1.08)';
+        overlay.style.opacity = 1;
+      });
+
+      card.addEventListener('mouseleave', () => {
+        card.style.transform = 'scale(1)';
+        overlay.style.opacity = 0;
+      });
+
+      card.addEventListener('click', () => openActionMoviePopup(movie.id));
+
+      card.appendChild(overlay);
+      actionSection.appendChild(card);
+    });
+  }
+
+  async function openActionMoviePopup(movieId) {
+    const res = await fetch(`https://api.themoviedb.org/3/movie/${movieId}?api_key=${apiKey}&language=fr-FR`);
+    const movie = await res.json();
+    const genres = (movie.genres || []).map(g => g.name).join(', ');
+
+    const overlay = document.createElement('div');
+    overlay.className = 'tv-overlay';
+    overlay.innerHTML = `
+      <div class="tv-popup"><span class="close-btn">&times;</span>
+        <div class="tv-content" style="display:flex;gap:20px;">
+          <div class="popup-left">
+            <img src="https://image.tmdb.org/t/p/w342${movie.poster_path}" class="main-poster"/>
+          </div>
+          <div class="popup-right">
+            <h2>${movie.title}</h2>
+            <div class="show-genres">${genres}</div>
+            <p>${movie.overview || 'Aucun résumé disponible.'}</p>
+            <a href="https://movix.site/watch/movie/${movie.id}" target="_blank" class="btn btn-primary">▶ Lecture</a>
+          </div>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(overlay);
+
+    const closeBtn = overlay.querySelector('.close-btn');
+    closeBtn.addEventListener('click', () => document.body.removeChild(overlay));
+    overlay.addEventListener('click', e => { if (e.target === overlay) document.body.removeChild(overlay); });
+  }
+
+  const introVideo = document.getElementById('introVideo');
+  if (introVideo) {
+    introVideo.addEventListener('ended', fetchActionMovies);
+  } else {
+    fetchActionMovies();
+  }
+});
+</script>
+
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const popularNowSection = document.getElementById('popular-now');
+  const apiKey = '9bb76e7829aacc0197000636ecf535b1';
+
+  async function fetchPopularNow() {
+    const response = await fetch(`https://api.themoviedb.org/3/movie/popular?api_key=${apiKey}&language=fr-FR&page=1`);
+    const data = await response.json();
+    const movies = removeDuplicateMovies(data.results).slice(0, 20);
+
+    popularNowSection.innerHTML = '';
+
+    movies.forEach(movie => {
+      const card = document.createElement('div');
+      card.className = 'movie-card';
+      card.style.minWidth = '180px';
+      card.style.height = '270px';
+      card.style.backgroundImage = `url(https://image.tmdb.org/t/p/w500${movie.poster_path})`;
+      card.style.backgroundSize = 'cover';
+      card.style.backgroundPosition = 'center';
+      card.style.position = 'relative';
+      card.style.transition = 'transform 0.3s ease, filter 0.3s ease';
+
+      const overlay = document.createElement('div');
+      overlay.style.position = 'absolute';
+      overlay.style.top = 0;
+      overlay.style.left = 0;
+      overlay.style.right = 0;
+      overlay.style.bottom = 0;
+      overlay.style.background = 'rgba(0,0,0,0.6)';
+      overlay.style.color = 'white';
+      overlay.style.opacity = 0;
+      overlay.style.display = 'flex';
+      overlay.style.flexDirection = 'column';
+      overlay.style.justifyContent = 'flex-end';
+      overlay.style.padding = '15px';
+      overlay.style.transition = 'opacity 0.3s ease';
+      overlay.innerHTML = `
+        <div style="font-weight: bold; font-size: 16px;">${movie.title}</div>
+        <div style="font-size: 13px; color: #ccc;">${(movie.release_date || '').slice(0,4)}</div>
+      `;
+
+      card.addEventListener('mouseenter', () => {
+        card.style.transform = 'scale(1.08)';
+        overlay.style.opacity = 1;
+      });
+
+      card.addEventListener('mouseleave', () => {
+        card.style.transform = 'scale(1)';
+        overlay.style.opacity = 0;
+      });
+
+      card.addEventListener('click', () => openActionMoviePopup(movie.id));
+      card.appendChild(overlay);
+      popularNowSection.appendChild(card);
+    });
+  }
+
+  const introVideo = document.getElementById('introVideo');
+  if (introVideo) {
+    introVideo.addEventListener('ended', fetchPopularNow);
+  } else {
+    fetchPopularNow();
+  }
+});
+</script>
+
+<script>
+function removeDuplicateMovies(movies) {
+  const seen = new Set();
+  return movies.filter(item => {
+    const title = item.title || item.name;
+    if (!title || seen.has(title)) return false;
+    seen.add(title);
+    return true;
+  });
+}
+
+</script>
+<script>
+let scrollTimers = {};
+
+document.querySelectorAll('.row').forEach(row => {
+  let mouseStill = false;
+  let lastMouseY = 0;
+
+  row.addEventListener('mouseenter', () => {
+    scrollTimers[row.id] = setTimeout(() => {
+      mouseStill = true;
+    }, 2000);
+  });
+
+  row.addEventListener('mousemove', (e) => {
+    if (Math.abs(e.clientY - lastMouseY) > 2) {
+      mouseStill = false;
+      clearTimeout(scrollTimers[row.id]);
+      scrollTimers[row.id] = setTimeout(() => {
+        mouseStill = true;
+      }, 2000);
+    }
+    lastMouseY = e.clientY;
+  });
+
+  row.addEventListener('mouseleave', () => {
+    mouseStill = false;
+    clearTimeout(scrollTimers[row.id]);
+  });
+
+  row.addEventListener('wheel', e => {
+    if (mouseStill) {
+      e.preventDefault();
+      row.scrollBy({
+        left: e.deltaY > 0 ? 150 : -150,
+        behavior: 'smooth'
+      });
+    }
+  }, { passive: false });
+});
+</script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const popularNowSection = document.getElementById('popular-now');
+  const apiKey = '9bb76e7829aacc0197000636ecf535b1';
+
+  function removeDuplicateMovies(movies) {
+    const seen = new Set();
+    return movies.filter(item => {
+      const title = item.title || item.name;
+      if (!title || seen.has(title)) return false;
+      seen.add(title);
+      return true;
+    });
+  }
+
+async function fetchPopularNow() {
+  const [movieRes, tvRes] = await Promise.all([
+    fetch(`https://api.themoviedb.org/3/movie/popular?api_key=${apiKey}&language=fr-FR&page=1`),
+    fetch(`https://api.themoviedb.org/3/tv/popular?api_key=${apiKey}&language=fr-FR&page=1`)
+  ]);
+  const movieData = await movieRes.json();
+  const tvData = await tvRes.json();
+
+  const combined = removeDuplicateMovies([...movieData.results, ...tvData.results]).slice(0, 20);
+  popularNowSection.innerHTML = '';
+
+  combined.forEach(item => {
+    const title = item.title || item.name;
+    const year = (item.release_date || item.first_air_date || '').slice(0, 4);
+    const posterPath = item.poster_path ? `https://image.tmdb.org/t/p/w500${item.poster_path}` : '';
+    const id = item.id;
+    const type = item.name ? 'tv' : 'movie'; // Détermine si c'est une série ou un film
+    const typeLabel = type === 'movie' ? 'Film' : 'Série'; // Texte à afficher
+
+    const card = document.createElement('div');
+    card.className = 'movie-card';
+    card.style.minWidth = '180px';
+    card.style.height = '270px';
+    card.style.backgroundImage = `url(${posterPath})`;
+    card.style.backgroundSize = 'cover';
+    card.style.backgroundPosition = 'center';
+    card.style.position = 'relative';
+    card.style.transition = 'transform 0.3s ease, filter 0.3s ease';
+
+    const overlay = document.createElement('div');
+    overlay.style.position = 'absolute';
+    overlay.style.top = 0;
+    overlay.style.left = 0;
+    overlay.style.right = 0;
+    overlay.style.bottom = 0;
+    overlay.style.background = 'rgba(0,0,0,0.6)';
+    overlay.style.color = 'white';
+    overlay.style.opacity = 0;
+    overlay.style.display = 'flex';
+    overlay.style.flexDirection = 'column';
+    overlay.style.justifyContent = 'flex-end';
+    overlay.style.padding = '15px';
+    overlay.style.transition = 'opacity 0.3s ease';
+    overlay.innerHTML = `
+      <div style="font-weight: bold; font-size: 16px;">${title}</div>
+      <div style="font-size: 13px; color: #ccc;">${year} • ${typeLabel}</div>
+    `;
+
+    card.addEventListener('mouseenter', () => {
+      card.style.transform = 'scale(1.08)';
+      overlay.style.opacity = 1;
+    });
+
+    card.addEventListener('mouseleave', () => {
+      card.style.transform = 'scale(1)';
+      overlay.style.opacity = 0;
+    });
+
+    card.addEventListener('click', () => openItemPopup(id, type));
+    card.appendChild(overlay);
+    popularNowSection.appendChild(card);
+  });
+}
+
+async function openItemPopup(id, type) {
+  const res = await fetch(`https://api.themoviedb.org/3/${type}/${id}?api_key=${apiKey}&language=fr-FR`);
+  const item = await res.json();
+  const genres = (item.genres || []).map(g => g.name).join(', ');
+  const title = item.title || item.name;
+  const poster = item.poster_path ? `https://image.tmdb.org/t/p/w342${item.poster_path}` : '';
+  const overview = item.overview || 'Aucun résumé disponible.';
+  const link = type === 'movie' ? `https://movix.site/watch/movie/${item.id}` : `https://movix.site/watch/tv/${item.id}`;
+
+  const overlay = document.createElement('div');
+  overlay.className = 'tv-overlay';
+  overlay.innerHTML = `
+    <div class="tv-popup"><span class="close-btn">&times;</span>
+      <div class="tv-content" style="display:flex;gap:20px;">
+        <div class="popup-left">
+          <img src="${poster}" class="main-poster"/>
+        </div>
+        <div class="popup-right">
+          <h2>${title}</h2>
+          <div class="show-genres">${genres}</div>
+          <p>${overview}</p>
+          <a href="${link}" target="_blank" class="btn btn-primary">▶ Lecture</a>
+        </div>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  overlay.querySelector('.close-btn').addEventListener('click', () => overlay.remove());
+  overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+}
+
+  const introVideo = document.getElementById('introVideo');
+  if (introVideo) {
+    introVideo.addEventListener('ended', fetchPopularNow);
+  } else {
+    fetchPopularNow();
+  }
+});
+</script>
+
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  let popularPage = 1;
+  const apiKey = '9bb76e7829aacc0197000636ecf535b1';
+  const seen = new Set();
+  const container = document.getElementById('popular-now');
+  const voirPlusCard = document.getElementById('voir-plus-card');
+
+  async function fetchAndAppendPopular() {
+    popularPage++;
+    const [movies, series] = await Promise.all([
+      fetch(`https://api.themoviedb.org/3/movie/popular?api_key=${apiKey}&language=fr-FR&page=${popularPage}`).then(res => res.json()),
+      fetch(`https://api.themoviedb.org/3/tv/popular?api_key=${apiKey}&language=fr-FR&page=${popularPage}`).then(res => res.json())
+    ]);
+    const results = [...movies.results, ...series.results].slice(0, 20).filter(item => {
+      const title = item.title || item.name;
+      if (!title || seen.has(title)) return false;
+      seen.add(title);
+      return true;
+    }).slice(0, 20);
+
+    for (let item of results) {
+      const title = item.title || item.name;
+      const year = (item.release_date || item.first_air_date || '').slice(0, 4);
+      const poster = item.poster_path ? `https://image.tmdb.org/t/p/w500${item.poster_path}` : '';
+      const type = item.name ? 'tv' : 'movie';
+
+      const card = document.createElement('div');
+      card.className = 'movie-card';
+      card.style.minWidth = '180px';
+      card.style.height = '270px';
+      card.style.backgroundImage = `url(${poster})`;
+      card.style.backgroundSize = 'cover';
+      card.style.backgroundPosition = 'center';
+      card.style.position = 'relative';
+      card.style.transition = 'transform 0.3s ease, filter 0.3s ease';
+
+      const overlay = document.createElement('div');
+      overlay.style.position = 'absolute';
+      overlay.style.top = 0;
+      overlay.style.left = 0;
+      overlay.style.right = 0;
+      overlay.style.bottom = 0;
+      overlay.style.background = 'rgba(0,0,0,0.6)';
+      overlay.style.color = 'white';
+      overlay.style.opacity = 0;
+      overlay.style.display = 'flex';
+      overlay.style.flexDirection = 'column';
+      overlay.style.justifyContent = 'flex-end';
+      overlay.style.padding = '15px';
+      overlay.style.transition = 'opacity 0.3s ease';
+      overlay.innerHTML = `
+        <div style="font-weight: bold; font-size: 16px;">${title}</div>
+        <div style="font-size: 13px; color: #ccc;">${year}</div>
+      `;
+
+      card.addEventListener('mouseenter', () => {
+        card.style.transform = 'scale(1.08)';
+        overlay.style.opacity = 1;
+      });
+      card.addEventListener('mouseleave', () => {
+        card.style.transform = 'scale(1)';
+        overlay.style.opacity = 0;
+      });
+      card.addEventListener('click', () => openItemPopup(item.id, type));
+      card.appendChild(overlay);
+
+      container.insertBefore(card, voirPlusCard);
+    }
+  }
+
+  async function openItemPopup(id, type) {
+    const res = await fetch(`https://api.themoviedb.org/3/${type}/${id}?api_key=${apiKey}&language=fr-FR`);
+    const item = await res.json();
+    const genres = (item.genres || []).map(g => g.name).join(', ');
+    const title = item.title || item.name;
+    const poster = item.poster_path ? `https://image.tmdb.org/t/p/w342${item.poster_path}` : '';
+    const overview = item.overview || 'Aucun résumé disponible.';
+    const link = type === 'movie' ? `https://movix.site/watch/movie/${item.id}` : `https://movix.site/watch/tv/${item.id}`;
+
+    const overlay = document.createElement('div');
+    overlay.className = 'tv-overlay';
+    overlay.innerHTML = `
+      <div class="tv-popup"><span class="close-btn">&times;</span>
+        <div class="tv-content" style="display:flex;gap:20px;">
+          <div class="popup-left"><img src="${poster}" class="main-poster"/></div>
+          <div class="popup-right">
+            <h2>${title}</h2>
+            <div class="show-genres">${genres}</div>
+            <p>${overview}</p>
+            <a href="${link}" target="_blank" class="btn btn-primary">▶ Lecture</a>
+          </div>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(overlay);
+    overlay.querySelector('.close-btn').addEventListener('click', () => overlay.remove());
+    overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+  }
+
+  voirPlusCard.addEventListener('click', fetchAndAppendPopular);
+});
+</script>
+
+
+<script>
+document.querySelectorAll('.row').forEach(row => {
+  row.addEventListener('wheel', e => {
+    e.preventDefault();
+    row.scrollBy({
+      left: e.deltaY > 0 ? 600 : -600,
+      behavior: 'smooth'
+    });
+  }, { passive: false });
+});
+</script>
+
+
+<script>
+  const apiKey = '9bb76e7829aacc0197000636ecf535b1';
+  let currentPopularPage = 1;
+
+  document.getElementById('voir-plus-card').addEventListener('click', async () => {
+    currentPopularPage++;
+    const response = await fetch(`https://api.themoviedb.org/3/movie/popular?api_key=${apiKey}&language=fr-FR&page=${currentPopularPage}`);
+    const data = await response.json();
+    const movies = data.results;
+    const container = document.getElementById('popular-now');
+
+    movies.forEach(movie => {
+      const card = document.createElement('div');
+      card.className = 'movie-card';
+      card.style.backgroundImage = `url(https://image.tmdb.org/t/p/w500${movie.poster_path})`;
+
+      card.innerHTML = `
+        <div class="movie-info">
+          <div class="movie-title">${movie.title}</div>
+          <div class="movie-meta">${(movie.release_date || '').slice(0, 4)} • ★ ${movie.vote_average.toFixed(1)}</div>
+        </div>
+      `;
+
+      card.addEventListener('click', () => {
+        alert('Vous avez sélectionné : ' + movie.title);
+      });
+
+      container.insertBefore(card, document.getElementById('voir-plus-card'));
+    });
+  });
+</script>
+
+
+
+<!-- ✅ Ajout type (film/série) dans suggestions de recherche -->
+<script>
+function getTypeLabel(type) {
+  return type === 'movie' ? 'Film' : 'Série';
+}
+
+function showSuggestions(results) {
+  suggestions.innerHTML = '';
+  const displayedResults = results.slice(0, resultsToShow);
+  
+  displayedResults.forEach((item, index) => {
+    const title = item.title || item.name;
+    const year = (item.release_date || item.first_air_date || '').slice(0, 4);
+    const image = item.poster_path ? `https://image.tmdb.org/t/p/w92${item.poster_path}` : '';
+    const typeLabel = getTypeLabel(item.type);
+    const div = document.createElement('div');
+    div.className = 'suggestion';
+    if (index === activeIndex) div.classList.add('active');
+    div.innerHTML = `
+      <img src="${image}" alt="">
+      <div class="suggestion-details">
+        <div class="suggestion-title">${title}</div>
+        <div class="suggestion-year">${year || 'Année inconnue'} | ${typeLabel}</div>
+      </div>
+    `;
+    div.addEventListener('click', () => openLink(item));
+    suggestions.appendChild(div);
+  });
+
+  // Afficher le bouton seulement s'il y a plus de résultats à afficher
+  if (results.length > resultsToShow) {
+    const btn = document.createElement('button');
+    btn.id = 'load-more-btn';
+    btn.textContent = 'Afficher plus';
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation(); // Empêche la fermeture des suggestions
+      resultsToShow += 5;
+      showSuggestions(results); // Passer les résultats complets, pas seulement currentResults
+    });
+    suggestions.appendChild(btn);
+  }
+}
+</script>
+
+<!-- ✅ Popup modifié pour films avec fond image paysage et filtre noir -->
+<script>
+async function openLink(item) {
+  const apiKey = '9bb76e7829aacc0197000636ecf535b1';
+  const isMovie = item.type === 'movie';
+
+  if (isMovie) {
+    // Pour les films - garder le système actuel
+    const [details, videos] = await Promise.all([
+      fetch(`https://api.themoviedb.org/3/movie/${item.id}?api_key=${apiKey}&language=fr-FR`).then(res => res.json()),
+      fetch(`https://api.themoviedb.org/3/movie/${item.id}/videos?api_key=${apiKey}&language=fr-FR`).then(res => res.json())
+    ]);
+
+    const genres = (details.genres || []).map(g => g.name).join(', ');
+    const backdrop = details.backdrop_path ? `https://image.tmdb.org/t/p/w780${details.backdrop_path}` : '';
+    const trailer = (videos.results || []).find(v => v.type === 'Trailer' && v.site === 'YouTube');
+
+    const overlay = document.createElement('div');
+    overlay.className = 'tv-overlay';
+    overlay.innerHTML = `
+      <div class="tv-popup" style="background-image:url('${backdrop}');background-size:cover;background-position:center;border-radius:16px;position:relative;overflow:hidden;">
+        <div style="background:rgba(0,0,0,0.75);padding:20px;display:flex;gap:20px;flex-wrap:wrap;border-radius:16px;">
+          <div class="popup-left">
+            <img src="https://image.tmdb.org/t/p/w342${details.poster_path}" class="main-poster"/>
+          </div>
+          <div class="popup-right">
+            <h2>${details.title}</h2>
+            <div class="show-genres"><strong>Film</strong></div>
+            <div class="show-genres">${genres}</div>
+            <p>${details.overview || 'Aucun résumé disponible.'}</p>
+            <a href="https://movix.site/watch/movie/${details.id}" target="_blank" class="btn btn-primary">▶ Lecture</a>
+            ${trailer ? `<a href="https://www.youtube.com/watch?v=${trailer.key}" target="_blank" class="btn btn-secondary" style="margin-top:10px;">🎬 Bande-annonce</a>` : ''}
+          </div>
+        </div>
+        <span class="close-btn" style="position:absolute;top:10px;right:20px;font-size:28px;cursor:pointer;color:white;">&times;</span>
+      </div>
+    `;
+    document.body.appendChild(overlay);
+    overlay.querySelector('.close-btn').addEventListener('click', () => document.body.removeChild(overlay));
+    overlay.addEventListener('click', e => { if (e.target === overlay) document.body.removeChild(overlay); });
+
+  } else {
+    // NOUVEAU CODE POUR LES SERIES
+    const [show, videos] = await Promise.all([
+      fetch(`https://api.themoviedb.org/3/tv/${item.id}?api_key=${apiKey}&language=fr-FR`).then(res => res.json()),
+      fetch(`https://api.themoviedb.org/3/tv/${item.id}/videos?api_key=${apiKey}&language=fr-FR`).then(res => res.json())
+    ]);
+
+    const genres = (show.genres || []).map(g => g.name).join(', ');
+    const backdrop = show.backdrop_path ? `https://image.tmdb.org/t/p/w1280${show.backdrop_path}` : '';
+    const trailer = (videos.results || []).find(v => v.type === 'Trailer' && v.site === 'YouTube');
+
+    const overlay = document.createElement('div');
+    overlay.className = 'tv-overlay';
+    overlay.innerHTML = `
+      <div class="tv-popup" style="background-image:url('${backdrop}');background-size:cover;background-position:center;border-radius:16px;position:relative;overflow:hidden;">
+        <div style="background:rgba(0,0,0,0.85);padding:30px;border-radius:16px;">
+          <div style="display:flex;gap:30px;flex-wrap:wrap;margin-bottom:20px;">
+            <div style="flex:0 0 250px;">
+              <img src="https://image.tmdb.org/t/p/w500${show.poster_path}" style="width:100%;border-radius:10px;box-shadow:0 5px 15px rgba(0,0,0,0.5);"/>
+            </div>
+            <div style="flex:1;min-width:300px;">
+              <h2 style="font-family:'Bebas Neue', sans-serif;font-size:2.5rem;color:#e50914;margin-bottom:10px;">${show.name}</h2>
+              <div style="display:flex;gap:15px;margin-bottom:15px;flex-wrap:wrap;">
+                <span style="background:#e50914;padding:3px 10px;border-radius:4px;font-size:0.9rem;">Série</span>
+                <span style="color:#ccc;font-size:0.9rem;">${genres}</span>
+              </div>
+              <p style="line-height:1.6;margin-bottom:20px;">${show.overview || 'Aucun résumé disponible.'}</p>
+              
+${trailer ? `
+  <a href="https://www.youtube.com/watch?v=${trailer.key}" 
+     target="_blank" 
+     style="background:#6d6d6eb3;color:white;padding:10px 20px;border-radius:6px;text-decoration:none;display:inline-block;margin-right:10px;">
+    🎬 Bande-annonce
+  </a>
+` : `
+  <a href="https://www.youtube.com/results?search_query=${encodeURIComponent(show.name + ' bande annonce')}" 
+     target="_blank" 
+     style="background:#6d6d6eb3;color:white;padding:10px 20px;border-radius:6px;text-decoration:none;display:inline-block;margin-right:10px;">
+    🎬 Rechercher bande-annonce
+  </a>
+`}
+              
+            </div>
+          </div>
+          
+          <div style="margin-top:30px;">
+            <h3 style="font-family:'Bebas Neue', sans-serif;font-size:1.8rem;color:#fff;margin-bottom:15px;border-bottom:2px solid #e50914;padding-bottom:5px;display:inline-block;">
+              Saisons
+            </h3>
+            <div style="display:flex;gap:15px;overflow-x:auto;padding:15px 5px;scrollbar-width:thin;">
+              ${show.seasons.filter(s => s.season_number > 0).map(season => `
+                <div class="season-thumb" 
+                     data-season="${season.season_number}" 
+                     data-id="${show.id}"
+                     style="flex:0 0 150px;cursor:pointer;position:relative;">
+                  <img src="${season.poster_path ? `https://image.tmdb.org/t/p/w300${season.poster_path}` : 'https://via.placeholder.com/150x225?text=No+Image'}" 
+                       style="width:100%;border-radius:8px;box-shadow:0 4px 10px rgba(0,0,0,0.3);"/>
+                  <div style="position:absolute;bottom:0;left:0;right:0;background:linear-gradient(transparent, rgba(0,0,0,0.8));padding:10px;text-align:center;">
+                    <span style="font-weight:bold;color:#fff;">Saison ${season.season_number}</span>
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        </div>
+        <span class="close-btn" style="position:absolute;top:15px;right:25px;font-size:32px;cursor:pointer;color:white;">&times;</span>
+      </div>
+    `;
+    
+    document.body.appendChild(overlay);
+    
+    // Gestion du clic sur les saisons
+    overlay.querySelectorAll('.season-thumb').forEach(thumb => {
+      thumb.addEventListener('click', async () => {
+        const seasonNum = thumb.dataset.season;
+        const tvId = thumb.dataset.id;
+        
+        // Charger les infos de la saison
+        const [seasonData, seasonVideos] = await Promise.all([
+          fetch(`https://api.themoviedb.org/3/tv/${tvId}/season/${seasonNum}?api_key=${apiKey}&language=fr-FR`).then(r => r.json()),
+          fetch(`https://api.themoviedb.org/3/tv/${tvId}/season/${seasonNum}/videos?api_key=${apiKey}&language=fr-FR`).then(r => r.json())
+        ]);
+        
+        const seasonTrailer = (seasonVideos.results || []).find(v => v.type === 'Trailer' && v.site === 'YouTube');
+        
+        // Créer le popup des épisodes
+        const epOverlay = document.createElement('div');
+        epOverlay.className = 'episode-overlay';
+        epOverlay.innerHTML = `
+          <div class="episode-popup" style="background:#141414;border-radius:12px;padding:25px;max-width:800px;width:90%;max-height:90vh;overflow-y:auto;position:relative;">
+            <h3 style="font-family:'Bebas Neue', sans-serif;font-size:2rem;color:#e50914;margin-bottom:20px;">
+              ${seasonData.name || `Saison ${seasonNum}`}
+            </h3>
+            
+            ${seasonTrailer ? `
+              <div style="margin-bottom:20px;">
+                <a href="https://www.youtube.com/watch?v=${seasonTrailer.key}" 
+                   target="_blank" 
+                   style="background:#e50914;color:white;padding:8px 15px;border-radius:4px;text-decoration:none;display:inline-block;">
+                  🎬 Bande-annonce Saison ${seasonNum}
+                </a>
+              </div>
+            ` : ''}
+            
+            <div style="display:grid;grid-template-columns:repeat(auto-fill, minmax(300px, 1fr));gap:15px;">
+              ${seasonData.episodes.map(ep => `
+                <div style="background:#222;border-radius:8px;overflow:hidden;">
+                  <div style="display:flex;gap:15px;">
+                    <img src="${ep.still_path ? `https://image.tmdb.org/t/p/w300${ep.still_path}` : 'https://via.placeholder.com/150x85?text=No+Image'}" 
+                         style="width:150px;height:85px;object-fit:cover;"/>
+                    <div style="padding:10px;flex:1;">
+                      <h4 style="margin:0 0 5px 0;font-size:1.1rem;">
+                        <a href="https://movix.site/watch/tv/${tvId}/s/${seasonNum}/e/${ep.episode_number}" 
+                           target="_blank" 
+                           style="color:white;text-decoration:none;">
+                          Épisode ${ep.episode_number}: ${ep.name}
+                        </a>
+                      </h4>
+                      <p style="margin:0;font-size:0.9rem;color:#aaa;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">
+                        ${ep.overview || 'Aucun résumé disponible.'}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+            <span class="close-btn" style="position:absolute;top:10px;right:20px;font-size:28px;cursor:pointer;color:white;">&times;</span>
+          </div>
+        `;
+        
+        document.body.appendChild(epOverlay);
+        
+        epOverlay.querySelector('.close-btn').addEventListener('click', () => {
+          document.body.removeChild(epOverlay);
+        });
+        
+        epOverlay.addEventListener('click', e => {
+          if (e.target === epOverlay) {
+            document.body.removeChild(epOverlay);
+          }
+        });
+      });
+    });
+    
+    overlay.querySelector('.close-btn').addEventListener('click', () => {
+      document.body.removeChild(overlay);
+    });
+    
+    overlay.addEventListener('click', e => {
+      if (e.target === overlay) {
+        document.body.removeChild(overlay);
+      }
+    });
+  }
+}
+
+async function openSeasonEpisodes(tvId, seasonNum) {
+  const apiKey = '9bb76e7829aacc0197000636ecf535b1';
+  const res = await fetch(`https://api.themoviedb.org/3/tv/${tvId}/season/${seasonNum}?api_key=${apiKey}&language=fr-FR`);
+  const season = await res.json();
+
+  const overlay = document.createElement('div');
+  overlay.className = 'tv-overlay';
+  overlay.innerHTML = `
+    <div class="tv-popup" style="background:#141414;padding:20px;border-radius:16px;position:relative;max-width:600px;">
+      <h2>${season.name || `Saison ${seasonNum}`}</h2>
+      <div style="max-height:400px;overflow-y:auto;margin-top:15px;">
+        ${season.episodes.map(ep => `
+          <div style="padding:10px;border-bottom:1px solid #333;">
+            <a href="https://movix.site/watch/tv/${tvId}/s/${seasonNum}/e/${ep.episode_number}" 
+               target="_blank" 
+               style="color:white;text-decoration:none;">
+              Épisode ${ep.episode_number}: ${ep.name || 'Sans titre'}
+            </a>
+          </div>
+        `).join('')}
+      </div>
+      <span class="close-btn" style="position:absolute;top:10px;right:20px;font-size:28px;cursor:pointer;color:white;">&times;</span>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  overlay.querySelector('.close-btn').addEventListener('click', () => document.body.removeChild(overlay));
+  overlay.addEventListener('click', e => { if (e.target === overlay) document.body.removeChild(overlay); });
+}
 </script>
 
 </body>
@@ -3207,6 +4313,39 @@ function sendBugReport() {
     showPopupMessage("error", "Impossible d'envoyer le message.");
   });
 }
+
+// Smooth scroll sur les liens de navigation
+const navLinks = document.querySelectorAll('.nav-links a[href^="#"]');
+navLinks.forEach(link => {
+  link.addEventListener('click', e => {
+    e.preventDefault();
+    const target = document.querySelector(link.getAttribute('href'));
+    if (target) {
+      target.scrollIntoView({ behavior: 'smooth' });
+    }
+  });
+});
+
+// Ajout de classes pour animation de fondu
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      entry.target.classList.add('fade-section-in');
+      entry.target.classList.remove('fade-section-out');
+    } else {
+      entry.target.classList.remove('fade-section-in');
+      entry.target.classList.add('fade-section-out');
+    }
+  });
+}, {
+  threshold: 0.1
+});
+
+document.querySelectorAll('.section').forEach(section => {
+  section.classList.add('fade-section');
+  observer.observe(section);
+});
+
 </script>
 
 </html>
