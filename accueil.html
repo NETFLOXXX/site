@@ -1,6 +1,15 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
+
+<!-- Google Tag Manager -->
+<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+})(window,document,'script','dataLayer','GTM-53SV2S62');</script>
+<!-- End Google Tag Manager -->
+
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="https://i.ibb.co/VYfvTC6F/untilted-1752571740-trimmy.png" type="image/png">
@@ -1102,6 +1111,12 @@
 </style>
 </head>
 <body>
+
+<!-- Google Tag Manager (noscript) -->
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-53SV2S62"
+height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+<!-- End Google Tag Manager (noscript) -->
+
     <!-- Video Intro -->
 	<div class="intro-container" id="introContainer">
 		<video class="intro-video" id="introVideo" autoplay muted>
@@ -4030,15 +4045,20 @@ const [show, videos, season1Data, season1Videos] = await Promise.all([
     const totalEpisodes = show.seasons.filter(s => s.season_number > 0).reduce((total, season) => total + season.episode_count, 0);
     const totalSeasons = show.number_of_seasons;
 
+    // Affiche de référence pour les saisons sans affiche
+    const season1Poster = season1Data.poster_path;
+
     const overlay = document.createElement('div');
     overlay.className = 'tv-overlay';
     overlay.innerHTML = `
-      <div class="tv-popup" style="background-image:url('${backdrop}');background-size:cover;background-position:center;border-radius:16px;position:relative;max-height:90vh;max-width:90vw;width:90vw;overflow-y:auto;">
+      <div class="tv-popup" style="background-image:url('${backdrop}');background-size:cover;background-position:center;border-radius:16px;position:fixed;max-height:90vh;max-width:90vw;width:90vw;overflow-y:auto;">
         <div style="background:rgba(0,0,0,0.85);padding:30px;border-radius:16px;min-height:100%;height:100%;">
           <div style="display:flex;gap:30px;flex-wrap:wrap;margin-bottom:20px;">
-            <div style="flex:0 0 250px;">
-              <img src="https://image.tmdb.org/t/p/w500${show.poster_path}" style="width:100%;border-radius:10px;box-shadow:0 5px 15px rgba(0,0,0,0.5);"/>
-            </div>
+            ${show.poster_path ? `
+              <div style="flex:0 0 250px;">
+                <img src="https://image.tmdb.org/t/p/w500${show.poster_path}" style="width:100%;border-radius:10px;box-shadow:0 5px 15px rgba(0,0,0,0.5);"/>
+              </div>
+            ` : ''}
             <div style="flex:1;min-width:300px;">
               <h2 style="font-family:'Bebas Neue', sans-serif;font-size:2.5rem;color:#e50914;margin-bottom:10px;">${show.name}</h2>
               <div style="display:flex;gap:15px;margin-bottom:15px;flex-wrap:wrap;">
@@ -4075,18 +4095,52 @@ ${season1Trailer ? `
                   Saisons
                 </h3>
                 <div style="display:flex;gap:15px;flex-wrap:wrap;padding:10px 0;">
-                  ${show.seasons.filter(s => s.season_number > 0).map(season => `
-                    <div class="season-thumb" 
-                         data-season="${season.season_number}" 
-                         data-id="${show.id}"
-                         style="flex:0 0 150px;cursor:pointer;position:relative;">
-                      <img src="${season.poster_path ? `https://image.tmdb.org/t/p/w300${season.poster_path}` : 'https://via.placeholder.com/150x225?text=S' + season.season_number}" 
-                           style="width:100%;height:225px;object-fit:cover;border-radius:6px;box-shadow:0 3px 8px rgba(0,0,0,0.4);"/>
-                      <div style="position:absolute;bottom:0;left:0;right:0;background:linear-gradient(transparent 30%, rgba(0,0,0,0.3) 60%, rgba(0,0,0,0.9) 100%);padding:15px 8px 8px 8px;text-align:center;border-radius:0 0 6px 6px;">
-                        <span style="font-weight:bold;color:#fff;font-size:12px;text-shadow:2px 2px 4px rgba(0,0,0,0.8);">Saison ${season.season_number}</span>
-                      </div>
-                    </div>
-                  `).join('')}
+                  ${show.seasons.filter(s => s.season_number > 0).map(season => {
+                    // Logique pour gérer les affiches manquantes
+                    let seasonContent = '';
+                    
+                    if (season.poster_path) {
+                      // La saison a sa propre affiche
+                      seasonContent = `
+                        <div class="season-thumb" 
+                             data-season="${season.season_number}" 
+                             data-id="${show.id}"
+                             style="flex:0 0 150px;cursor:pointer;position:relative;">
+                          <img src="https://image.tmdb.org/t/p/w300${season.poster_path}" 
+                               style="width:100%;height:225px;object-fit:cover;border-radius:6px;box-shadow:0 3px 8px rgba(0,0,0,0.4);"/>
+                          <div style="position:absolute;bottom:0;left:0;right:0;background:linear-gradient(transparent 30%, rgba(0,0,0,0.3) 60%, rgba(0,0,0,0.9) 100%);padding:15px 8px 8px 8px;text-align:center;border-radius:0 0 6px 6px;">
+                            <span style="font-weight:bold;color:#fff;font-size:12px;text-shadow:2px 2px 4px rgba(0,0,0,0.8);">Saison ${season.season_number}</span>
+                          </div>
+                        </div>
+                      `;
+                    } else if (season1Poster) {
+                      // Utiliser l'affiche de la saison 1
+                      seasonContent = `
+                        <div class="season-thumb" 
+                             data-season="${season.season_number}" 
+                             data-id="${show.id}"
+                             style="flex:0 0 150px;cursor:pointer;position:relative;">
+                          <img src="https://image.tmdb.org/t/p/w300${season1Poster}" 
+                               style="width:100%;height:225px;object-fit:cover;border-radius:6px;box-shadow:0 3px 8px rgba(0,0,0,0.4);"/>
+                          <div style="position:absolute;bottom:0;left:0;right:0;background:linear-gradient(transparent 30%, rgba(0,0,0,0.3) 60%, rgba(0,0,0,0.9) 100%);padding:15px 8px 8px 8px;text-align:center;border-radius:0 0 6px 6px;">
+                            <span style="font-weight:bold;color:#fff;font-size:12px;text-shadow:2px 2px 4px rgba(0,0,0,0.8);">Saison ${season.season_number}</span>
+                          </div>
+                        </div>
+                      `;
+                    } else {
+                      // Pas d'affiche disponible, juste le texte
+                      seasonContent = `
+                        <div class="season-thumb" 
+                             data-season="${season.season_number}" 
+                             data-id="${show.id}"
+                             style="flex:0 0 150px;cursor:pointer;background:#333;border-radius:6px;padding:20px;display:flex;align-items:center;justify-content:center;min-height:225px;">
+                          <span style="font-weight:bold;color:#fff;font-size:16px;text-align:center;">Saison ${season.season_number}</span>
+                        </div>
+                      `;
+                    }
+                    
+                    return seasonContent;
+                  }).join('')}
                 </div>
               </div>
               
@@ -4150,25 +4204,50 @@ epOverlay.innerHTML = `
     `}
     
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;width:100%;">
-      ${seasonData.episodes.map((ep, index) => `
-        <div class="episode-card" 
-             style="background:#222;border-radius:8px;overflow:hidden;cursor:pointer;transition:transform 0.3s ease;grid-column:${index % 2 === 0 ? '1' : '2'};" 
-             onclick="window.open('https://movix.site/watch/tv/${tvId}/s/${seasonNum}/e/${ep.episode_number}', '_blank')"
-             onmouseover="this.style.transform='scale(1.05)'"
-             onmouseout="this.style.transform='scale(1)'">
-          <div style="position:relative;aspect-ratio:16/9;">
-            <img src="${ep.still_path ? `https://image.tmdb.org/t/p/w500${ep.still_path}` : 
-                 (seasonData.poster_path ? `https://image.tmdb.org/t/p/w500${seasonData.poster_path}` : 
-                 'https://via.placeholder.com/500x281?text=No+Image')}" 
-                 style="width:100%;height:100%;object-fit:cover;"/>
-          </div>
-          <div style="padding:8px;">
-            <h4 style="margin:0;font-size:0.85rem;color:white;line-height:1.2;">
-              Épisode ${ep.episode_number}: ${ep.name}
-            </h4>
-          </div>
-        </div>
-      `).join('')}
+      ${seasonData.episodes.map((ep, index) => {
+        // Logique pour gérer les images d'épisodes manquantes
+        let episodeContent = '';
+        
+        if (ep.still_path || seasonData.poster_path) {
+          // L'épisode a une image ou on utilise l'affiche de la saison
+          const imageUrl = ep.still_path ? 
+            `https://image.tmdb.org/t/p/w500${ep.still_path}` : 
+            `https://image.tmdb.org/t/p/w500${seasonData.poster_path}`;
+          
+          episodeContent = `
+            <div class="episode-card" 
+                 style="background:#222;border-radius:8px;overflow:hidden;cursor:pointer;transition:transform 0.3s ease;grid-column:${index % 2 === 0 ? '1' : '2'};" 
+                 onclick="window.open('https://movix.site/watch/tv/${tvId}/s/${seasonNum}/e/${ep.episode_number}', '_blank')"
+                 onmouseover="this.style.transform='scale(1.05)'"
+                 onmouseout="this.style.transform='scale(1)'">
+              <div style="position:relative;aspect-ratio:16/9;">
+                <img src="${imageUrl}" 
+                     style="width:100%;height:100%;object-fit:cover;"/>
+              </div>
+              <div style="padding:8px;">
+                <h4 style="margin:0;font-size:0.85rem;color:white;line-height:1.2;">
+                  Épisode ${ep.episode_number}: ${ep.name}
+                </h4>
+              </div>
+            </div>
+          `;
+        } else {
+          // Pas d'image disponible, juste le titre et le numéro
+          episodeContent = `
+            <div class="episode-card" 
+                 style="background:#222;border-radius:8px;padding:15px;cursor:pointer;transition:transform 0.3s ease;grid-column:${index % 2 === 0 ? '1' : '2'};" 
+                 onclick="window.open('https://movix.site/watch/tv/${tvId}/s/${seasonNum}/e/${ep.episode_number}', '_blank')"
+                 onmouseover="this.style.transform='scale(1.05)'"
+                 onmouseout="this.style.transform='scale(1)'">
+              <h4 style="margin:0;font-size:0.9rem;color:white;line-height:1.3;">
+                Épisode ${ep.episode_number}: ${ep.name}
+              </h4>
+            </div>
+          `;
+        }
+        
+        return episodeContent;
+      }).join('')}
     </div>
   </div>
 `;
