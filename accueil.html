@@ -1116,7 +1116,7 @@
     <!-- Header -->
     <header class="header" id="header">
         <nav class="nav">
-            <a href="https://netfloxxx.github.io/site/accueil.html" class="logo">NETFLOX</a>
+            <a href="#accueil" class="logo">NETFLOX</a>
             <ul class="nav-links">
                 <li><a href="#accueil">A la une</a></li>
 				<li><a href="#historique">Historique</a></li>
@@ -2676,7 +2676,7 @@ async function openLink(item) {
   <div class="tv-popup" style="
     position: relative;
     border-radius: 16px;
-    overflow: hidden;
+    overflow: auto;
     background-image: url('https://image.tmdb.org/t/p/w1280${item.backdrop_path}');
     background-size: cover;
     background-position: center;
@@ -3161,7 +3161,7 @@ async function showTvPopup(item) {
   const overlay = document.createElement('div');
   overlay.className = 'tv-overlay';
   overlay.innerHTML = `
-    <div class="tv-popup" style="background-image:url('${backdrop}');background-size:cover;background-position:center;border-radius:16px;position:relative;overflow:hidden;">
+    <div class="tv-popup" style="background-image:url('${backdrop}');background-size:cover;background-position:center;border-radius:16px;position:relative;overflow:auto;">
       <div style="background:rgba(0,0,0,0.85);padding:30px;border-radius:16px;">
         <div style="display:flex;gap:30px;flex-wrap:wrap;margin-bottom:20px;">
           <div style="flex:0 0 250px;">
@@ -3231,46 +3231,65 @@ async function showTvPopup(item) {
       
       const seasonTrailer = (seasonVideos.results || []).find(v => v.type === 'Trailer' && v.site === 'YouTube');
       
-      // Créer le popup des épisodes
-      const epOverlay = document.createElement('div');
-      epOverlay.className = 'episode-overlay';
-      epOverlay.innerHTML = `
-        <div class="episode-popup" style="background:#141414;border-radius:12px;padding:25px;max-width:800px;width:90%;max-height:90vh;overflow-y:auto;position:relative;">
-          <h3 style="font-family:'Bebas Neue', sans-serif;font-size:2rem;color:#e50914;margin-bottom:20px;">
-            ${seasonData.name || `Saison ${seasonNum}`}
-          </h3>
-          
-          ${seasonTrailer ? `
-            <div style="margin-bottom:20px;">
-              <a href="https://www.youtube.com/watch?v=${seasonTrailer.key}" 
-                 target="_blank" 
-                 style="background:#e50914;color:white;padding:8px 15px;border-radius:4px;text-decoration:none;display:inline-block;">
-                🎬 Bande-annonce Saison ${seasonNum}
-              </a>
-            </div>
-          ` : ''}
-          
-<div style="display:grid;grid-template-columns:repeat(auto-fill, minmax(300px, 1fr));gap:15px;">
-  ${seasonData.episodes.map(ep => `
-    <div style="background:#222;border-radius:8px;overflow:hidden;cursor:pointer;" 
-         onclick="window.open('https://movix.site/watch/tv/${tvId}/s/${seasonNum}/e/${ep.episode_number}', '_blank')">
-      <div style="position:relative;height:169px;">
-        <img src="${ep.still_path ? `https://image.tmdb.org/t/p/w300${ep.still_path}` : 
-             (seasonData.poster_path ? `https://image.tmdb.org/t/p/w300${seasonData.poster_path}` : 
-             'https://via.placeholder.com/300x169?text=No+Image')}" 
-             style="width:100%;height:100%;object-fit:cover;"/>
+// Créer le popup des épisodes
+const epOverlay = document.createElement('div');
+epOverlay.className = 'episode-overlay';
+epOverlay.onclick = (e) => {
+  if (e.target === epOverlay) {
+    epOverlay.remove();
+  }
+};
+epOverlay.innerHTML = `
+  <div class="episode-popup" style="background:#141414;border-radius:12px;padding:25px;max-width:900px;width:90%;max-height:90vh;overflow-y:auto;position:relative;">
+    <button onclick="this.closest('.episode-overlay').remove()" 
+            style="position:absolute;top:15px;right:15px;background:none;border:none;color:white;font-size:1.5rem;font-weight:bold;cursor:pointer;z-index:10;">
+      ✕
+    </button>
+    <h3 style="font-family:'Bebas Neue', sans-serif;font-size:3rem;color:#e50914;margin-bottom:15px;">
+      ${seasonData.name || `Saison ${seasonNum}`}
+    </h3>
+    
+    ${seasonTrailer ? `
+      <div style="margin-bottom:20px;">
+        <a href="https://www.youtube.com/watch?v=${seasonTrailer.key}" 
+           target="_blank" 
+           style="background:#6d6d6eb3;color:white;padding:8px 15px;border-radius:4px;text-decoration:none;display:inline-block;">
+          🎬 Bande-annonce Saison ${seasonNum}
+        </a>
       </div>
-      <div style="padding:15px;">
-        <h4 style="margin:0;font-size:1.1rem;color:white;">
-          Épisode ${ep.episode_number}: ${ep.name}
-        </h4>
+    ` : `
+      <div style="margin-bottom:20px;">
+        <a href="https://www.youtube.com/results?search_query=${encodeURIComponent(`bande annonce ${show.name} saison ${seasonNum}`)}" 
+           target="_blank" 
+           style="background:#6d6d6eb3;color:white;padding:8px 15px;border-radius:4px;text-decoration:none;display:inline-block;">
+          🎬 Bande-annonce Saison ${seasonNum}
+        </a>
       </div>
-    </div>
-  `).join('')}
-</div>
-          <span class="close-btn" style="position:absolute;top:10px;right:20px;font-size:28px;cursor:pointer;color:white;">&times;</span>
+    `}
+    
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;width:100%;">
+      ${seasonData.episodes.map((ep, index) => `
+        <div class="episode-card" 
+             style="background:#222;border-radius:8px;overflow:hidden;cursor:pointer;transition:transform 0.3s ease;grid-column:${index % 2 === 0 ? '1' : '2'};" 
+             onclick="window.open('https://movix.site/watch/tv/${tvId}/s/${seasonNum}/e/${ep.episode_number}', '_blank')"
+             onmouseover="this.style.transform='scale(1.05)'"
+             onmouseout="this.style.transform='scale(1)'">
+          <div style="position:relative;aspect-ratio:16/9;">
+            <img src="${ep.still_path ? `https://image.tmdb.org/t/p/w500${ep.still_path}` : 
+                 (seasonData.poster_path ? `https://image.tmdb.org/t/p/w500${seasonData.poster_path}` : 
+                 'https://via.placeholder.com/500x281?text=No+Image')}" 
+                 style="width:100%;height:100%;object-fit:cover;"/>
+          </div>
+          <div style="padding:8px;">
+            <h4 style="margin:0;font-size:0.85rem;color:white;line-height:1.2;">
+              Épisode ${ep.episode_number}: ${ep.name}
+            </h4>
+          </div>
         </div>
-      `;
+      `).join('')}
+    </div>
+  </div>
+`;
       
       document.body.appendChild(epOverlay);
       
@@ -3971,7 +3990,7 @@ async function openLink(item) {
     const overlay = document.createElement('div');
     overlay.className = 'tv-overlay';
     overlay.innerHTML = `
-      <div class="tv-popup" style="background-image:url('${backdrop}');background-size:cover;background-position:center;border-radius:16px;position:relative;overflow:hidden;">
+      <div class="tv-popup" style="background-image:url('${backdrop}');background-size:cover;background-position:center;border-radius:16px;position:relative;overflow:auto;">
         <div style="background:rgba(0,0,0,0.75);padding:20px;display:flex;gap:20px;flex-wrap:wrap;border-radius:16px;">
           <div class="popup-left">
             <img src="https://image.tmdb.org/t/p/w342${details.poster_path}" class="main-poster"/>
@@ -3994,20 +4013,28 @@ async function openLink(item) {
 
   } else {
     // NOUVEAU CODE POUR LES SERIES
-    const [show, videos] = await Promise.all([
+const [show, videos, season1Data, season1Videos] = await Promise.all([
       fetch(`https://api.themoviedb.org/3/tv/${item.id}?api_key=${apiKey}&language=fr-FR`).then(res => res.json()),
-      fetch(`https://api.themoviedb.org/3/tv/${item.id}/videos?api_key=${apiKey}&language=fr-FR`).then(res => res.json())
+      fetch(`https://api.themoviedb.org/3/tv/${item.id}/videos?api_key=${apiKey}&language=fr-FR`).then(res => res.json()),
+      fetch(`https://api.themoviedb.org/3/tv/${item.id}/season/1?api_key=${apiKey}&language=fr-FR`).then(res => res.json()),
+      fetch(`https://api.themoviedb.org/3/tv/${item.id}/season/1/videos?api_key=${apiKey}&language=fr-FR`).then(res => res.json())
     ]);
 
     const genres = (show.genres || []).map(g => g.name).join(', ');
     const backdrop = show.backdrop_path ? `https://image.tmdb.org/t/p/w1280${show.backdrop_path}` : '';
-    const trailer = (videos.results || []).find(v => v.type === 'Trailer' && v.site === 'YouTube');
+    
+    // Utiliser uniquement la bande-annonce de la saison 1
+    const season1Trailer = (season1Videos.results || []).find(v => v.type === 'Trailer' && v.site === 'YouTube');
+
+    // Calculer le nombre total d'épisodes
+    const totalEpisodes = show.seasons.filter(s => s.season_number > 0).reduce((total, season) => total + season.episode_count, 0);
+    const totalSeasons = show.number_of_seasons;
 
     const overlay = document.createElement('div');
     overlay.className = 'tv-overlay';
     overlay.innerHTML = `
-      <div class="tv-popup" style="background-image:url('${backdrop}');background-size:cover;background-position:center;border-radius:16px;position:relative;overflow:hidden;">
-        <div style="background:rgba(0,0,0,0.85);padding:30px;border-radius:16px;">
+      <div class="tv-popup" style="background-image:url('${backdrop}');background-size:cover;background-position:center;border-radius:16px;position:relative;max-height:90vh;max-width:90vw;width:90vw;overflow-y:auto;">
+        <div style="background:rgba(0,0,0,0.85);padding:30px;border-radius:16px;min-height:100%;height:100%;">
           <div style="display:flex;gap:30px;flex-wrap:wrap;margin-bottom:20px;">
             <div style="flex:0 0 250px;">
               <img src="https://image.tmdb.org/t/p/w500${show.poster_path}" style="width:100%;border-radius:10px;box-shadow:0 5px 15px rgba(0,0,0,0.5);"/>
@@ -4018,42 +4045,51 @@ async function openLink(item) {
                 <span style="background:#e50914;padding:3px 10px;border-radius:4px;font-size:0.9rem;">Série</span>
                 <span style="color:#ccc;font-size:0.9rem;">${genres}</span>
               </div>
+              
+              <!-- Informations saisons/épisodes -->
+              <div style="margin-bottom:15px;">
+                <span style="font-family:'Roboto', Arial, sans-serif;color:#fff;font-size:0.95rem;font-weight:500;">
+                  ${totalSeasons} saison${totalSeasons > 1 ? 's' : ''} • ${totalEpisodes} épisode${totalEpisodes > 1 ? 's' : ''}
+                </span>
+              </div>
+              
               <p style="line-height:1.6;margin-bottom:20px;">${show.overview || 'Aucun résumé disponible.'}</p>
               
-${trailer ? `
-  <a href="https://www.youtube.com/watch?v=${trailer.key}" 
+${season1Trailer ? `
+  <a href="https://www.youtube.com/watch?v=${season1Trailer.key}" 
      target="_blank" 
      style="background:#6d6d6eb3;color:white;padding:10px 20px;border-radius:6px;text-decoration:none;display:inline-block;margin-right:10px;">
     🎬 Bande-annonce
   </a>
 ` : `
-  <a href="https://www.youtube.com/results?search_query=${encodeURIComponent(show.name + ' bande annonce')}" 
+  <a href="https://www.youtube.com/results?search_query=${encodeURIComponent(show.name + ' saison 1 bande annonce')}" 
      target="_blank" 
      style="background:#6d6d6eb3;color:white;padding:10px 20px;border-radius:6px;text-decoration:none;display:inline-block;margin-right:10px;">
     🎬 Rechercher bande-annonce
   </a>
-`}
-              
-            </div>
-          </div>
-          
-          <div style="margin-top:30px;">
-            <h3 style="font-family:'Bebas Neue', sans-serif;font-size:1.8rem;color:#fff;margin-bottom:15px;border-bottom:2px solid #e50914;padding-bottom:5px;display:inline-block;">
-              Saisons
-            </h3>
-            <div style="display:flex;gap:15px;overflow-x:auto;padding:15px 5px;scrollbar-width:thin;">
-              ${show.seasons.filter(s => s.season_number > 0).map(season => `
-                <div class="season-thumb" 
-                     data-season="${season.season_number}" 
-                     data-id="${show.id}"
-                     style="flex:0 0 150px;cursor:pointer;position:relative;">
-                  <img src="${season.poster_path ? `https://image.tmdb.org/t/p/w300${season.poster_path}` : 'https://via.placeholder.com/150x225?text=No+Image'}" 
-                       style="width:100%;border-radius:8px;box-shadow:0 4px 10px rgba(0,0,0,0.3);"/>
-                  <div style="position:absolute;bottom:0;left:0;right:0;background:linear-gradient(transparent, rgba(0,0,0,0.8));padding:10px;text-align:center;">
-                    <span style="font-weight:bold;color:#fff;">Saison ${season.season_number}</span>
-                  </div>
+`}<br> </br>
+
+              <!-- Saisons déplacées ici -->
+              <div style="margin-bottom:20px;">
+                <h3 style="font-family:'Bebas Neue', sans-serif;font-size:1.4rem;color:#fff;margin-bottom:10px;border-bottom:2px solid #e50914;padding-bottom:3px;display:inline-block;">
+                  Saisons
+                </h3>
+                <div style="display:flex;gap:15px;flex-wrap:wrap;padding:10px 0;">
+                  ${show.seasons.filter(s => s.season_number > 0).map(season => `
+                    <div class="season-thumb" 
+                         data-season="${season.season_number}" 
+                         data-id="${show.id}"
+                         style="flex:0 0 150px;cursor:pointer;position:relative;">
+                      <img src="${season.poster_path ? `https://image.tmdb.org/t/p/w300${season.poster_path}` : 'https://via.placeholder.com/150x225?text=S' + season.season_number}" 
+                           style="width:100%;height:225px;object-fit:cover;border-radius:6px;box-shadow:0 3px 8px rgba(0,0,0,0.4);"/>
+                      <div style="position:absolute;bottom:0;left:0;right:0;background:linear-gradient(transparent 30%, rgba(0,0,0,0.3) 60%, rgba(0,0,0,0.9) 100%);padding:15px 8px 8px 8px;text-align:center;border-radius:0 0 6px 6px;">
+                        <span style="font-weight:bold;color:#fff;font-size:12px;text-shadow:2px 2px 4px rgba(0,0,0,0.8);">Saison ${season.season_number}</span>
+                      </div>
+                    </div>
+                  `).join('')}
                 </div>
-              `).join('')}
+              </div>
+              
             </div>
           </div>
         </div>
@@ -4077,50 +4113,65 @@ ${trailer ? `
         
         const seasonTrailer = (seasonVideos.results || []).find(v => v.type === 'Trailer' && v.site === 'YouTube');
         
-        // Créer le popup des épisodes
-        const epOverlay = document.createElement('div');
-        epOverlay.className = 'episode-overlay';
-        epOverlay.innerHTML = `
-          <div class="episode-popup" style="background:#141414;border-radius:12px;padding:25px;max-width:800px;width:90%;max-height:90vh;overflow-y:auto;position:relative;">
-            <h3 style="font-family:'Bebas Neue', sans-serif;font-size:2rem;color:#e50914;margin-bottom:20px;">
-              ${seasonData.name || `Saison ${seasonNum}`}
-            </h3>
-            
-            ${seasonTrailer ? `
-              <div style="margin-bottom:20px;">
-                <a href="https://www.youtube.com/watch?v=${seasonTrailer.key}" 
-                   target="_blank" 
-                   style="background:#e50914;color:white;padding:8px 15px;border-radius:4px;text-decoration:none;display:inline-block;">
-                  🎬 Bande-annonce Saison ${seasonNum}
-                </a>
-              </div>
-            ` : ''}
-            
-            <div style="display:grid;grid-template-columns:repeat(auto-fill, minmax(300px, 1fr));gap:15px;">
-              ${seasonData.episodes.map(ep => `
-                <div style="background:#222;border-radius:8px;overflow:hidden;">
-                  <div style="display:flex;gap:15px;">
-                    <img src="${ep.still_path ? `https://image.tmdb.org/t/p/w300${ep.still_path}` : 'https://via.placeholder.com/150x85?text=No+Image'}" 
-                         style="width:150px;height:85px;object-fit:cover;"/>
-                    <div style="padding:10px;flex:1;">
-                      <h4 style="margin:0 0 5px 0;font-size:1.1rem;">
-                        <a href="https://movix.site/watch/tv/${tvId}/s/${seasonNum}/e/${ep.episode_number}" 
-                           target="_blank" 
-                           style="color:white;text-decoration:none;">
-                          Épisode ${ep.episode_number}: ${ep.name}
-                        </a>
-                      </h4>
-                      <p style="margin:0;font-size:0.9rem;color:#aaa;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">
-                        ${ep.overview || 'Aucun résumé disponible.'}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              `).join('')}
-            </div>
-            <span class="close-btn" style="position:absolute;top:10px;right:20px;font-size:28px;cursor:pointer;color:white;">&times;</span>
+// Créer le popup des épisodes
+const epOverlay = document.createElement('div');
+epOverlay.className = 'episode-overlay';
+epOverlay.onclick = (e) => {
+  if (e.target === epOverlay) {
+    epOverlay.remove();
+  }
+};
+epOverlay.innerHTML = `
+  <div class="episode-popup" style="background:#141414;border-radius:12px;padding:25px;max-width:900px;width:90%;max-height:90vh;overflow-y:auto;position:relative;">
+    <button onclick="this.closest('.episode-overlay').remove()" 
+            style="position:absolute;top:15px;right:15px;background:none;border:none;color:white;font-size:1.5rem;font-weight:bold;cursor:pointer;z-index:10;">
+      ✕
+    </button>
+    <h3 style="font-family:'Bebas Neue', sans-serif;font-size:3rem;color:#e50914;margin-bottom:15px;">
+      ${seasonData.name || `Saison ${seasonNum}`}
+    </h3>
+    
+    ${seasonTrailer ? `
+      <div style="margin-bottom:20px;">
+        <a href="https://www.youtube.com/watch?v=${seasonTrailer.key}" 
+           target="_blank" 
+           style="background:#6d6d6eb3;color:white;padding:8px 15px;border-radius:4px;text-decoration:none;display:inline-block;">
+          🎬 Bande-annonce Saison ${seasonNum}
+        </a>
+      </div>
+    ` : `
+      <div style="margin-bottom:20px;">
+        <a href="https://www.youtube.com/results?search_query=${encodeURIComponent(`bande annonce ${show.name} saison ${seasonNum}`)}" 
+           target="_blank" 
+           style="background:#6d6d6eb3;color:white;padding:8px 15px;border-radius:4px;text-decoration:none;display:inline-block;">
+          🎬 Bande-annonce Saison ${seasonNum}
+        </a>
+      </div>
+    `}
+    
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;width:100%;">
+      ${seasonData.episodes.map((ep, index) => `
+        <div class="episode-card" 
+             style="background:#222;border-radius:8px;overflow:hidden;cursor:pointer;transition:transform 0.3s ease;grid-column:${index % 2 === 0 ? '1' : '2'};" 
+             onclick="window.open('https://movix.site/watch/tv/${tvId}/s/${seasonNum}/e/${ep.episode_number}', '_blank')"
+             onmouseover="this.style.transform='scale(1.05)'"
+             onmouseout="this.style.transform='scale(1)'">
+          <div style="position:relative;aspect-ratio:16/9;">
+            <img src="${ep.still_path ? `https://image.tmdb.org/t/p/w500${ep.still_path}` : 
+                 (seasonData.poster_path ? `https://image.tmdb.org/t/p/w500${seasonData.poster_path}` : 
+                 'https://via.placeholder.com/500x281?text=No+Image')}" 
+                 style="width:100%;height:100%;object-fit:cover;"/>
           </div>
-        `;
+          <div style="padding:8px;">
+            <h4 style="margin:0;font-size:0.85rem;color:white;line-height:1.2;">
+              Épisode ${ep.episode_number}: ${ep.name}
+            </h4>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+  </div>
+`;
         
         document.body.appendChild(epOverlay);
         
