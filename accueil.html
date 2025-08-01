@@ -1,15 +1,6 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-
-<!-- Google Tag Manager -->
-<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
-new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
-'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-})(window,document,'script','dataLayer','GTM-53SV2S62');</script>
-<!-- End Google Tag Manager -->
-
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="https://i.ibb.co/VYfvTC6F/untilted-1752571740-trimmy.png" type="image/png">
@@ -1111,12 +1102,6 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 </style>
 </head>
 <body>
-
-<!-- Google Tag Manager (noscript) -->
-<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-53SV2S62"
-height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
-<!-- End Google Tag Manager (noscript) -->
-
     <!-- Video Intro -->
 	<div class="intro-container" id="introContainer">
 		<video class="intro-video" id="introVideo" autoplay muted>
@@ -2552,109 +2537,875 @@ function slugify(str) {
               .replace(/(^-|-$)/g, '');
 }
 
+let currentSearchParams = { contentType: 'both', selectedGenres: [] };
+
 async function goToRandom() {
+    // Étape 1: Choix du type de contenu
+    showContentTypeSelection();
+}
+
+function showContentTypeSelection() {
+    const overlay = document.createElement('div');
+    overlay.className = 'tv-overlay';
+    overlay.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.8);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+        backdrop-filter: blur(5px);
+    `;
+    
+    overlay.innerHTML = `
+        <div style="
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 500px;
+            width: 90%;
+            text-align: center;
+            position: relative;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            border: 1px solid #333;
+        ">
+            <div style="
+                background: linear-gradient(45deg, #e50914, #ff1744);
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+                background-clip: text;
+                font-family: 'Bebas Neue', sans-serif;
+                font-size: 2.5rem;
+                margin-bottom: 30px;
+                text-align: center;
+            ">Que voulez-vous regarder ?</div>
+            
+            <div style="display: flex; flex-direction: column; gap: 20px;">
+                <button onclick="showGenreSelection('movie')" 
+                        style="
+                            background: linear-gradient(135deg, #333 0%, #555 100%);
+                            color: white;
+                            padding: 18px 30px;
+                            border: none;
+                            border-radius: 12px;
+                            font-size: 1.2rem;
+                            cursor: pointer;
+                            transition: all 0.3s ease;
+                            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+                            border: 1px solid #444;
+                        "
+                        onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 25px rgba(0, 0, 0, 0.4)'"
+                        onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 15px rgba(0, 0, 0, 0.3)'">
+                    🎬 Films uniquement
+                </button>
+                
+                <button onclick="showGenreSelection('tv')" 
+                        style="
+                            background: linear-gradient(135deg, #333 0%, #555 100%);
+                            color: white;
+                            padding: 18px 30px;
+                            border: none;
+                            border-radius: 12px;
+                            font-size: 1.2rem;
+                            cursor: pointer;
+                            transition: all 0.3s ease;
+                            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+                            border: 1px solid #444;
+                        "
+                        onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 25px rgba(0, 0, 0, 0.4)'"
+                        onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 15px rgba(0, 0, 0, 0.3)'">
+                    📺 Séries uniquement
+                </button>
+                
+                <button onclick="showGenreSelection('both')" 
+                        style="
+                            background: linear-gradient(135deg, #e50914 0%, #ff1744 100%);
+                            color: white;
+                            padding: 18px 30px;
+                            border: none;
+                            border-radius: 12px;
+                            font-size: 1.2rem;
+                            cursor: pointer;
+                            transition: all 0.3s ease;
+                            box-shadow: 0 4px 15px rgba(229, 9, 20, 0.4);
+                            border: 1px solid #ff1744;
+                        "
+                        onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 25px rgba(229, 9, 20, 0.6)'"
+                        onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 15px rgba(229, 9, 20, 0.4)'">
+                    🎲 Peu importe - Surprenez-moi !
+                </button>
+            </div>
+            
+            <button onclick="this.closest('.tv-overlay').remove()" 
+                    style="
+                        position: absolute;
+                        top: 15px;
+                        right: 15px;
+                        background: none;
+                        border: none;
+                        color: #888;
+                        font-size: 28px;
+                        cursor: pointer;
+                        transition: color 0.3s ease;
+                        width: 40px;
+                        height: 40px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        border-radius: 50%;
+                    "
+                    onmouseover="this.style.color='white'; this.style.background='rgba(255, 255, 255, 0.1)'"
+                    onmouseout="this.style.color='#888'; this.style.background='none'">
+                ×
+            </button>
+        </div>
+    `;
+    
+    document.body.appendChild(overlay);
+    overlay.addEventListener('click', e => { if (e.target === overlay) document.body.removeChild(overlay); });
+    
+    // Ajouter les fonctions au contexte global temporairement
+    window.showGenreSelection = (type) => {
+        document.body.removeChild(overlay);
+        if (type === 'both') {
+            // Si "peu importe", lancer directement sans sélection de genres
+            currentSearchParams = { contentType: type, selectedGenres: [] };
+            performRandomSearch(type, []);
+        } else {
+            showGenreSelectionPopup(type);
+        }
+    };
+}
+
+function showGenreSelectionPopup(contentType) {
+    const movieGenres = [
+        { id: 28, name: 'Action' },
+        { id: 12, name: 'Aventure' },
+        { id: 16, name: 'Animation' },
+        { id: 35, name: 'Comédie' },
+        { id: 80, name: 'Crime' },
+        { id: 99, name: 'Documentaire' },
+        { id: 18, name: 'Drame' },
+        { id: 14, name: 'Fantastique' },
+        { id: 27, name: 'Horreur' },
+        { id: 10402, name: 'Musique' },
+        { id: 9648, name: 'Mystère' },
+        { id: 10749, name: 'Romance' },
+        { id: 878, name: 'Science-Fiction' },
+        { id: 53, name: 'Thriller' },
+        { id: 10752, name: 'Guerre' },
+        { id: 37, name: 'Western' }
+    ];
+    
+    const tvGenres = [
+        { id: 10759, name: 'Action & Aventure' },
+        { id: 16, name: 'Animation' },
+        { id: 35, name: 'Comédie' },
+        { id: 80, name: 'Crime' },
+        { id: 99, name: 'Documentaire' },
+        { id: 18, name: 'Drame' },
+        { id: 10751, name: 'Familial' },
+        { id: 10762, name: 'Enfants' },
+        { id: 9648, name: 'Mystère' },
+        { id: 10763, name: 'Actualités' },
+        { id: 10764, name: 'Téléréalité' },
+        { id: 10765, name: 'Science-Fiction & Fantastique' },
+        { id: 10766, name: 'Feuilleton' },
+        { id: 10767, name: 'Talk' },
+        { id: 10768, name: 'Guerre & Politique' },
+        { id: 37, name: 'Western' }
+    ];
+    
+    let genres = contentType === 'movie' ? movieGenres : contentType === 'tv' ? tvGenres : [...movieGenres, ...tvGenres];
+    
+    // Supprimer les doublons si "both"
+    if (contentType === 'both') {
+        const uniqueGenres = genres.filter((genre, index, self) => 
+            index === self.findIndex(g => g.name === genre.name)
+        );
+        genres = uniqueGenres;
+    }
+    
+    const overlay = document.createElement('div');
+    overlay.className = 'tv-overlay';
+    overlay.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.8);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+        backdrop-filter: blur(5px);
+        padding: 20px;
+    `;
+    
+    overlay.innerHTML = `
+        <div style="
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 700px;
+            width: 100%;
+            max-height: 85vh;
+            overflow-y: auto;
+            position: relative;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            border: 1px solid #333;
+        ">
+            <div style="
+                background: linear-gradient(45deg, #e50914, #ff1744);
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+                background-clip: text;
+                font-family: 'Bebas Neue', sans-serif;
+                font-size: 2.5rem;
+                margin-bottom: 30px;
+                text-align: center;
+            ">Choisissez vos genres préférés</div>
+            
+            <div style="margin-bottom: 30px; text-align: center;">
+                <button id="randomAll" 
+                        style="
+                            background: linear-gradient(135deg, #e50914 0%, #ff1744 100%);
+                            color: white;
+                            padding: 12px 25px;
+                            border: none;
+                            border-radius: 8px;
+                            font-size: 1rem;
+                            cursor: pointer;
+                            transition: all 0.3s ease;
+                            box-shadow: 0 4px 20px rgba(229, 9, 20, 0.4);
+                            border: 1px solid #ff1744;
+                            font-weight: 600;
+                        "
+                        onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 30px rgba(229, 9, 20, 0.6)'"
+                        onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 20px rgba(229, 9, 20, 0.4)'">
+                    🎲 Peu importe - Surprenez-moi !
+                </button>
+            </div>
+            
+            <div style="
+                display: grid;
+                grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+                gap: 15px;
+                margin-bottom: 40px;
+            ">
+                ${genres.map(genre => `
+                    <label class="custom-checkbox" style="
+                        display: flex;
+                        align-items: center;
+                        background: linear-gradient(135deg, #222 0%, #333 100%);
+                        padding: 18px;
+                        border-radius: 12px;
+                        cursor: pointer;
+                        transition: all 0.3s ease;
+                        border: 2px solid #444;
+                        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+                        position: relative;
+                        overflow: hidden;
+                    "
+                           onmouseover="this.style.transform='translateY(-3px)'; this.style.boxShadow='0 8px 25px rgba(0, 0, 0, 0.4)'; this.style.borderColor='#e50914'"
+                           onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 15px rgba(0, 0, 0, 0.3)'; this.style.borderColor='#444'">
+                        
+                        <div class="checkbox-wrapper" style="
+                            position: relative;
+                            width: 24px;
+                            height: 24px;
+                            margin-right: 15px;
+                        ">
+                            <input type="checkbox" value="${genre.id}" style="
+                                position: absolute;
+                                opacity: 0;
+                                cursor: pointer;
+                                height: 100%;
+                                width: 100%;
+                                z-index: 2;
+                            ">
+                            <span class="checkmark" style="
+                                position: absolute;
+                                top: 0;
+                                left: 0;
+                                height: 24px;
+                                width: 24px;
+                                background: linear-gradient(135deg, #2a2a2a, #404040);
+                                border-radius: 8px;
+                                border: 2px solid #555;
+                                transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                                box-shadow: 0 2px 8px rgba(0,0,0,0.3), inset 0 1px 2px rgba(255,255,255,0.1);
+                                position: relative;
+                                overflow: hidden;
+                            ">
+                                <span class="glow-effect" style="
+                                    position: absolute;
+                                    top: -50%;
+                                    left: -50%;
+                                    width: 200%;
+                                    height: 200%;
+                                    background: linear-gradient(45deg, transparent, rgba(229, 9, 20, 0.3), transparent);
+                                    transform: rotate(45deg) translateX(-100%);
+                                    transition: transform 0.6s ease;
+                                "></span>
+                            </span>
+                        </div>
+                        
+                        <span style="color: white; font-size: 1rem; font-weight: 600; text-shadow: 1px 1px 2px rgba(0,0,0,0.5);">${genre.name}</span>
+                        
+                        <div style="
+                            position: absolute;
+                            top: 0;
+                            left: -100%;
+                            width: 100%;
+                            height: 100%;
+                            background: linear-gradient(90deg, transparent, rgba(229, 9, 20, 0.1), transparent);
+                            transition: left 0.5s ease;
+                        "></div>
+                    </label>
+                `).join('')}
+            </div>
+            
+            <div style="text-align: center;">
+                <button onclick="launchRandomWithGenres('${contentType}')" 
+                        style="
+                            background: linear-gradient(135deg, #e50914 0%, #ff1744 100%);
+                            color: white;
+                            padding: 15px 40px;
+                            border: none;
+                            border-radius: 12px;
+                            font-size: 1.2rem;
+                            cursor: pointer;
+                            transition: all 0.3s ease;
+                            box-shadow: 0 4px 20px rgba(229, 9, 20, 0.4);
+                            border: 1px solid #ff1744;
+                            font-weight: 600;
+                        "
+                        onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 30px rgba(229, 9, 20, 0.6)'"
+                        onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 20px rgba(229, 9, 20, 0.4)'">
+                    🎲 Lancer la magie !
+                </button>
+            </div>
+            
+            <button onclick="this.closest('.tv-overlay').remove()" 
+                    style="
+                        position: absolute;
+                        top: 15px;
+                        right: 15px;
+                        background: none;
+                        border: none;
+                        color: #888;
+                        font-size: 28px;
+                        cursor: pointer;
+                        transition: color 0.3s ease;
+                        width: 40px;
+                        height: 40px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        border-radius: 50%;
+                    "
+                    onmouseover="this.style.color='white'; this.style.background='rgba(255, 255, 255, 0.1)'"
+                    onmouseout="this.style.color='#888'; this.style.background='none'">
+                ×
+            </button>
+        </div>
+        
+        <style>
+            .custom-checkbox input:checked ~ .checkmark {
+                background: linear-gradient(135deg, #e50914, #ff1744, #e50914) !important;
+                border-color: #ff1744 !important;
+                box-shadow: 0 0 20px rgba(229, 9, 20, 0.6), 0 0 40px rgba(229, 9, 20, 0.3), inset 0 2px 4px rgba(0,0,0,0.2) !important;
+                transform: scale(1.1) !important;
+            }
+            
+            .custom-checkbox input:checked ~ .checkmark .glow-effect {
+                transform: rotate(45deg) translateX(100%) !important;
+            }
+            
+            .custom-checkbox:hover .checkmark {
+                border-color: #e50914 !important;
+                box-shadow: 0 0 15px rgba(229, 9, 20, 0.4), 0 2px 8px rgba(0,0,0,0.3), inset 0 1px 2px rgba(255,255,255,0.1) !important;
+                transform: scale(1.05) !important;
+            }
+            
+            .custom-checkbox:hover .checkmark .glow-effect {
+                transform: rotate(45deg) translateX(-50%) !important;
+            }
+        </style>
+    `;
+    
+    document.body.appendChild(overlay);
+    
+    // Gestion du bouton "Peu importe"
+    const randomAllBtn = overlay.querySelector('#randomAll');
+    const checkboxes = overlay.querySelectorAll('input[type="checkbox"]');
+    
+    randomAllBtn.addEventListener('click', () => {
+        // Sauvegarder les paramètres pour le bouton relancer
+        currentSearchParams = { contentType: contentType, selectedGenres: [] };
+        
+        document.body.removeChild(overlay);
+        performRandomSearch(contentType, []);
+    });
+    
+    overlay.addEventListener('click', e => { if (e.target === overlay) document.body.removeChild(overlay); });
+    
+    // Ajouter la fonction au contexte global temporairement
+    window.launchRandomWithGenres = (type) => {
+        const selectedGenres = Array.from(checkboxes)
+            .filter(cb => cb.checked)
+            .map(cb => cb.value);
+        
+        // Sauvegarder les paramètres pour le bouton relancer
+        currentSearchParams = { contentType: type, selectedGenres: selectedGenres };
+        
+        document.body.removeChild(overlay);
+        performRandomSearch(type, selectedGenres);
+    };
+}
+
+async function performRandomSearch(contentType, selectedGenres) {
     const apiKey = '9bb76e7829aacc0197000636ecf535b1';
+    
+    // Si aucun genre sélectionné, utiliser tous les genres populaires
+    let genreParam = selectedGenres.length > 0 ? `&with_genres=${selectedGenres.join(',')}` : '';
+    
+    try {
+        let pool = [];
+        
+        if (contentType === 'movie' || contentType === 'both') {
+            // Mélange de films populaires et bien notés mais moins connus
+            const moviePromises = [];
+            
+            // Films populaires (pages 1-10)
+            for (let i = 0; i < 2; i++) {
+                const randomPage = Math.floor(Math.random() * 10 + 1);
+                moviePromises.push(
+                    fetch(`https://api.themoviedb.org/3/discover/movie?api_key=${apiKey}&language=fr-FR&sort_by=popularity.desc&page=${randomPage}${genreParam}&vote_count.gte=200`)
+                        .then(res => res.json())
+                        .then(data => data.results?.map(m => ({ ...m, type: 'movie' })) || [])
+                );
+            }
+            
+        // Films bien notés mais moins populaires - Pépites cachées
+            for (let i = 0; i < 3; i++) {
+                const randomPage = Math.floor(Math.random() * 40 + 25); // Pages 25-65 pour plus de découvertes
+                moviePromises.push(
+                    fetch(`https://api.themoviedb.org/3/discover/movie?api_key=${apiKey}&language=fr-FR&sort_by=vote_average.desc&page=${randomPage}${genreParam}&vote_count.gte=30&vote_average.gte=6.8&primary_release_date.gte=2010-01-01`)
+                        .then(res => res.json())
+                        .then(data => data.results?.map(m => ({ ...m, type: 'movie' })) || [])
+                );
+            }
+            
+            // Films de réalisateurs reconnus mais moins mainstream
+            moviePromises.push(
+                fetch(`https://api.themoviedb.org/3/discover/movie?api_key=${apiKey}&language=fr-FR&sort_by=vote_average.desc&page=${Math.floor(Math.random() * 20 + 10)}${genreParam}&vote_count.gte=50&vote_average.gte=7.2&with_runtime.gte=90&with_runtime.lte=180`)
+                    .then(res => res.json())
+                    .then(data => data.results?.map(m => ({ ...m, type: 'movie' })) || [])
+            );
+            
+            const movieResults = await Promise.all(moviePromises);
+            pool.push(...movieResults.flat());
+        }
+        
+        if (contentType === 'tv' || contentType === 'both') {
+            // Même approche pour les séries
+            const tvPromises = [];
+            
+            // Séries populaires
+            for (let i = 0; i < 2; i++) {
+                const randomPage = Math.floor(Math.random() * 10 + 1);
+                tvPromises.push(
+                    fetch(`https://api.themoviedb.org/3/discover/tv?api_key=${apiKey}&language=fr-FR&sort_by=popularity.desc&page=${randomPage}${genreParam}&vote_count.gte=100`)
+                        .then(res => res.json())
+                        .then(data => data.results?.map(s => ({ ...s, type: 'tv' })) || [])
+                );
+            }
+            
+            // Séries bien notées mais moins connues - Pépites
+            for (let i = 0; i < 3; i++) {
+                const randomPage = Math.floor(Math.random() * 35 + 20); // Pages 20-55
+                tvPromises.push(
+                    fetch(`https://api.themoviedb.org/3/discover/tv?api_key=${apiKey}&language=fr-FR&sort_by=vote_average.desc&page=${randomPage}${genreParam}&vote_count.gte=25&vote_average.gte=7.2&first_air_date.gte=2010-01-01`)
+                        .then(res => res.json())
+                        .then(data => data.results?.map(s => ({ ...s, type: 'tv' })) || [])
+                );
+            }
+            
+            // Séries de qualité avec une approche narrative unique
+            tvPromises.push(
+                fetch(`https://api.themoviedb.org/3/discover/tv?api_key=${apiKey}&language=fr-FR&sort_by=vote_average.desc&page=${Math.floor(Math.random() * 25 + 15)}${genreParam}&vote_count.gte=40&vote_average.gte=7.5&with_networks=49|174|213|1024|2552`)
+                    .then(res => res.json())
+                    .then(data => data.results?.map(s => ({ ...s, type: 'tv' })) || [])
+            );
+            
+            const tvResults = await Promise.all(tvPromises);
+            pool.push(...tvResults.flat());
+        }
+        
+        if (pool.length === 0) {
+            // Si aucun résultat avec les genres, refaire une recherche sans genre
+            console.log("Aucun résultat avec genres, recherche sans filtre...");
+            return performRandomSearch(contentType, []);
+        }
+        
+        // Filtrer pour une meilleure diversité de qualité
+        let filteredPool = pool.filter(item => 
+            item.vote_average >= 6.0 && 
+            item.vote_count >= 15 &&
+            (item.title || item.name)
+        );
+        
+        // Si pas assez de pépites, élargir avec du contenu de qualité décente
+        if (filteredPool.length < 8) {
+            filteredPool = pool.filter(item => 
+                item.vote_average >= 5.5 && 
+                item.vote_count >= 10 &&
+                (item.title || item.name)
+            );
+        }
+        
+        // En dernier recours, prendre tout ce qui a un titre
+        if (filteredPool.length === 0) {
+            filteredPool = pool.filter(item => (item.title || item.name));
+        }
+        
+        const random = filteredPool[Math.floor(Math.random() * filteredPool.length)];
+        displayRandomResult(random, apiKey);
+        
+    } catch (error) {
+        console.error('Erreur lors de la recherche:', error);
+        alert("Erreur lors de la recherche. Veuillez réessayer.");
+    }
+}
 
-    const [movieRes, tvRes] = await Promise.all([
-        fetch(`https://api.themoviedb.org/3/movie/popular?api_key=${apiKey}&language=fr-FR&page=${Math.floor(Math.random() * 500 + 1)}`),
-        fetch(`https://api.themoviedb.org/3/tv/popular?api_key=${apiKey}&language=fr-FR&page=${Math.floor(Math.random() * 500 + 1)}`)
-    ]);
+// Fonction pour relancer avec les mêmes paramètres
+function relaunchRandom() {
+    performRandomSearch(currentSearchParams.contentType, currentSearchParams.selectedGenres);
+}
 
-    const movies = await movieRes.json();
-    const series = await tvRes.json();
-
-    const pool = [...movies.results.map(m => ({ ...m, type: 'movie' })), ...series.results.map(s => ({ ...s, type: 'tv' }))];
-    const random = pool[Math.floor(Math.random() * pool.length)];
-
-    if (!random) return alert("Aucun contenu trouvé");
-
-    if (random.type === 'movie') {
-        // Requête complète pour avoir les genres et le résumé correct
-        const details = await fetch(`https://api.themoviedb.org/3/movie/${random.id}?api_key=${apiKey}&language=fr-FR`)
-            .then(res => res.json());
+async function displayRandomResult(random, apiKey) {
+    const isMovie = random.type === 'movie';
+    
+    if (isMovie) {
+        // Code pour les films avec bouton relancer amélioré
+        const [details, videos] = await Promise.all([
+            fetch(`https://api.themoviedb.org/3/movie/${random.id}?api_key=${apiKey}&language=fr-FR`).then(res => res.json()),
+            fetch(`https://api.themoviedb.org/3/movie/${random.id}/videos?api_key=${apiKey}&language=fr-FR`).then(res => res.json())
+        ]);
 
         const genres = (details.genres || []).map(g => g.name).join(', ');
+        const backdrop = details.backdrop_path ? `https://image.tmdb.org/t/p/w780${details.backdrop_path}` : '';
+        const trailer = (videos.results || []).find(v => v.type === 'Trailer' && v.site === 'YouTube');
 
         const overlay = document.createElement('div');
         overlay.className = 'tv-overlay';
         overlay.innerHTML = `
-          <div class="tv-popup"><span class="close-btn">&times;</span>
-            <div class="tv-content" style="display:flex;gap:20px;">
-              <div class="popup-left">
-                <img src="https://image.tmdb.org/t/p/w342${details.poster_path}" class="main-poster"/>
-              </div>
-              <div class="popup-right">
-                <h2>${details.title}</h2>
-                <div class="show-genres">${genres}</div>
-                <p>${details.overview || 'Aucun résumé disponible.'}</p>
-                <a href="https://movix.site/watch/movie/${details.id}" target="_blank" class="btn btn-primary">▶ Lecture</a>
-              </div>
-            </div>
-          </div>
-        `;
-        document.body.appendChild(overlay);
-
-        const closeBtn = overlay.querySelector('.close-btn');
-        closeBtn.addEventListener('click', () => document.body.removeChild(overlay));
-        overlay.addEventListener('click', e => { if (e.target === overlay) document.body.removeChild(overlay); });
-
-    } else {
-        showTvPopup(random); // série → utilise la fonction popup stylisé
-    }
-}
-
-
-function goToRandom() {
-    const apiKey = '9bb76e7829aacc0197000636ecf535b1';
-
-    Promise.all([
-        fetch(`https://api.themoviedb.org/3/movie/popular?api_key=${apiKey}&language=fr-FR&page=${Math.floor(Math.random() * 500 + 1)}`),
-        fetch(`https://api.themoviedb.org/3/tv/popular?api_key=${apiKey}&language=fr-FR&page=${Math.floor(Math.random() * 500 + 1)}`)
-    ]).then(async ([movieRes, tvRes]) => {
-        const movies = await movieRes.json();
-        const series = await tvRes.json();
-
-        const pool = [...movies.results.map(m => ({ ...m, type: 'movie' })), ...series.results.map(s => ({ ...s, type: 'tv' }))];
-        const random = pool[Math.floor(Math.random() * pool.length)];
-
-        if (!random) return alert("Aucun contenu trouvé");
-
-        if (random.type === 'movie') {
-            const [details, videos] = await Promise.all([
-                fetch(`https://api.themoviedb.org/3/movie/${random.id}?api_key=${apiKey}&language=fr-FR`).then(res => res.json()),
-                fetch(`https://api.themoviedb.org/3/movie/${random.id}/videos?api_key=${apiKey}&language=fr-FR`).then(res => res.json())
-            ]);
-
-            const genres = (details.genres || []).map(g => g.name).join(', ');
-            const trailer = (videos.results || []).find(v => v.type === 'Trailer' && v.site === 'YouTube');
-
-            const overlay = document.createElement('div');
-            overlay.className = 'tv-overlay';
-            overlay.innerHTML = `
-                <div class="tv-popup"><span class="close-btn">&times;</span>
-                    <div class="tv-content" style="display:flex;gap:20px;">
-                        <div class="popup-left">
-                            <img src="https://image.tmdb.org/t/p/w342${details.poster_path}" class="main-poster"/>
+            <div class="tv-popup" style="background-image:url('${backdrop}');background-size:cover;background-position:center;border-radius:16px;position:fixed;overflow:auto;">
+                <div style="background:rgba(0,0,0,0.75);padding:20px;display:flex;gap:20px;flex-wrap:wrap;border-radius:16px;">
+                    <div class="popup-left">
+                        <img src="https://image.tmdb.org/t/p/w342${details.poster_path}" class="main-poster"/>
+                    </div>
+                    <div class="popup-right">
+                        <h2>${details.title}</h2>
+                        <div class="show-genres"><strong>Film</strong></div>
+                        <div class="show-genres">${genres}</div>
+                        <div style="color: #ffd700; margin: 10px 0;">
+                            ⭐ ${details.vote_average.toFixed(1)}/10 (${details.vote_count} votes)
                         </div>
-                        <div class="popup-right">
-                            <h2>${details.title}</h2>
-                            <div class="show-genres">${genres}</div>
-                            <p>${details.overview || 'Aucun résumé disponible.'}</p>
+                        <p>${details.overview || 'Aucun résumé disponible.'}</p>
+                        <div style="margin-top: 15px;">
                             <a href="https://movix.site/watch/movie/${details.id}" target="_blank" class="btn btn-primary">▶ Lecture</a>
-                            ${trailer ? `<a href="https://www.youtube.com/watch?v=${trailer.key}" target="_blank" class="btn btn-secondary" style="margin-top:10px;">🎬 Bande-annonce</a>` : ''}
+                            ${trailer ? 
+                                `<a href="https://www.youtube.com/watch?v=${trailer.key}" target="_blank" class="btn btn-secondary" style="margin-top:10px;">🎬 Bande-annonce</a>` : 
+                                `<a href="https://www.youtube.com/results?search_query=${encodeURIComponent(details.title + ' bande annonce')}" target="_blank" class="btn btn-secondary" style="margin-top:10px;">🎬 Rechercher bande-annonce</a>`
+                            }
+                            <button onclick="relaunchRandom(); this.closest('.tv-overlay').remove();" 
+                                    style="
+                                        background: #e50914;
+                                        color: white;
+                                        padding: 10px 20px;
+                                        border: none;
+                                        border-radius: 6px;
+                                        margin-top: 10px;
+                                        margin-left: 10px;
+                                        cursor: pointer;
+                                        text-decoration: none;
+                                        display: inline-block;
+                                        font-size: 14px;
+                                        font-family: inherit;
+                                    ">
+                                🎲 Autre suggestion
+                            </button>
                         </div>
                     </div>
                 </div>
-            `;
-            document.body.appendChild(overlay);
+                <span class="close-btn" style="position:absolute;top:10px;right:20px;font-size:28px;cursor:pointer;color:white;">&times;</span>
+            </div>
+        `;
+        document.body.appendChild(overlay);
+        overlay.querySelector('.close-btn').addEventListener('click', () => document.body.removeChild(overlay));
+        overlay.addEventListener('click', e => { if (e.target === overlay) document.body.removeChild(overlay); });
 
-            const closeBtn = overlay.querySelector('.close-btn');
-            closeBtn.addEventListener('click', () => document.body.removeChild(overlay));
-            overlay.addEventListener('click', e => { if (e.target === overlay) document.body.removeChild(overlay); });
-        } else {
-            showTvPopup(random);
-        }
-    });
+    } else {
+        // Code pour les séries avec affiches de saisons réduites
+        const [show, videos, season1Data, season1Videos] = await Promise.all([
+            fetch(`https://api.themoviedb.org/3/tv/${random.id}?api_key=${apiKey}&language=fr-FR`).then(res => res.json()),
+            fetch(`https://api.themoviedb.org/3/tv/${random.id}/videos?api_key=${apiKey}&language=fr-FR`).then(res => res.json()),
+            fetch(`https://api.themoviedb.org/3/tv/${random.id}/season/1?api_key=${apiKey}&language=fr-FR`).then(res => res.json()),
+            fetch(`https://api.themoviedb.org/3/tv/${random.id}/season/1/videos?api_key=${apiKey}&language=fr-FR`).then(res => res.json())
+        ]);
+
+        const genres = (show.genres || []).map(g => g.name).join(', ');
+        const backdrop = show.backdrop_path ? `https://image.tmdb.org/t/p/w1280${show.backdrop_path}` : '';
+        
+        const season1Trailer = (season1Videos.results || []).find(v => v.type === 'Trailer' && v.site === 'YouTube');
+        const totalEpisodes = show.seasons.filter(s => s.season_number > 0).reduce((total, season) => total + season.episode_count, 0);
+        const totalSeasons = show.number_of_seasons;
+        const season1Poster = season1Data.poster_path;
+
+        const overlay = document.createElement('div');
+        overlay.className = 'tv-overlay';
+        overlay.innerHTML = `
+            <div class="tv-popup" style="background-image:url('${backdrop}');background-size:cover;background-position:center;border-radius:16px;position:fixed;max-height:90vh;max-width:90vw;width:90vw;overflow-y:auto;">
+                <div style="background:rgba(0,0,0,0.85);padding:30px;border-radius:16px;min-height:100%;height:100%;">
+                    <div style="display:flex;gap:30px;flex-wrap:wrap;margin-bottom:20px;">
+                        ${show.poster_path ? `
+                            <div style="flex:0 0 250px;">
+                                <img src="https://image.tmdb.org/t/p/w500${show.poster_path}" style="width:100%;border-radius:10px;box-shadow:0 5px 15px rgba(0,0,0,0.5);"/>
+                            </div>
+                        ` : ''}
+                        <div style="flex:1;min-width:300px;">
+                            <h2 style="font-family:'Bebas Neue', sans-serif;font-size:2.5rem;color:#e50914;margin-bottom:10px;">${show.name}</h2>
+                            <div style="display:flex;gap:15px;margin-bottom:15px;flex-wrap:wrap;">
+                                <span style="background:#e50914;padding:3px 10px;border-radius:4px;font-size:0.9rem;">Série</span>
+                                <span style="color:#ccc;font-size:0.9rem;">${genres}</span>
+                            </div>
+                            
+                            <div style="color: #ffd700; margin-bottom: 15px;">
+                                ⭐ ${show.vote_average.toFixed(1)}/10 (${show.vote_count} votes)
+                            </div>
+                            
+                            <div style="margin-bottom:15px;">
+                                <span style="font-family:'Roboto', Arial, sans-serif;color:#fff;font-size:0.95rem;font-weight:500;">
+                                    ${totalSeasons} saison${totalSeasons > 1 ? 's' : ''} • ${totalEpisodes} épisode${totalEpisodes > 1 ? 's' : ''}
+                                </span>
+                            </div>
+                            
+                            <p style="line-height:1.6;margin-bottom:20px;">${show.overview || 'Aucun résumé disponible.'}</p>
+                            
+                            <div style="margin-bottom: 20px;">
+                                ${season1Trailer ? `
+                                    <a href="https://www.youtube.com/watch?v=${season1Trailer.key}" 
+                                       target="_blank" 
+                                       style="background:#6d6d6eb3;color:white;padding:10px 20px;border-radius:6px;text-decoration:none;display:inline-block;margin-right:10px;">
+                                        🎬 Bande-annonce
+                                    </a>
+                                ` : `
+                                    <a href="https://www.youtube.com/results?search_query=${encodeURIComponent(show.name + ' saison 1 bande annonce')}" 
+                                       target="_blank" 
+                                       style="background:#6d6d6eb3;color:white;padding:10px 20px;border-radius:6px;text-decoration:none;display:inline-block;margin-right:10px;">
+                                        🎬 Rechercher bande-annonce
+                                    </a>
+                                `}
+                                
+                                <button onclick="relaunchRandom(); this.closest('.tv-overlay').remove();" 
+                                        style="
+                                            background: #e50914;
+                                            color: white;
+                                            padding: 10px 20px;
+                                            border: none;
+                                            border-radius: 6px;
+                                            cursor: pointer;
+                                            text-decoration: none;
+                                            display: inline-block;
+                                            font-size: 14px;
+                                            font-family: inherit;
+                                        ">
+                                    🎲 Autre suggestion
+                                </button>
+                            </div>
+
+                            <!-- Saisons avec affiches réduites -->
+                            <div style="margin-bottom:20px;">
+                                <h3 style="font-family:'Bebas Neue', sans-serif;font-size:1.8rem;color:#fff;margin-bottom:15px;border-bottom:2px solid #e50914;padding-bottom:5px;display:inline-block;">
+                                    Saisons
+                                </h3>
+                                <div style="display:flex;gap:15px;flex-wrap:wrap;padding:15px 0;">
+                                    ${show.seasons.filter(s => s.season_number > 0).map(season => {
+                                        let seasonContent = '';
+                                        
+                                        if (season.poster_path) {
+                                            seasonContent = `
+                                                <div class="season-thumb" 
+                                                     data-season="${season.season_number}" 
+                                                     data-id="${show.id}"
+                                                     style="flex:0 0 190px;cursor:pointer;position:relative;text-align:center;">
+                                                    <img src="https://image.tmdb.org/t/p/w300${season.poster_path}" 
+                                                         style="width:100%;height:285px;object-fit:cover;border-radius:10px;box-shadow:0 5px 20px rgba(0,0,0,0.6);transition:transform 0.3s ease;"
+                                                         onmouseover="this.style.transform='scale(1.05)'"
+                                                         onmouseout="this.style.transform='scale(1)'"/>
+                                                    <div style="margin-top:10px;padding:8px 12px;background:rgba(0,0,0,0.8);border-radius:6px;display:inline-block;">
+                                                        <span style="font-weight:bold;color:#fff;font-size:15px;">Saison ${season.season_number}</span>
+                                                    </div>
+                                                </div>
+                                            `;
+                                        } else if (season1Poster) {
+                                            seasonContent = `
+                                                <div class="season-thumb" 
+                                                     data-season="${season.season_number}" 
+                                                     data-id="${show.id}"
+                                                     style="flex:0 0 190px;cursor:pointer;position:relative;text-align:center;">
+                                                    <img src="https://image.tmdb.org/t/p/w300${season1Poster}" 
+                                                         style="width:100%;height:285px;object-fit:cover;border-radius:10px;box-shadow:0 5px 20px rgba(0,0,0,0.6);transition:transform 0.3s ease;"
+                                                         onmouseover="this.style.transform='scale(1.05)'"
+                                                         onmouseout="this.style.transform='scale(1)'"/>
+                                                    <div style="margin-top:10px;padding:8px 12px;background:rgba(0,0,0,0.8);border-radius:6px;display:inline-block;">
+                                                        <span style="font-weight:bold;color:#fff;font-size:15px;">Saison ${season.season_number}</span>
+                                                    </div>
+                                                </div>
+                                            `;
+                                        } else {
+                                            seasonContent = `
+                                                <div class="season-thumb" 
+                                                     data-season="${season.season_number}" 
+                                                     data-id="${show.id}"
+                                                     style="flex:0 0 190px;cursor:pointer;background:#333;border-radius:10px;padding:20px;display:flex;flex-direction:column;align-items:center;justify-content:center;height:285px;box-shadow:0 5px 20px rgba(0,0,0,0.6);text-align:center;">
+                                                    <span style="font-weight:bold;color:#fff;font-size:18px;background:rgba(0,0,0,0.8);padding:8px 12px;border-radius:6px;">Saison ${season.season_number}</span>
+                                                </div>
+                                            `;
+                                        }
+                                        
+                                        return seasonContent;
+                                    }).join('')}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <span class="close-btn" style="position:absolute;top:15px;right:25px;font-size:32px;cursor:pointer;color:white;">&times;</span>
+            </div>
+        `;
+        
+        document.body.appendChild(overlay);
+        
+        // Gestion du clic sur les saisons
+        overlay.querySelectorAll('.season-thumb').forEach(thumb => {
+            thumb.addEventListener('click', async () => {
+                const seasonNum = thumb.dataset.season;
+                const tvId = thumb.dataset.id;
+                
+                const [seasonData, seasonVideos] = await Promise.all([
+                    fetch(`https://api.themoviedb.org/3/tv/${tvId}/season/${seasonNum}?api_key=${apiKey}&language=fr-FR`).then(r => r.json()),
+                    fetch(`https://api.themoviedb.org/3/tv/${tvId}/season/${seasonNum}/videos?api_key=${apiKey}&language=fr-FR`).then(r => r.json())
+                ]);
+                
+                const seasonTrailer = (seasonVideos.results || []).find(v => v.type === 'Trailer' && v.site === 'YouTube');
+                
+                const epOverlay = document.createElement('div');
+                epOverlay.className = 'episode-overlay';
+                epOverlay.onclick = (e) => {
+                    if (e.target === epOverlay) {
+                        epOverlay.remove();
+                    }
+                };
+                epOverlay.innerHTML = `
+                    <div class="episode-popup" style="background:#141414;border-radius:12px;padding:25px;max-width:900px;width:90%;max-height:90vh;overflow-y:auto;position:relative;">
+                        <button onclick="this.closest('.episode-overlay').remove()" 
+                                style="position:absolute;top:15px;right:15px;background:none;border:none;color:white;font-size:1.5rem;font-weight:bold;cursor:pointer;z-index:10;">
+                            ✕
+                        </button>
+                        <h3 style="font-family:'Bebas Neue', sans-serif;font-size:3rem;color:#e50914;margin-bottom:15px;">
+                            ${seasonData.name || `Saison ${seasonNum}`}
+                        </h3>
+                        
+                        ${seasonTrailer ? `
+                            <div style="margin-bottom:20px;">
+                                <a href="https://www.youtube.com/watch?v=${seasonTrailer.key}" 
+                                   target="_blank" 
+                                   style="background:#6d6d6eb3;color:white;padding:8px 15px;border-radius:4px;text-decoration:none;display:inline-block;">
+                                    🎬 Bande-annonce Saison ${seasonNum}
+                                </a>
+                            </div>
+                        ` : `
+                            <div style="margin-bottom:20px;">
+                                <a href="https://www.youtube.com/results?search_query=${encodeURIComponent(`bande annonce ${show.name} saison ${seasonNum}`)}" 
+                                   target="_blank" 
+                                   style="background:#6d6d6eb3;color:white;padding:8px 15px;border-radius:4px;text-decoration:none;display:inline-block;">
+                                    🎬 Bande-annonce Saison ${seasonNum}
+                                </a>
+                            </div>
+                        `}
+                        
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;width:100%;">
+                            ${seasonData.episodes.map((ep, index) => {
+                                let episodeContent = '';
+                                
+                                if (ep.still_path || seasonData.poster_path) {
+                                    const imageUrl = ep.still_path ? 
+                                        `https://image.tmdb.org/t/p/w500${ep.still_path}` : 
+                                        `https://image.tmdb.org/t/p/w500${seasonData.poster_path}`;
+                                    
+                                    episodeContent = `
+                                        <div class="episode-card" 
+                                             style="background:#222;border-radius:8px;overflow:hidden;cursor:pointer;transition:transform 0.3s ease;grid-column:${index % 2 === 0 ? '1' : '2'};" 
+                                             onclick="window.open('https://movix.site/watch/tv/${tvId}/s/${seasonNum}/e/${ep.episode_number}', '_blank')"
+                                             onmouseover="this.style.transform='scale(1.05)'"
+                                             onmouseout="this.style.transform='scale(1)'">
+                                            <div style="position:relative;aspect-ratio:16/9;">
+                                                <img src="${imageUrl}" 
+                                                     style="width:100%;height:100%;object-fit:cover;"/>
+                                            </div>
+                                            <div style="padding:8px;">
+                                                <h4 style="margin:0;font-size:0.85rem;color:white;line-height:1.2;">
+                                                    Épisode ${ep.episode_number}: ${ep.name}
+                                                </h4>
+                                            </div>
+                                        </div>
+                                    `;
+                                } else {
+                                    episodeContent = `
+                                        <div class="episode-card" 
+                                             style="background:#222;border-radius:8px;padding:15px;cursor:pointer;transition:transform 0.3s ease;grid-column:${index % 2 === 0 ? '1' : '2'};" 
+                                             onclick="window.open('https://movix.site/watch/tv/${tvId}/s/${seasonNum}/e/${ep.episode_number}', '_blank')"
+                                             onmouseover="this.style.transform='scale(1.05)'"
+                                             onmouseout="this.style.transform='scale(1)'">
+                                            <h4 style="margin:0;font-size:0.9rem;color:white;line-height:1.3;">
+                                                Épisode ${ep.episode_number}: ${ep.name}
+                                            </h4>
+                                        </div>
+                                    `;
+                                }
+                                
+                                return episodeContent;
+                            }).join('')}
+                        </div>
+                    </div>
+                `;
+                
+                document.body.appendChild(epOverlay);
+            });
+        });
+        
+        overlay.querySelector('.close-btn').addEventListener('click', () => {
+            document.body.removeChild(overlay);
+        });
+        
+        overlay.addEventListener('click', e => {
+            if (e.target === overlay) {
+                document.body.removeChild(overlay);
+            }
+        });
+    }
 }
 
 
@@ -3992,7 +4743,7 @@ async function openLink(item) {
   const isMovie = item.type === 'movie';
 
   if (isMovie) {
-    // Pour les films - garder le système actuel
+    // Code pour les films avec bouton relancer amélioré
     const [details, videos] = await Promise.all([
       fetch(`https://api.themoviedb.org/3/movie/${item.id}?api_key=${apiKey}&language=fr-FR`).then(res => res.json()),
       fetch(`https://api.themoviedb.org/3/movie/${item.id}/videos?api_key=${apiKey}&language=fr-FR`).then(res => res.json())
@@ -4008,15 +4759,26 @@ async function openLink(item) {
       <div class="tv-popup" style="background-image:url('${backdrop}');background-size:cover;background-position:center;border-radius:16px;position:relative;overflow:auto;">
         <div style="background:rgba(0,0,0,0.75);padding:20px;display:flex;gap:20px;flex-wrap:wrap;border-radius:16px;">
           <div class="popup-left">
-            <img src="https://image.tmdb.org/t/p/w342${details.poster_path}" class="main-poster"/>
+            ${details.poster_path ? 
+              `<img src="https://image.tmdb.org/t/p/w342${details.poster_path}" class="main-poster"/>` :
+              `<div style="width:342px;height:513px;background:#333;border-radius:8px;display:flex;align-items:center;justify-content:center;"><span style="color:#666;font-size:48px;">🎬</span></div>`
+            }
           </div>
           <div class="popup-right">
             <h2>${details.title}</h2>
             <div class="show-genres"><strong>Film</strong></div>
             <div class="show-genres">${genres}</div>
+            <div style="color: #ffd700; margin: 10px 0;">
+              ⭐ ${details.vote_average.toFixed(1)}/10 (${details.vote_count} votes)
+            </div>
             <p>${details.overview || 'Aucun résumé disponible.'}</p>
-            <a href="https://movix.site/watch/movie/${details.id}" target="_blank" class="btn btn-primary">▶ Lecture</a>
-            ${trailer ? `<a href="https://www.youtube.com/watch?v=${trailer.key}" target="_blank" class="btn btn-secondary" style="margin-top:10px;">🎬 Bande-annonce</a>` : ''}
+            <div style="margin-top: 15px;">
+              <a href="https://movix.site/watch/movie/${details.id}" target="_blank" class="btn btn-primary">▶ Lecture</a>
+              ${trailer ? 
+                `<a href="https://www.youtube.com/watch?v=${trailer.key}" target="_blank" class="btn btn-secondary" style="margin-top:10px;">🎬 Bande-annonce</a>` : 
+                `<a href="https://www.youtube.com/results?search_query=${encodeURIComponent(details.title + ' bande annonce')}" target="_blank" class="btn btn-secondary" style="margin-top:10px;">🎬 Rechercher bande-annonce</a>`
+              }
+            </div>
           </div>
         </div>
         <span class="close-btn" style="position:absolute;top:10px;right:20px;font-size:28px;cursor:pointer;color:white;">&times;</span>
@@ -4027,8 +4789,8 @@ async function openLink(item) {
     overlay.addEventListener('click', e => { if (e.target === overlay) document.body.removeChild(overlay); });
 
   } else {
-    // NOUVEAU CODE POUR LES SERIES
-const [show, videos, season1Data, season1Videos] = await Promise.all([
+    // Code pour les séries avec affiches de saisons réduites
+    const [show, videos, season1Data, season1Videos] = await Promise.all([
       fetch(`https://api.themoviedb.org/3/tv/${item.id}?api_key=${apiKey}&language=fr-FR`).then(res => res.json()),
       fetch(`https://api.themoviedb.org/3/tv/${item.id}/videos?api_key=${apiKey}&language=fr-FR`).then(res => res.json()),
       fetch(`https://api.themoviedb.org/3/tv/${item.id}/season/1?api_key=${apiKey}&language=fr-FR`).then(res => res.json()),
@@ -4038,14 +4800,9 @@ const [show, videos, season1Data, season1Videos] = await Promise.all([
     const genres = (show.genres || []).map(g => g.name).join(', ');
     const backdrop = show.backdrop_path ? `https://image.tmdb.org/t/p/w1280${show.backdrop_path}` : '';
     
-    // Utiliser uniquement la bande-annonce de la saison 1
     const season1Trailer = (season1Videos.results || []).find(v => v.type === 'Trailer' && v.site === 'YouTube');
-
-    // Calculer le nombre total d'épisodes
     const totalEpisodes = show.seasons.filter(s => s.season_number > 0).reduce((total, season) => total + season.episode_count, 0);
     const totalSeasons = show.number_of_seasons;
-
-    // Affiche de référence pour les saisons sans affiche
     const season1Poster = season1Data.poster_path;
 
     const overlay = document.createElement('div');
@@ -4058,7 +4815,13 @@ const [show, videos, season1Data, season1Videos] = await Promise.all([
               <div style="flex:0 0 250px;">
                 <img src="https://image.tmdb.org/t/p/w500${show.poster_path}" style="width:100%;border-radius:10px;box-shadow:0 5px 15px rgba(0,0,0,0.5);"/>
               </div>
-            ` : ''}
+            ` : `
+              <div style="flex:0 0 250px;">
+                <div style="width:100%;height:375px;background:#333;border-radius:10px;display:flex;align-items:center;justify-content:center;box-shadow:0 5px 15px rgba(0,0,0,0.5);">
+                  <span style="color:#666;font-size:64px;">📺</span>
+                </div>
+              </div>
+            `}
             <div style="flex:1;min-width:300px;">
               <h2 style="font-family:'Bebas Neue', sans-serif;font-size:2.5rem;color:#e50914;margin-bottom:10px;">${show.name}</h2>
               <div style="display:flex;gap:15px;margin-bottom:15px;flex-wrap:wrap;">
@@ -4066,7 +4829,10 @@ const [show, videos, season1Data, season1Videos] = await Promise.all([
                 <span style="color:#ccc;font-size:0.9rem;">${genres}</span>
               </div>
               
-              <!-- Informations saisons/épisodes -->
+              <div style="color: #ffd700; margin-bottom: 15px;">
+                ⭐ ${show.vote_average.toFixed(1)}/10 (${show.vote_count} votes)
+              </div>
+              
               <div style="margin-bottom:15px;">
                 <span style="font-family:'Roboto', Arial, sans-serif;color:#fff;font-size:0.95rem;font-weight:500;">
                   ${totalSeasons} saison${totalSeasons > 1 ? 's' : ''} • ${totalEpisodes} épisode${totalEpisodes > 1 ? 's' : ''}
@@ -4075,66 +4841,69 @@ const [show, videos, season1Data, season1Videos] = await Promise.all([
               
               <p style="line-height:1.6;margin-bottom:20px;">${show.overview || 'Aucun résumé disponible.'}</p>
               
-${season1Trailer ? `
-  <a href="https://www.youtube.com/watch?v=${season1Trailer.key}" 
-     target="_blank" 
-     style="background:#6d6d6eb3;color:white;padding:10px 20px;border-radius:6px;text-decoration:none;display:inline-block;margin-right:10px;">
-    🎬 Bande-annonce
-  </a>
-` : `
-  <a href="https://www.youtube.com/results?search_query=${encodeURIComponent(show.name + ' saison 1 bande annonce')}" 
-     target="_blank" 
-     style="background:#6d6d6eb3;color:white;padding:10px 20px;border-radius:6px;text-decoration:none;display:inline-block;margin-right:10px;">
-    🎬 Rechercher bande-annonce
-  </a>
-`}<br> </br>
+              <div style="margin-bottom: 20px;">
+                ${season1Trailer ? `
+                  <a href="https://www.youtube.com/watch?v=${season1Trailer.key}" 
+                     target="_blank" 
+                     style="background:#6d6d6eb3;color:white;padding:10px 20px;border-radius:6px;text-decoration:none;display:inline-block;margin-right:10px;">
+                      🎬 Bande-annonce
+                  </a>
+                ` : `
+                  <a href="https://www.youtube.com/results?search_query=${encodeURIComponent(show.name + ' saison 1 bande annonce')}" 
+                     target="_blank" 
+                     style="background:#6d6d6eb3;color:white;padding:10px 20px;border-radius:6px;text-decoration:none;display:inline-block;margin-right:10px;">
+                      🎬 Rechercher bande-annonce
+                  </a>
+                `}
+              </div>
 
-              <!-- Saisons déplacées ici -->
+              <!-- Saisons avec affiches réduites -->
               <div style="margin-bottom:20px;">
-                <h3 style="font-family:'Bebas Neue', sans-serif;font-size:1.4rem;color:#fff;margin-bottom:10px;border-bottom:2px solid #e50914;padding-bottom:3px;display:inline-block;">
+                <h3 style="font-family:'Bebas Neue', sans-serif;font-size:1.8rem;color:#fff;margin-bottom:15px;border-bottom:2px solid #e50914;padding-bottom:5px;display:inline-block;">
                   Saisons
                 </h3>
-                <div style="display:flex;gap:15px;flex-wrap:wrap;padding:10px 0;">
+                <div style="display:flex;gap:15px;flex-wrap:wrap;padding:15px 0;">
                   ${show.seasons.filter(s => s.season_number > 0).map(season => {
-                    // Logique pour gérer les affiches manquantes
                     let seasonContent = '';
                     
                     if (season.poster_path) {
-                      // La saison a sa propre affiche
                       seasonContent = `
                         <div class="season-thumb" 
                              data-season="${season.season_number}" 
                              data-id="${show.id}"
-                             style="flex:0 0 150px;cursor:pointer;position:relative;">
+                             style="flex:0 0 190px;cursor:pointer;position:relative;text-align:center;">
                           <img src="https://image.tmdb.org/t/p/w300${season.poster_path}" 
-                               style="width:100%;height:225px;object-fit:cover;border-radius:6px;box-shadow:0 3px 8px rgba(0,0,0,0.4);"/>
-                          <div style="position:absolute;bottom:0;left:0;right:0;background:linear-gradient(transparent 30%, rgba(0,0,0,0.3) 60%, rgba(0,0,0,0.9) 100%);padding:15px 8px 8px 8px;text-align:center;border-radius:0 0 6px 6px;">
-                            <span style="font-weight:bold;color:#fff;font-size:12px;text-shadow:2px 2px 4px rgba(0,0,0,0.8);">Saison ${season.season_number}</span>
+                               style="width:100%;height:285px;object-fit:cover;border-radius:10px;box-shadow:0 5px 20px rgba(0,0,0,0.6);transition:transform 0.3s ease;"
+                               onmouseover="this.style.transform='scale(1.05)'"
+                               onmouseout="this.style.transform='scale(1)'"/>
+                          <div style="margin-top:10px;padding:8px 12px;background:rgba(0,0,0,0.8);border-radius:6px;display:inline-block;">
+                            <span style="font-weight:bold;color:#fff;font-size:15px;">Saison ${season.season_number}</span>
                           </div>
                         </div>
                       `;
                     } else if (season1Poster) {
-                      // Utiliser l'affiche de la saison 1
                       seasonContent = `
                         <div class="season-thumb" 
                              data-season="${season.season_number}" 
                              data-id="${show.id}"
-                             style="flex:0 0 150px;cursor:pointer;position:relative;">
+                             style="flex:0 0 190px;cursor:pointer;position:relative;text-align:center;">
                           <img src="https://image.tmdb.org/t/p/w300${season1Poster}" 
-                               style="width:100%;height:225px;object-fit:cover;border-radius:6px;box-shadow:0 3px 8px rgba(0,0,0,0.4);"/>
-                          <div style="position:absolute;bottom:0;left:0;right:0;background:linear-gradient(transparent 30%, rgba(0,0,0,0.3) 60%, rgba(0,0,0,0.9) 100%);padding:15px 8px 8px 8px;text-align:center;border-radius:0 0 6px 6px;">
-                            <span style="font-weight:bold;color:#fff;font-size:12px;text-shadow:2px 2px 4px rgba(0,0,0,0.8);">Saison ${season.season_number}</span>
+                               style="width:100%;height:285px;object-fit:cover;border-radius:10px;box-shadow:0 5px 20px rgba(0,0,0,0.6);transition:transform 0.3s ease;"
+                               onmouseover="this.style.transform='scale(1.05)'"
+                               onmouseout="this.style.transform='scale(1)'"/>
+                          <div style="margin-top:10px;padding:8px 12px;background:rgba(0,0,0,0.8);border-radius:6px;display:inline-block;">
+                            <span style="font-weight:bold;color:#fff;font-size:15px;">Saison ${season.season_number}</span>
                           </div>
                         </div>
                       `;
                     } else {
-                      // Pas d'affiche disponible, juste le texte
                       seasonContent = `
                         <div class="season-thumb" 
                              data-season="${season.season_number}" 
                              data-id="${show.id}"
-                             style="flex:0 0 150px;cursor:pointer;background:#333;border-radius:6px;padding:20px;display:flex;align-items:center;justify-content:center;min-height:225px;">
-                          <span style="font-weight:bold;color:#fff;font-size:16px;text-align:center;">Saison ${season.season_number}</span>
+                             style="flex:0 0 190px;cursor:pointer;background:#333;border-radius:10px;padding:20px;display:flex;flex-direction:column;align-items:center;justify-content:center;height:285px;box-shadow:0 5px 20px rgba(0,0,0,0.6);text-align:center;">
+                          <span style="color:#666;font-size:48px;margin-bottom:10px;">📺</span>
+                          <span style="font-weight:bold;color:#fff;font-size:18px;background:rgba(0,0,0,0.8);padding:8px 12px;border-radius:6px;">Saison ${season.season_number}</span>
                         </div>
                       `;
                     }
@@ -4143,7 +4912,6 @@ ${season1Trailer ? `
                   }).join('')}
                 </div>
               </div>
-              
             </div>
           </div>
         </div>
@@ -4159,7 +4927,6 @@ ${season1Trailer ? `
         const seasonNum = thumb.dataset.season;
         const tvId = thumb.dataset.id;
         
-        // Charger les infos de la saison
         const [seasonData, seasonVideos] = await Promise.all([
           fetch(`https://api.themoviedb.org/3/tv/${tvId}/season/${seasonNum}?api_key=${apiKey}&language=fr-FR`).then(r => r.json()),
           fetch(`https://api.themoviedb.org/3/tv/${tvId}/season/${seasonNum}/videos?api_key=${apiKey}&language=fr-FR`).then(r => r.json())
