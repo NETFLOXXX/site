@@ -1429,6 +1429,262 @@ document.addEventListener('DOMContentLoaded', () => {
     setupPopularScroll();
 });
 
+<style>
+.popular-section {
+    margin: 40px 0;
+    padding: 0 20px;
+}
+
+.popular-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 2rem;
+    color: white;
+    margin-bottom: 20px;
+    border-bottom: 2px solid #333;
+    padding-bottom: 10px;
+    display: inline-block;
+}
+
+.popular-container {
+    position: relative;
+    overflow: hidden;
+    padding: 20px 0;
+}
+
+.popular-scroll {
+    display: flex;
+    gap: 20px;
+    transition: transform 0.3s ease;
+    align-items: flex-start;
+}
+
+.popular-item {
+    flex: 0 0 200px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.popular-item:hover {
+    transform: scale(1.05);
+}
+
+.popular-poster {
+    width: 100%;
+    height: 300px;
+    object-fit: cover;
+    border-radius: 10px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    transition: all 0.3s ease;
+}
+
+.popular-item:hover .popular-poster {
+    filter: brightness(0.7);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5);
+}
+
+.popular-info {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: linear-gradient(transparent, rgba(0, 0, 0, 0.9));
+    color: white;
+    padding: 30px 15px 15px;
+    border-radius: 0 0 10px 10px;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.popular-item:hover .popular-info {
+    opacity: 1;
+}
+
+.popular-info h3 {
+    font-size: 1rem;
+    font-weight: bold;
+    margin: 0 0 5px 0;
+    line-height: 1.2;
+}
+
+.popular-meta {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.85rem;
+    color: #ccc;
+}
+
+.popular-type {
+    background: #666;
+    color: white;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 0.75rem;
+    font-weight: bold;
+}
+
+.load-more-card {
+    flex: 0 0 200px;
+    height: 300px;
+    border: 2px dashed #666;
+    border-radius: 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background: rgba(102, 102, 102, 0.1);
+}
+
+.load-more-card:hover {
+    background: rgba(102, 102, 102, 0.2);
+    transform: scale(1.05);
+}
+
+.load-more-icon {
+    font-size: 3rem;
+    color: #666;
+    margin-bottom: 10px;
+}
+
+.load-more-text {
+    color: #666;
+    font-weight: bold;
+    font-size: 1.1rem;
+}
+
+.tv-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.tv-popup {
+    max-width: 90vw;
+    max-height: 90vh;
+    width: 900px;
+    background: #141414;
+    border-radius: 16px;
+    position: relative;
+    overflow: auto;
+}
+
+.popup-left {
+    flex: 0 0 250px;
+}
+
+.main-poster {
+    width: 100%;
+    border-radius: 10px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+}
+
+.popup-right {
+    flex: 1;
+    min-width: 300px;
+}
+
+.show-genres {
+    background: #333;
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    display: inline-block;
+    margin-right: 10px;
+    margin-bottom: 10px;
+}
+
+.btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 6px;
+    text-decoration: none;
+    display: inline-block;
+    margin-right: 10px;
+    margin-top: 10px;
+    cursor: pointer;
+    font-size: 14px;
+    font-family: inherit;
+}
+
+.btn-primary {
+    background: #666;
+    color: white;
+}
+
+.btn-secondary {
+    background: #444;
+    color: white;
+}
+
+.close-btn {
+    position: absolute;
+    top: 15px;
+    right: 20px;
+    font-size: 28px;
+    cursor: pointer;
+    color: white;
+    z-index: 10;
+}
+
+.episode-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.9);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1001;
+}
+
+.episode-popup {
+    background: #141414;
+    border-radius: 12px;
+    padding: 25px;
+    max-width: 900px;
+    width: 90%;
+    max-height: 90vh;
+    overflow-y: auto;
+    position: relative;
+}
+
+.episode-card {
+    background: #222;
+    border-radius: 8px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform 0.3s ease;
+}
+
+.episode-card:hover {
+    transform: scale(1.05);
+}
+
+.season-thumb {
+    cursor: pointer;
+    position: relative;
+    text-align: center;
+    transition: transform 0.3s ease;
+}
+
+.season-thumb:hover {
+    transform: scale(1.05);
+}
+</style>
+
+<script>
 const apiKey = '9bb76e7829aacc0197000636ecf535b1';
 let currentPage = 1;
 let scrollPosition = 0;
@@ -1475,6 +1731,7 @@ async function displayRandomResult(random, apiKey) {
                 <span class="close-btn">&times;</span>
             </div>
         `;
+<script>
         document.body.appendChild(overlay);
         overlay.querySelector('.close-btn').addEventListener('click', () => document.body.removeChild(overlay));
         overlay.addEventListener('click', e => { if (e.target === overlay) document.body.removeChild(overlay); });
@@ -1601,6 +1858,7 @@ async function displayRandomResult(random, apiKey) {
             </div>
         `;
         
+<script>
         document.body.appendChild(overlay);
         
         overlay.querySelectorAll('.season-thumb').forEach(thumb => {
@@ -1651,6 +1909,7 @@ async function displayRandomResult(random, apiKey) {
                         `}
                         
                         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;width:100%;">
+						<script>
                             ${seasonData.episodes.map((ep, index) => {
                                 let episodeContent = '';
                                 
@@ -1695,7 +1954,7 @@ async function displayRandomResult(random, apiKey) {
                 document.body.appendChild(epOverlay);
             });
         });
-        
+        <script>
         overlay.querySelector('.close-btn').addEventListener('click', () => {
             document.body.removeChild(overlay);
         });
@@ -5848,4 +6107,3 @@ document.querySelectorAll('.section').forEach(section => {
 </script>
 
 </html>
-
