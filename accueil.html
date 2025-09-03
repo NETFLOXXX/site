@@ -1398,7 +1398,7 @@ function showRandomPopup(item) {
         <div class="show-genres"><strong>${item.media_type === 'movie' ? 'Film' : 'Série'}</strong></div>
         <div class="show-genres">${(item.genre_ids || []).join(', ')}</div>
         <p>${item.overview || 'Aucun résumé disponible.'}</p>
-        <a href="https://movix.site/watch/${item.media_type === 'movie' ? 'movie' : 'tv'}/${item.id}" target="_blank" class="btn btn-primary">▶ Lecture</a>
+        <a href="https://movix.website/watch/${item.media_type === 'movie' ? 'movie' : 'tv'}/${item.id}" target="_blank" class="btn btn-primary">▶ Lecture</a>
       </div>
     </div>
     <span class="close-btn" style="position:absolute;top:10px;right:20px;font-size:28px;cursor:pointer;color:white;">&times;</span>
@@ -2212,7 +2212,7 @@ async function openLink(item) {
             <h2>${details.title}</h2>
             <div class="show-genres">${genres}</div>
             <p>${details.overview || 'Aucun résumé disponible.'}</p>
-            <a href="https://movix.site/watch/movie/${details.id}" target="_blank" class="btn btn-primary">▶ Lecture</a>
+            <a href="https://movix.website/watch/movie/${details.id}" target="_blank" class="btn btn-primary">▶ Lecture</a>
           </div>
         </div>
       </div>
@@ -3124,7 +3124,7 @@ async function displayRandomResult(random, apiKey) {
                         </div>
                         <p>${details.overview || 'Aucun résumé disponible.'}</p>
                         <div style="margin-top: 15px;">
-                            <a href="https://movix.site/watch/movie/${details.id}" target="_blank" class="btn btn-primary">▶ Lecture</a>
+                            <a href="https://movix.website/watch/movie/${details.id}" target="_blank" class="btn btn-primary">▶ Lecture</a>
                             ${trailer ? 
                                 `<a href="https://www.youtube.com/watch?v=${trailer.key}" target="_blank" class="btn btn-secondary" style="margin-top:10px;">🎬 Bande-annonce</a>` : 
                                 `<a href="https://www.youtube.com/results?search_query=${encodeURIComponent(details.title + ' bande annonce')}" target="_blank" class="btn btn-secondary" style="margin-top:10px;">🎬 Rechercher bande-annonce</a>`
@@ -3358,7 +3358,7 @@ async function displayRandomResult(random, apiKey) {
                                     episodeContent = `
                                         <div class="episode-card" 
                                              style="background:#222;border-radius:8px;overflow:hidden;cursor:pointer;transition:transform 0.3s ease;grid-column:${index % 2 === 0 ? '1' : '2'};" 
-                                             onclick="window.open('https://movix.site/watch/tv/${tvId}/s/${seasonNum}/e/${ep.episode_number}', '_blank')"
+                                             onclick="window.open('https://movix.website/watch/tv/${tvId}/s/${seasonNum}/e/${ep.episode_number}', '_blank')"
                                              onmouseover="this.style.transform='scale(1.05)'"
                                              onmouseout="this.style.transform='scale(1)'">
                                             <div style="position:relative;aspect-ratio:16/9;">
@@ -3376,7 +3376,7 @@ async function displayRandomResult(random, apiKey) {
                                     episodeContent = `
                                         <div class="episode-card" 
                                              style="background:#222;border-radius:8px;padding:15px;cursor:pointer;transition:transform 0.3s ease;grid-column:${index % 2 === 0 ? '1' : '2'};" 
-                                             onclick="window.open('https://movix.site/watch/tv/${tvId}/s/${seasonNum}/e/${ep.episode_number}', '_blank')"
+                                             onclick="window.open('https://movix.website/watch/tv/${tvId}/s/${seasonNum}/e/${ep.episode_number}', '_blank')"
                                              onmouseover="this.style.transform='scale(1.05)'"
                                              onmouseout="this.style.transform='scale(1)'">
                                             <h4 style="margin:0;font-size:0.9rem;color:white;line-height:1.3;">
@@ -3463,7 +3463,7 @@ async function openLink(item) {
         <div class="show-genres"><strong>${item.media_type === 'movie' ? 'Film' : 'Série'}</strong></div>
         <div class="show-genres">${(item.genre_ids || []).join(', ')}</div>
         <p>${item.overview || 'Aucun résumé disponible.'}</p>
-        <a href="https://movix.site/watch/${item.media_type === 'movie' ? 'movie' : 'tv'}/${item.id}" target="_blank" class="btn btn-primary">▶ Lecture</a>
+        <a href="https://movix.website/watch/${item.media_type === 'movie' ? 'movie' : 'tv'}/${item.id}" target="_blank" class="btn btn-primary">▶ Lecture</a>
       </div>
     </div>
     <span class="close-btn" style="position:absolute;top:10px;right:20px;font-size:28px;cursor:pointer;color:white;">&times;</span>
@@ -3559,7 +3559,7 @@ function showTvPopup(item) {
                       epOverlay.addEventListener('click', e => { if (e.target === epOverlay) document.body.removeChild(epOverlay); });
 
                       const episodesHTML = data.episodes.map(ep => {
-                        return `<div class="episode-link"><a href="https://movix.site/watch/tv/${item.id}/s/${seasonNum}/e/${ep.episode_number}" target="_blank">Épisode ${ep.episode_number} : ${ep.name}</a></div>`;
+                        return `<div class="episode-link"><a href="https://movix.website/watch/tv/${item.id}/s/${seasonNum}/e/${ep.episode_number}" target="_blank">Épisode ${ep.episode_number} : ${ep.name}</a></div>`;
                       }).join('');
                       epOverlay.querySelector('.episode-content').innerHTML = `<h3>${data.name}</h3>${episodesHTML}`;
                     });
@@ -3898,7 +3898,7 @@ async function openLink(item) {
             <h2>${details.title}</h2>
             <div class="show-genres">${genres}</div>
             <p>${details.overview || 'Aucun résumé disponible.'}</p>
-            <a href="https://movix.site/watch/movie/${details.id}" target="_blank" class="btn btn-primary">▶ Lecture</a>
+            <a href="https://movix.website/watch/movie/${details.id}" target="_blank" class="btn btn-primary">▶ Lecture</a>
             ${trailer ? `<a href="https://www.youtube.com/watch?v=${trailer.key}" target="_blank" class="btn btn-secondary" style="margin-top:10px;">🎬 Bande-annonce</a>` : ''}
           </div>
         </div>
@@ -3949,7 +3949,7 @@ async function showTvPopup(item) {
               </a>
             ` : ''}
             
-            <a href="https://movix.site/watch/tv/${show.id}" 
+            <a href="https://movix.website/watch/tv/${show.id}" 
                target="_blank" 
                style="background:#fff;color:#000;padding:10px 20px;border-radius:6px;text-decoration:none;display:inline-block;">
               ▶ Lecture
@@ -4037,7 +4037,7 @@ epOverlay.innerHTML = `
       ${seasonData.episodes.map((ep, index) => `
         <div class="episode-card" 
              style="background:#222;border-radius:8px;overflow:hidden;cursor:pointer;transition:transform 0.3s ease;grid-column:${index % 2 === 0 ? '1' : '2'};" 
-             onclick="window.open('https://movix.site/watch/tv/${tvId}/s/${seasonNum}/e/${ep.episode_number}', '_blank')"
+             onclick="window.open('https://movix.website/watch/tv/${tvId}/s/${seasonNum}/e/${ep.episode_number}', '_blank')"
              onmouseover="this.style.transform='scale(1.05)'"
              onmouseout="this.style.transform='scale(1)'">
           <div style="position:relative;aspect-ratio:16/9;">
@@ -4150,7 +4150,7 @@ function updateHeroSlide() {
     const poster = `https://image.tmdb.org/t/p/w342${movie.poster_path}`;
     const title = movie.title;
     const desc = movie.overview || "Aucun résumé disponible.";
-    const playUrl = `https://movix.site/watch/movie/${movie.id}`;
+    const playUrl = `https://movix.website/watch/movie/${movie.id}`;
 
     const hero = document.getElementById("heroCarousel");
     const content = document.querySelector(".hero-content");
@@ -4278,7 +4278,7 @@ document.addEventListener('DOMContentLoaded', function () {
             <h2>${movie.title}</h2>
             <div class="show-genres">${genres}</div>
             <p>${movie.overview || 'Aucun résumé disponible.'}</p>
-            <a href="https://movix.site/watch/movie/${movie.id}" target="_blank" class="btn btn-primary">▶ Lecture</a>
+            <a href="https://movix.website/watch/movie/${movie.id}" target="_blank" class="btn btn-primary">▶ Lecture</a>
           </div>
         </div>
       </div>
@@ -4506,7 +4506,7 @@ async function openItemPopup(id, type) {
   const title = item.title || item.name;
   const poster = item.poster_path ? `https://image.tmdb.org/t/p/w342${item.poster_path}` : '';
   const overview = item.overview || 'Aucun résumé disponible.';
-  const link = type === 'movie' ? `https://movix.site/watch/movie/${item.id}` : `https://movix.site/watch/tv/${item.id}`;
+  const link = type === 'movie' ? `https://movix.website/watch/movie/${item.id}` : `https://movix.website/watch/tv/${item.id}`;
 
   const overlay = document.createElement('div');
   overlay.className = 'tv-overlay';
@@ -4618,7 +4618,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const title = item.title || item.name;
     const poster = item.poster_path ? `https://image.tmdb.org/t/p/w342${item.poster_path}` : '';
     const overview = item.overview || 'Aucun résumé disponible.';
-    const link = type === 'movie' ? `https://movix.site/watch/movie/${item.id}` : `https://movix.site/watch/tv/${item.id}`;
+    const link = type === 'movie' ? `https://movix.website/watch/movie/${item.id}` : `https://movix.website/watch/tv/${item.id}`;
 
     const overlay = document.createElement('div');
     overlay.className = 'tv-overlay';
@@ -4773,7 +4773,7 @@ async function openLink(item) {
             </div>
             <p>${details.overview || 'Aucun résumé disponible.'}</p>
             <div style="margin-top: 15px;">
-              <a href="https://movix.site/watch/movie/${details.id}" target="_blank" class="btn btn-primary">▶ Lecture</a>
+              <a href="https://movix.website/watch/movie/${details.id}" target="_blank" class="btn btn-primary">▶ Lecture</a>
               ${trailer ? 
                 `<a href="https://www.youtube.com/watch?v=${trailer.key}" target="_blank" class="btn btn-secondary" style="margin-top:10px;">🎬 Bande-annonce</a>` : 
                 `<a href="https://www.youtube.com/results?search_query=${encodeURIComponent(details.title + ' bande annonce')}" target="_blank" class="btn btn-secondary" style="margin-top:10px;">🎬 Rechercher bande-annonce</a>`
@@ -4984,7 +4984,7 @@ epOverlay.innerHTML = `
           episodeContent = `
             <div class="episode-card" 
                  style="background:#222;border-radius:8px;overflow:hidden;cursor:pointer;transition:transform 0.3s ease;grid-column:${index % 2 === 0 ? '1' : '2'};" 
-                 onclick="window.open('https://movix.site/watch/tv/${tvId}/s/${seasonNum}/e/${ep.episode_number}', '_blank')"
+                 onclick="window.open('https://movix.website/watch/tv/${tvId}/s/${seasonNum}/e/${ep.episode_number}', '_blank')"
                  onmouseover="this.style.transform='scale(1.05)'"
                  onmouseout="this.style.transform='scale(1)'">
               <div style="position:relative;aspect-ratio:16/9;">
@@ -5003,7 +5003,7 @@ epOverlay.innerHTML = `
           episodeContent = `
             <div class="episode-card" 
                  style="background:#222;border-radius:8px;padding:15px;cursor:pointer;transition:transform 0.3s ease;grid-column:${index % 2 === 0 ? '1' : '2'};" 
-                 onclick="window.open('https://movix.site/watch/tv/${tvId}/s/${seasonNum}/e/${ep.episode_number}', '_blank')"
+                 onclick="window.open('https://movix.website/watch/tv/${tvId}/s/${seasonNum}/e/${ep.episode_number}', '_blank')"
                  onmouseover="this.style.transform='scale(1.05)'"
                  onmouseout="this.style.transform='scale(1)'">
               <h4 style="margin:0;font-size:0.9rem;color:white;line-height:1.3;">
@@ -5058,7 +5058,7 @@ async function openSeasonEpisodes(tvId, seasonNum) {
       <div style="max-height:400px;overflow-y:auto;margin-top:15px;">
         ${season.episodes.map(ep => `
           <div style="padding:10px;border-bottom:1px solid #333;">
-            <a href="https://movix.site/watch/tv/${tvId}/s/${seasonNum}/e/${ep.episode_number}" 
+            <a href="https://movix.website/watch/tv/${tvId}/s/${seasonNum}/e/${ep.episode_number}" 
                target="_blank" 
                style="color:white;text-decoration:none;">
               Épisode ${ep.episode_number}: ${ep.name || 'Sans titre'}
