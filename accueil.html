@@ -1099,6 +1099,61 @@
   border-radius: 10px;
 }
 
+
+/* === Responsive Universel ajouté === */
+
+/* Burger menu */
+.burger {
+  display: none;
+  flex-direction: column;
+  gap: 5px;
+  cursor: pointer;
+}
+.burger div {
+  width: 25px;
+  height: 3px;
+  background: white;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .hero-overlay {
+    flex-direction: column;
+    text-align: center;
+    gap: 20px;
+  }
+  .hero-content { max-width: 100%; }
+  .hero-title { font-size: 36px; }
+  .hero-description { font-size: 16px; }
+}
+@media (max-width: 768px) {
+  .header { padding: 15px 20px; }
+  .nav-links {
+    display: none;
+    flex-direction: column;
+    background: #141414;
+    position: absolute;
+    top: 70px;
+    left: 0;
+    width: 100%;
+    padding: 20px;
+    gap: 15px;
+  }
+  .nav-links.active { display: flex; }
+  .burger { display: flex; }
+  .content { padding: 80px 20px; }
+  .hero { height: 70vh; }
+  .hero-title { font-size: 28px; }
+  .hero-description { font-size: 14px; }
+  .hero-poster { width: 180px; }
+}
+@media (max-width: 480px) {
+  .hero-title { font-size: 24px; }
+  .btn { font-size: 14px; padding: 10px 20px; }
+  .section-title { font-size: 20px; }
+  .movie-card { min-width: 140px; height: 90px; }
+}
+
 </style>
 </head>
 <body>
@@ -1122,7 +1177,7 @@
 				<li><a href="#historique">Historique</a></li>
                 <li><a href="#films">Films</a></li>
                 <li><a href="#séries">Séries</a></li>
-                <li><a href="https://netfloxxx.github.io/site/canal.html">En direct</a></li>
+                <li><a href="https://netfloxxx.github.io/site/canal">En direct</a></li>
             </ul>
             <div class="nav-right">
                 <div class="search-container">
@@ -1143,7 +1198,12 @@
                     </div>
                 </div>
             </div>
-        </nav>
+        
+<div class="burger" onclick="document.querySelector('.nav-links').classList.toggle('active')">
+  <div></div><div></div><div></div>
+</div>
+
+</nav>
     </header>
 
     <!-- Hero Section -->
@@ -5075,6 +5135,22 @@ async function openSeasonEpisodes(tvId, seasonNum) {
 }
 </script>
 
+<script>
+// Sécurisation autoplay vidéo intro
+document.addEventListener('DOMContentLoaded', function() {
+  const introVideo = document.getElementById('introVideo');
+  if (introVideo) {
+    const playPromise = introVideo.play();
+    if (playPromise !== undefined) {
+      playPromise.catch(() => {
+        // Si autoplay bloqué, attendre un clic pour lancer
+        introVideo.muted = true;
+        introVideo.play();
+      });
+    }
+  }
+});
+</script>
 </body>
 
 
