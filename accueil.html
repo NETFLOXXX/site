@@ -524,7 +524,7 @@
 		}
 
 #search-input {
-  width: 400px;
+  width: 350px;
   padding: 10px 15px;
   font-size: 16px;
   border: none;
@@ -1154,6 +1154,40 @@
   .movie-card { min-width: 140px; height: 90px; }
 }
 
+.nav {
+  display: flex;
+  justify-content: space-between; /* espace entre les 3 zones */
+  align-items: center;
+}
+
+.logo {
+  flex-shrink: 0; /* le logo ne se réduit jamais */
+  margin-right: 20px;
+}
+
+.nav-links {
+  display: flex;
+  gap: 18px; /* espace entre les liens */
+  flex: 1; /* prend la place dispo */
+}
+
+.nav-right {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-shrink: 0; /* bloque la zone droite */
+}
+
+.continue-message {
+    text-align: center;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 20px;
+    color: #aaa;
+    margin: 10px 0 20px 0;
+    font-style: italic;
+}
+
+
 </style>
 </head>
 <body>
@@ -1177,7 +1211,7 @@
 				<li><a href="#historique">Historique</a></li>
                 <li><a href="#films">Films</a></li>
                 <li><a href="#séries">Séries</a></li>
-                <li><a href="https://netfloxxx.github.io/site/canal">En direct</a></li>
+                <li><a href="https://netfloxxx.github.io/site/canal">Direct</a></li>
             </ul>
             <div class="nav-right">
                 <div class="search-container">
@@ -1233,12 +1267,14 @@
 
 <main class="content">
 	
-        <section id="historique" class="home section-1">
-            <h2 class="section-title">Continuer à regarder</h2>
-            <div class="row" id="continue-watching">
-                <!-- Movies will be populated by JavaScript -->
-            </div>
-        </section>
+<section id="historique" class="home section-1">
+    <h2 class="section-title">Continuer à regarder</h2>
+	<p id="continue-message" class="continue-message"></p>
+    <div class="row" id="continue-watching">
+        <!-- Movies will be populated by JavaScript -->
+    </div>
+</section>
+
 		
         <section class="section">
             <h2 class="section-title">Recommandé pour vous</h2>
@@ -1641,21 +1677,30 @@ async function loadMorePopular() {
             analytics.logEvent('search', { search_term: query });
         }
 
-        function populateMovies() {
-            populateSection('trending', moviesData.trending);
-            populateSection('action', moviesData.action);
-            populateSection('comedy', moviesData.comedy);
-            populateSection('documentaries', moviesData.documentaries);
-            
-            // Recommandations personnalisées
-            if (currentUser) {
-                populateSection('recommended', getRecommendations());
-                populateSection('continue-watching', getContinueWatching());
-            } else {
-                populateSection('recommended', moviesData.trending);
-                populateSection('continue-watching', []);
-            }
+function populateMovies() {
+    const messageEl = document.getElementById('continue-message');
+
+    populateSection('trending', moviesData.trending);
+    populateSection('action', moviesData.action);
+    populateSection('comedy', moviesData.comedy);
+    populateSection('documentaries', moviesData.documentaries);
+
+    if (currentUser) {
+        populateSection('recommended', getRecommendations());
+        populateSection('continue-watching', getContinueWatching());
+
+        if (messageEl) {
+            messageEl.textContent = "Regardez du contenu pour bénéficier de votre historique";
         }
+    } else {
+        populateSection('recommended', moviesData.trending);
+        populateSection('continue-watching', []);
+
+        if (messageEl) {
+            messageEl.textContent = "Connectez-vous pour voir votre historique";
+        }
+    }
+}
 
         function populateSection(sectionId, movies) {
             const section = document.getElementById(sectionId);
