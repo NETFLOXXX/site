@@ -1775,19 +1775,30 @@ document.getElementById("popupMessage").addEventListener("click", function(e) {
             }
         }
 
-        function trackView(movie) {
-            if (currentUser) {
-                if (!userPreferences.viewHistory) {
-                    userPreferences.viewHistory = [];
-                }
-                userPreferences.viewHistory.push({
-                    title: movie.title,
-                    timestamp: new Date().toISOString(),
-                    genre: movie.genre
-                });
-                saveUserPreferences();
-            }
+function trackView(movie) {
+    if (currentUser) {
+        if (!userPreferences.viewHistory) {
+            userPreferences.viewHistory = [];
         }
+        userPreferences.viewHistory.push({
+            title: movie.title,
+            timestamp: new Date().toISOString(),
+            genre: movie.genre
+        });
+
+        // Enregistrer aussi pour "continuer à regarder"
+        if (!userPreferences.watchProgress) {
+            userPreferences.watchProgress = {};
+        }
+        userPreferences.watchProgress[movie.title] = {
+            progress: 0, // à remplacer plus tard par un vrai % ou un timestamp
+            lastViewed: new Date().toISOString()
+        };
+
+        saveUserPreferences();
+    }
+}
+
 
         function getRecommendations() {
             if (!userPreferences.viewHistory) return moviesData.trending;
@@ -1802,14 +1813,16 @@ document.getElementById("popupMessage").addEventListener("click", function(e) {
             return Object.values(moviesData).flat().filter(movie => movie.genre === favoriteGenre);
         }
 
-        function getContinueWatching() {
-            if (!userPreferences.watchProgress) return [];
-            
-            return Object.keys(userPreferences.watchProgress).map(title => {
-                const movie = Object.values(moviesData).flat().find(m => m.title === title);
-                return movie;
-            }).filter(Boolean);
-        }
+function getContinueWatching() {
+    if (!userPreferences.watchProgress) return [];
+
+    return Object.keys(userPreferences.watchProgress)
+        .map(title => {
+            const movie = Object.values(moviesData).flat().find(m => m.title === title);
+            return movie ? { ...movie, progress: userPreferences.watchProgress[title].progress } : null;
+        })
+        .filter(Boolean);
+}
 
         function saveUserPreferences() {
             if (currentUser) {
