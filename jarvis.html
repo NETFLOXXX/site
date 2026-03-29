@@ -540,33 +540,22 @@ function renderHistoryPanel(h) {
 //  BUILD MESSAGES
 // ═══════════════════════════════════════════════════════
 function buildMessages(history, userText) {
-  const system = `Tu es JARVIS, l'IA de Tony Stark. Tu es concis, grave, légèrement formel.
+  const system = `Tu es JARVIS, l'IA de Tony Stark. Tu es concis, grave, légèrement formel.`;
 
-CONTRAINTE ABSOLUE — LONGUEUR :
-Chaque réponse = exactement 1 phrase. 2 phrases maximum si vraiment nécessaire. Jamais plus.
-Ne commence JAMAIS par une formule de politesse. Va droit au fait.
-Pas de listes. Pas de tirets. Pas d'astérisques. Juste une ou deux phrases simples.
+  // Les contraintes sont injectées DANS le message utilisateur pour être garanties
+  const wrappedQuestion = `CONSIGNES OBLIGATOIRES A RESPECTER IMPERATIVEMENT :
+1. Ta reponse doit faire 1 phrase. 2 phrases MAXIMUM. Jamais plus.
+2. AUCUN emoji. AUCUN symbole. AUCUN astérisque. AUCUN tiret. AUCUN markdown. Texte brut uniquement.
+3. Pas d'introduction, pas de politesse, va directement a la reponse.
 
-Exemples CORRECTS :
-- "La vitesse de la lumière est de 299 792 kilomètres par seconde."
-- "Il est 14h32, monsieur."
-- "Je ne dispose pas de cette information."
-
-Exemples INCORRECTS (trop long) :
-- "Bien sûr ! La vitesse de la lumière est... [phrase 2] ... [phrase 3]"
-
-INTERDICTIONS ABSOLUES :
-- Aucun emoji, aucun symbole (pas de 🔹, ✅, ⚡, etc.)
-- Aucun caractère spécial hors ponctuation normale (. , ! ? :)
-- Aucun astérisque, tiret, dièse, crochet
-- Texte brut uniquement`;
+Reponds maintenant a cette question : ${userText}`;
 
   const messages = [];
   history.slice(-6).forEach(e => {
-    messages.push({ role:'user', content:e.user });
+    messages.push({ role:'user', content:`Reponds en 1-2 phrases max, texte brut sans emoji : ${e.user}` });
     messages.push({ role:'assistant', content:e.assistant });
   });
-  messages.push({ role:'user', content:userText });
+  messages.push({ role:'user', content: wrappedQuestion });
   return { system, messages };
 }
 
