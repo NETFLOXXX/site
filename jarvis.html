@@ -321,52 +321,48 @@ async function clearHistory() {
 // ═══════════════════════════════════════════════════════
 //  TTS — voix robotique mâle
 // ═══════════════════════════════════════════════════════
-let voicesLoaded = [];
-if (window.speechSynthesis) {
-  const loadVoices = () => { voicesLoaded = window.speechSynthesis.getVoices(); };
-  window.speechSynthesis.onvoiceschanged = loadVoices;
-  loadVoices();
-}
+let currentAudio = null;
 
-function pickVoice() {
-  const v = voicesLoaded;
-  // Cherche voix française male (Thomas sur macOS, par ex.)
-  return v.find(x => x.lang.startsWith('fr') && /thomas|male|homme/i.test(x.name))
-      || v.find(x => x.lang.startsWith('fr'))
-      || v.find(x => /male|david|mark|george|richard/i.test(x.name))
-      || v[0] || null;
-}
-
-function speak(text) {
-  if (!window.speechSynthesis) return;
-  window.speechSynthesis.cancel();
+async function speak(text) {
+  if (!text) return;
+  // Stopper l'audio précédent si présent
+  if (currentAudio) { try { currentAudio.pause(); currentAudio.currentTime = 0; } catch {} }
   isSpeaking = true;
   setStatus('speaking');
 
-  const utter = new SpeechSynthesisUtterance(text);
-  const voice = pickVoice();
-  if (voice) utter.voice = voice;
-  utter.lang   = 'fr-FR';
-  utter.pitch  = 0.5;   // très grave → robotique
-  utter.rate   = 0.85;  // posé, comme Jarvis
-  utter.volume = 1;
+  try {
+    const audio = await puter.ai.txt2speech(text, {
+      provider: 'openai',
+      model: 'tts-1',
+      voice: 'onyx',          // voix masculine grave, la plus proche de Jarvis
+      response_format: 'mp3'
+    });
+    currentAudio = audio;
 
-  utter.onend = () => {
+    audio.onended = () => {
+      isSpeaking = false;
+      currentAudio = null;
+      setStatus('online');
+      if (voiceActive && !isGenerating) setTimeout(startListening, 300);
+    };
+    audio.onerror = () => {
+      isSpeaking = false;
+      currentAudio = null;
+      setStatus('online');
+      if (voiceActive && !isGenerating) setTimeout(startListening, 300);
+    };
+
+    audio.play();
+  } catch(err) {
+    console.error('TTS error:', err);
     isSpeaking = false;
     setStatus('online');
     if (voiceActive && !isGenerating) setTimeout(startListening, 300);
-  };
-  utter.onerror = () => {
-    isSpeaking = false;
-    setStatus('online');
-    if (voiceActive && !isGenerating) setTimeout(startListening, 300);
-  };
-
-  window.speechSynthesis.speak(utter);
+  }
 }
 
 function stopSpeech() {
-  if (window.speechSynthesis) window.speechSynthesis.cancel();
+  if (currentAudio) { try { currentAudio.pause(); currentAudio.currentTime = 0; } catch {} currentAudio = null; }
   isSpeaking = false;
 }
 
@@ -540,15 +536,21 @@ function renderHistoryPanel(h) {
 //  BUILD MESSAGES
 // ═══════════════════════════════════════════════════════
 function buildMessages(history, userText) {
-  const system = `Tu es JARVIS, l'IA de Tony Stark. Tu es concis, grave, légèrement formel.`;
+  const system = `Tu es JARVIS, l'intelligence artificielle de Tony Stark. Tu parles avec calme, precision et une légère formalite. Tu tutoies jamais, tu vouvois toujours.`;
 
-  // Les contraintes sont injectées DANS le message utilisateur pour être garanties
-  const wrappedQuestion = `CONSIGNES OBLIGATOIRES A RESPECTER IMPERATIVEMENT :
-1. Ta reponse doit faire 1 phrase. 2 phrases MAXIMUM. Jamais plus.
-2. AUCUN emoji. AUCUN symbole. AUCUN astérisque. AUCUN tiret. AUCUN markdown. Texte brut uniquement.
-3. Pas d'introduction, pas de politesse, va directement a la reponse.
+  const wrappedQuestion = `INSTRUCTIONS OBLIGATOIRES — a respecter sans exception :
+1. Reponds en 1 seule phrase. 2 phrases absolument maximum. Jamais plus, meme si le sujet est complexe.
+2. Aucun emoji. Aucun symbole. Aucun astérisque. Aucun tiret de liste. Aucun gras. Texte brut uniquement.
+3. Commence directement par la reponse. Pas de "Bien sur", "Certainement", "Voici" ou autre introduction.
+4. Si tu ne sais pas, dis-le en une phrase courte.
+5. Tu peux ajouter "monsieur" occasionnellement pour rester dans le personnage, mais pas systematiquement.
 
-Reponds maintenant a cette question : ${userText}`;
+Exemples corrects :
+"La vitesse de la lumiere est de 299 792 kilometres par seconde."
+"Je n'ai pas acces a cette information, monsieur."
+"Il fait actuellement 12 degres a Paris."
+
+Question : ${userText}`;
 
   const messages = [];
   history.slice(-6).forEach(e => {
