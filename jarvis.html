@@ -32,7 +32,7 @@ header{position:relative;z-index:10;display:flex;align-items:center;justify-cont
 #mic-ring::before,#mic-ring::after{content:'';position:absolute;border-radius:50%;border:2px solid #00ff88;animation:ripple 1.4s ease-out infinite}
 #mic-ring::after{animation-delay:0.7s}
 @keyframes ripple{0%{width:40px;height:40px;opacity:0.9}100%{width:80px;height:80px;opacity:0}}
-#mic-icon{font-size:1.6rem;z-index:1;filter:drop-shadow(0 0 8px #00ff88)}
+#mic-icon{font-size:1.4rem;z-index:1;filter:drop-shadow(0 0 8px #00ff88)}
 #voice-banner{position:fixed;top:70px;left:50%;transform:translateX(-50%);background:rgba(0,255,136,0.1);border:1px solid rgba(0,255,136,0.35);color:#00ff88;font-size:0.72rem;letter-spacing:0.15em;padding:6px 20px;border-radius:2px;z-index:50;display:none;backdrop-filter:blur(4px)}
 #voice-banner.show{display:block}
 main{position:relative;z-index:5;flex:1;display:flex;flex-direction:column;padding:16px 24px 0;overflow:hidden}
@@ -68,7 +68,7 @@ footer{position:relative;z-index:10;padding:12px 24px 16px;background:rgba(0,10,
 #send-btn{background:rgba(0,245,255,0.08);border-color:var(--cyan);color:var(--cyan)}
 #send-btn:hover:not(:disabled){background:rgba(0,245,255,0.18);box-shadow:0 0 16px rgba(0,245,255,0.3)}
 #send-btn:disabled{opacity:0.35;cursor:not-allowed}
-#mic-btn{background:rgba(0,255,136,0.06);border-color:rgba(0,255,136,0.4);color:#00ff88;font-size:1rem;padding:8px 16px;letter-spacing:0}
+#mic-btn{background:rgba(0,255,136,0.06);border-color:rgba(0,255,136,0.4);color:#00ff88;font-size:0.9rem;padding:8px 14px;letter-spacing:0}
 #mic-btn:hover{background:rgba(0,255,136,0.15);box-shadow:0 0 16px rgba(0,255,136,0.3)}
 #mic-btn.active{background:rgba(0,255,136,0.2);border-color:#00ff88;box-shadow:0 0 20px rgba(0,255,136,0.5)}
 #stop-btn{background:rgba(255,34,68,0.08);border-color:var(--red);color:var(--red);display:none}
@@ -89,13 +89,11 @@ footer{position:relative;z-index:10;padding:12px 24px 16px;background:rgba(0,10,
 </style>
 </head>
 <body>
-<div class="corner tl"></div>
-<div class="corner tr"></div>
-<div class="corner bl"></div>
-<div class="corner br"></div>
+<div class="corner tl"></div><div class="corner tr"></div>
+<div class="corner bl"></div><div class="corner br"></div>
 <div id="overlay" onclick="closeHistory()"></div>
-<div id="voice-banner">Ecoute active - Dis JARVIS</div>
-<div id="mic-ring"><span id="mic-icon">mic</span></div>
+<div id="voice-banner">ECOUTE ACTIVE - DIS JARVIS</div>
+<div id="mic-ring"><span id="mic-icon">&#127908;</span></div>
 <div id="history-panel">
   <h3>HISTORIQUE</h3>
   <div id="history-list"></div>
@@ -109,7 +107,7 @@ footer{position:relative;z-index:10;padding:12px 24px 16px;background:rgba(0,10,
     <span>claude-haiku-4-5</span>
   </div>
 </header>
-<main><div id="chat-log"><div class="sys-msg">SYSTEME INITIALISE - JARVIS V3.2</div></div></main>
+<main><div id="chat-log"><div class="sys-msg">SYSTEME INITIALISE - JARVIS V3.3</div></div></main>
 <footer>
   <div class="input-row">
     <textarea id="user-input" placeholder='Dis "Jarvis" ou tape ta question...' rows="1"></textarea>
@@ -122,16 +120,18 @@ footer{position:relative;z-index:10;padding:12px 24px 16px;background:rgba(0,10,
     <button class="btn" id="clear-btn" onclick="clearHistory()">EFFACER</button>
   </div>
 </footer>
+
 <script>
 // ── STATE ──────────────────────────────────────────────
-const HISTORY_KEY = 'jarvis_conv_history';
-const MAX_HISTORY = 20;
+const HISTORY_KEY = 'jarvis_conv_history_v2';
+const MAX_HISTORY = 50;
 let abortFlag    = false;
 let isGenerating = false;
 let isSpeaking   = false;
 let voiceActive  = false;
 let recognition  = null;
 let listenTimer  = null;
+let userName     = null; // prenom detecte
 
 // ── HISTORY ────────────────────────────────────────────
 async function loadHistory() {
@@ -145,14 +145,15 @@ async function saveHistory(h) {
 async function clearHistory() {
   if (!confirm('Effacer tout l\'historique ?')) return;
   try { await puter.kv.del(HISTORY_KEY); } catch {}
+  userName = null;
   addSysMsg('HISTORIQUE EFFACE');
   renderHistoryPanel([]);
 }
 
-// ── TTS PIPELINE (phrase par phrase, sans attendre la fin) ─
+// ── TTS GRATUIT - Web Speech API (voix Henri Microsoft) ──
+// Pas de credit consomme, 100% navigateur
 let ttsQueue   = [];
 let ttsRunning = false;
-let currentAudio = null;
 
 function enqueueTTS(phrase) {
   phrase = phrase.trim();
@@ -161,44 +162,58 @@ function enqueueTTS(phrase) {
   if (!ttsRunning) drainTTS();
 }
 
-async function drainTTS() {
+function drainTTS() {
   if (ttsRunning || ttsQueue.length === 0) return;
   ttsRunning = true;
   isSpeaking = true;
   setStatus('speaking');
+  speakNext();
+}
 
-  while (ttsQueue.length > 0) {
-    if (abortFlag) { ttsQueue = []; break; }
-    const phrase = ttsQueue.shift();
-    try {
-      const audio = await puter.ai.txt2speech(phrase, {
-        provider: 'openai',
-        model: 'tts-1',
-        voice: 'onyx',
-        response_format: 'mp3'
-      });
-      currentAudio = audio;
-      await new Promise(resolve => {
-        audio.onended = resolve;
-        audio.onerror = resolve;
-        audio.play();
-      });
-      currentAudio = null;
-    } catch(e) { console.warn('TTS err:', e); }
+function speakNext() {
+  if (abortFlag || ttsQueue.length === 0) {
+    ttsRunning = false;
+    isSpeaking = false;
+    setStatus('online');
+    if (voiceActive && !isGenerating) setTimeout(startListening, 300);
+    return;
   }
 
-  ttsRunning = false;
-  isSpeaking = false;
-  currentAudio = null;
-  setStatus('online');
-  if (voiceActive && !isGenerating) setTimeout(startListening, 300);
+  const phrase = ttsQueue.shift();
+  const utter  = new SpeechSynthesisUtterance(phrase);
+
+  // Choisir la meilleure voix masculine francaise disponible
+  // Priorite : Henri (Microsoft Neural, top qualite) > Thomas > autre voix fr male
+  const voices = window.speechSynthesis.getVoices();
+  const best = voices.find(v => /henri/i.test(v.name))
+            || voices.find(v => v.lang === 'fr-FR' && /male|homme|thomas|claude|pierre/i.test(v.name))
+            || voices.find(v => v.lang === 'fr-FR')
+            || voices.find(v => v.lang.startsWith('fr'))
+            || voices[0];
+  if (best) utter.voice = best;
+
+  utter.lang   = 'fr-FR';
+  utter.pitch  = 0.7;  // grave mais pas trop - plus naturel que 0.5
+  utter.rate   = 0.9;  // pose
+  utter.volume = 1;
+
+  utter.onend   = () => speakNext();
+  utter.onerror = () => speakNext();
+
+  window.speechSynthesis.speak(utter);
 }
 
 function stopTTS() {
-  ttsQueue = [];
+  ttsQueue   = [];
   ttsRunning = false;
-  if (currentAudio) { try { currentAudio.pause(); } catch {} currentAudio = null; }
+  window.speechSynthesis.cancel();
   isSpeaking = false;
+}
+
+// Precharger les voix (Chrome les charge en async)
+if (window.speechSynthesis) {
+  window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
+  window.speechSynthesis.getVoices();
 }
 
 // ── SPEECH RECOGNITION ────────────────────────────────
@@ -208,12 +223,20 @@ function initRecognition() {
   if (!SpeechRecognition) return null;
   const r = new SpeechRecognition();
   r.lang = 'fr-FR';
-  r.continuous = false;
-  r.interimResults = false;
-  r.maxAlternatives = 1;
+  r.continuous      = false;
+  r.interimResults  = false;
+  r.maxAlternatives = 3; // plusieurs alternatives pour mieux capter "jarvis"
+
   r.onresult = e => {
-    const raw = e.results[0][0].transcript.trim().toLowerCase();
-    handleVoiceInput(raw);
+    // Verifier toutes les alternatives pour trouver "jarvis"
+    let best = '';
+    for (let i = 0; i < e.results[0].length; i++) {
+      const t = e.results[0][i].transcript.trim().toLowerCase();
+      if (t.includes('jarvis')) { best = t; break; }
+      if (!best) best = t;
+    }
+    console.log('STT:', best);
+    handleVoiceInput(best);
   };
   r.onerror = e => {
     if (e.error === 'no-speech' || e.error === 'aborted') {
@@ -250,23 +273,55 @@ function stopListening() {
 function toggleVoice() {
   if (!SpeechRecognition) { alert('Utilise Chrome ou Edge pour la voix.'); return; }
   voiceActive = !voiceActive;
-  if (voiceActive) { addSysMsg('ECOUTE VOCALE ACTIVEE - DIS JARVIS'); startListening(); }
-  else { stopListening(); setStatus('online'); addSysMsg('ECOUTE VOCALE DESACTIVEE'); }
+  if (voiceActive) {
+    addSysMsg('ECOUTE VOCALE ACTIVEE - DIS JARVIS');
+    startListening();
+  } else {
+    stopListening();
+    setStatus('online');
+    addSysMsg('ECOUTE VOCALE DESACTIVEE');
+  }
 }
 
 function setVoiceBanner(on) {
   document.getElementById('voice-banner').classList.toggle('show', on);
 }
 
+// Detection plus robuste du mot-cle "jarvis"
+// Gere: "jarvis", "jarvice", "jarvi", "vis", "harvey" (mauvaise reco)
+function containsJarvis(text) {
+  // Detection large pour compenser les erreurs de reconnaissance vocale
+  return /jarv|harv|jarb|jarvi|jarvie|jarvic|jarvis/i.test(text);
+}
+
+// Detection du prenom dans la phrase
+function extractName(text) {
+  const m = text.match(/je m'appelle\s+(\w+)|mon nom est\s+(\w+)|appelle[- ]moi\s+(\w+)|c'est\s+(\w+)/i);
+  if (m) return (m[1]||m[2]||m[3]||m[4]);
+  return null;
+}
+
 function handleVoiceInput(raw) {
-  if (!raw.includes('jarvis')) return;
-  let question = raw.replace(/^.*?jarvis[,!?.\s]*/i, '').trim();
+  // Detecter si l'utilisateur donne son prenom
+  const name = extractName(raw);
+  if (name) {
+    userName = name;
+    addSysMsg('Prenom enregistre : ' + name);
+  }
+
+  if (!containsJarvis(raw)) return;
+
+  // Extraire la question apres "jarvis"
+  let question = raw.replace(/^.*?(jarv[ia]s?|harvey|jarvi|jarbi)[,!?.\s]*/i, '').trim();
+
   if (!question || question.length < 2) {
+    const rep = userName ? ('Oui ' + userName + ', monsieur ?') : 'Oui monsieur !';
     addUserBubble('Jarvis');
-    addJarvisInstant('Oui monsieur ?');
-    enqueueTTS('Oui monsieur ?');
+    addJarvisInstant(rep);
+    enqueueTTS(rep);
     return;
   }
+
   addUserBubble('Jarvis, ' + question);
   processQuery(question);
 }
@@ -285,7 +340,6 @@ function setStatus(state) {
   if (m[state]) { dot.classList.add(m[state][0]); txt.textContent = m[state][1]; }
   else txt.textContent = 'EN LIGNE';
 }
-
 function addSysMsg(t) {
   const l = document.getElementById('chat-log');
   const d = document.createElement('div');
@@ -338,27 +392,35 @@ function renderHistoryPanel(h) {
   const el = document.getElementById('history-list');
   if (!h.length) { el.innerHTML = '<div style="opacity:.4;font-size:.7rem">Aucun historique.</div>'; return; }
   el.innerHTML = h.map(e =>
-    '<div class="history-entry"><div class="q">' + escHtml(e.user.substring(0,80)) + (e.user.length>80?'...':'') + '</div>' +
-    '<div class="a">' + escHtml(e.assistant.substring(0,100)) + (e.assistant.length>100?'...':'') + '</div></div>'
+    '<div class="history-entry">' +
+    '<div class="q">' + escHtml(e.user.substring(0,80)) + (e.user.length>80?'...':'') + '</div>' +
+    '<div class="a">' + escHtml(e.assistant.substring(0,100)) + (e.assistant.length>100?'...':'') + '</div>' +
+    '</div>'
   ).join('');
 }
 
 // ── BUILD MESSAGES ────────────────────────────────────
 function buildMessages(history, userText) {
-  const system = 'Tu es JARVIS, l\'IA de Tony Stark. Tu parles avec calme et precision. Tu vouvoies toujours.';
+  const nameContext = userName
+    ? 'Le prenom de l\'utilisateur est ' + userName + '. Tu le vouvoies toujours (vous, votre, vos).'
+    : 'Tu ne connais pas encore le prenom de l\'utilisateur.';
+
+  const system =
+    'Tu es JARVIS, l\'IA de Tony Stark. Tu parles avec calme, precision et une legere formalite. ' +
+    nameContext + ' ' +
+    'Si l\'utilisateur te donne son prenom, retiens-le et utilise-le.';
 
   const wrapped =
-    'REGLES ABSOLUES - respecte-les sans exception :\n' +
+    'REGLES ABSOLUES :\n' +
     '1. Reponds en 1 phrase. 2 phrases MAXIMUM. Jamais plus.\n' +
     '2. Aucun emoji. Aucun symbole. Aucun astérisque. Aucun tiret de liste. Texte brut uniquement.\n' +
-    '3. Commence directement par la reponse, sans introduction.\n' +
-    '4. Tu peux ajouter "monsieur" occasionnellement.\n' +
-    'Bon exemple : "La vitesse de la lumiere est de 299 792 km/s."\n' +
-    'Mauvais exemple : tout ce qui depasse 2 phrases.\n' +
+    '3. Commence directement par la reponse sans introduction.\n' +
+    '4. Si tu connais le prenom, vouvoie et utilise-le naturellement.\n' +
     'Question : ' + userText;
 
   const messages = [];
-  history.slice(-3).forEach(e => {
+  // Envoyer tout l'historique
+  history.forEach(e => {
     messages.push({ role: 'user',      content: e.user });
     messages.push({ role: 'assistant', content: e.assistant });
   });
@@ -379,6 +441,10 @@ async function processQuery(text) {
   abortFlag = false;
   stopTTS();
 
+  // Detecter prenom dans le texte tape aussi
+  const name = extractName(text);
+  if (name) { userName = name; addSysMsg('Prenom enregistre : ' + name); }
+
   if (voiceActive) stopListening();
   document.getElementById('send-btn').disabled = true;
   document.getElementById('stop-btn').classList.add('visible');
@@ -389,12 +455,10 @@ async function processQuery(text) {
   const { bubble, cursor } = createJarvisBubble();
 
   let fullText = '';
-  let buffer = '';
+  let buffer   = '';
   const textNode = document.createTextNode('');
   bubble.insertBefore(textNode, cursor);
-
-  // Detecte fin de phrase pour decouper le TTS
-  const sentenceEndRe = /([.!?:]["\s])/;
+  const sentenceEndRe = /([.!?]["\s]|[.!?]$)/;
 
   try {
     const response = await puter.ai.chat(messages, {
@@ -405,41 +469,39 @@ async function processQuery(text) {
 
     for await (const part of response) {
       if (abortFlag) break;
-      const token = part && part.text ? part.text : '';
+      const token = (part && part.text) ? part.text : '';
       fullText += token;
       buffer   += token;
       textNode.textContent = fullText;
       scrollDown();
 
-      // Des qu'une phrase est complete dans le buffer, on la met en TTS immediatement
+      // Envoyer chaque phrase au TTS des qu'elle est complete
       let match;
       while ((match = sentenceEndRe.exec(buffer)) !== null) {
-        const idx     = match.index + match[0].length;
-        const phrase  = buffer.substring(0, idx).trim();
-        buffer        = buffer.substring(idx);
-        if (phrase) enqueueTTS(phrase);  // lance le TTS pendant que le stream continue
+        const idx    = match.index + match[0].length;
+        const phrase = buffer.substring(0, idx).trim();
+        buffer       = buffer.substring(idx);
+        if (phrase) enqueueTTS(phrase);
       }
     }
 
-    // Dernier bout restant apres fin du stream
     if (buffer.trim() && !abortFlag) enqueueTTS(buffer.trim());
 
   } catch(err) {
-    fullText = 'Erreur de connexion, monsieur.';
+    fullText = 'Erreur de connexion.';
     textNode.textContent = fullText;
     enqueueTTS(fullText);
     console.error(err);
   } finally {
     cursor.remove();
-    if (abortFlag && !fullText) fullText = 'Arrete';
 
-    if (fullText && fullText !== 'Arrete') {
+    if (fullText && !abortFlag) {
       history.push({ user: text, assistant: fullText });
       await saveHistory(history);
     }
 
     isGenerating = false;
-    abortFlag = false;
+    abortFlag    = false;
     document.getElementById('send-btn').disabled = false;
     document.getElementById('stop-btn').classList.remove('visible');
     scrollDown();
@@ -464,9 +526,17 @@ document.getElementById('user-input').addEventListener('input', function() { aut
 // ── BOOT ──────────────────────────────────────────────
 (async () => {
   const history = await loadHistory();
-  if (history.length) addSysMsg(history.length + ' echange(s) charges depuis l\'historique');
+  // Recuperer le prenom depuis l'historique si deja dit avant
+  for (const e of history) {
+    const n = extractName(e.user);
+    if (n) { userName = n; break; }
+  }
+  if (history.length) {
+    addSysMsg(history.length + ' echange(s) charges');
+    if (userName) addSysMsg('Prenom retrouve : ' + userName);
+  }
   if (!SpeechRecognition) addSysMsg('Reconnaissance vocale indisponible - utilise Chrome ou Edge');
-  else addSysMsg('Clique MIC pour activer la voix');
+  else addSysMsg('Clique MIC pour activer la voix - dis JARVIS pour activer');
 })();
 </script>
 </body>
