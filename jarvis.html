@@ -35,6 +35,8 @@ header{position:relative;z-index:10;display:flex;align-items:center;justify-cont
 #mic-icon{font-size:1.4rem;z-index:1;filter:drop-shadow(0 0 8px #00ff88)}
 #voice-banner{position:fixed;top:70px;left:50%;transform:translateX(-50%);background:rgba(0,255,136,0.1);border:1px solid rgba(0,255,136,0.35);color:#00ff88;font-size:0.72rem;letter-spacing:0.15em;padding:6px 20px;border-radius:2px;z-index:50;display:none;backdrop-filter:blur(4px)}
 #voice-banner.show{display:block}
+#memory-flash{position:fixed;top:110px;left:50%;transform:translateX(-50%);background:rgba(170,68,255,0.12);border:1px solid rgba(170,68,255,0.4);color:#cc88ff;font-size:0.68rem;letter-spacing:0.12em;padding:5px 18px;border-radius:2px;z-index:50;display:none;backdrop-filter:blur(4px);max-width:400px;text-align:center}
+#memory-flash.show{display:block}
 main{position:relative;z-index:5;flex:1;display:flex;flex-direction:column;padding:16px 24px 0;overflow:hidden}
 #chat-log{flex:1;overflow-y:auto;overflow-x:hidden;display:flex;flex-direction:column;gap:10px;padding-right:6px;padding-bottom:8px;scrollbar-width:thin;scrollbar-color:var(--cyan-dim) transparent}
 #chat-log::-webkit-scrollbar{width:4px}
@@ -52,31 +54,43 @@ main{position:relative;z-index:5;flex:1;display:flex;flex-direction:column;paddi
 .cursor{display:inline-block;width:8px;height:13px;background:var(--cyan);margin-left:3px;animation:cursorBlink 0.6s step-end infinite;vertical-align:middle;box-shadow:0 0 6px var(--cyan)}
 @keyframes cursorBlink{0%,100%{opacity:1}50%{opacity:0}}
 .sys-msg{font-size:0.68rem;color:rgba(0,245,255,0.35);text-align:center;letter-spacing:0.15em;padding:4px 0}
-#history-panel{position:fixed;right:-300px;top:0;bottom:0;width:280px;background:rgba(0,8,18,0.97);border-left:1px solid var(--border);z-index:100;display:flex;flex-direction:column;transition:right 0.3s cubic-bezier(0.4,0,0.2,1);padding:16px}
-#history-panel.open{right:0}
-#history-panel h3{font-family:'Orbitron',sans-serif;font-size:0.75rem;letter-spacing:0.2em;color:var(--cyan);margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--border)}
-#history-list{flex:1;overflow-y:auto;font-size:0.72rem;line-height:1.5;color:rgba(200,240,245,0.55);scrollbar-width:thin;scrollbar-color:var(--border) transparent}
-.history-entry{padding:6px 0;border-bottom:1px solid rgba(0,245,255,0.06)}
+.mem-msg{font-size:0.68rem;color:rgba(170,68,255,0.6);text-align:center;letter-spacing:0.12em;padding:3px 0}
+/* Panels */
+#side-panels{position:fixed;right:-320px;top:0;bottom:0;width:300px;z-index:100;display:flex;flex-direction:column;gap:0;transition:right 0.3s cubic-bezier(0.4,0,0.2,1)}
+#side-panels.open{right:0}
+.side-panel{background:rgba(0,8,18,0.97);border-left:1px solid var(--border);flex:1;display:flex;flex-direction:column;padding:14px;overflow:hidden}
+.side-panel:first-child{border-bottom:1px solid var(--border)}
+.side-panel h3{font-family:'Orbitron',sans-serif;font-size:0.7rem;letter-spacing:0.2em;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--border)}
+#history-panel-inner h3{color:var(--cyan)}
+#memory-panel-inner h3{color:#cc88ff}
+.panel-list{flex:1;overflow-y:auto;font-size:0.7rem;line-height:1.5;scrollbar-width:thin;scrollbar-color:var(--border) transparent}
+#history-list-inner{color:rgba(200,240,245,0.55)}
+#memory-list-inner{color:rgba(200,170,255,0.7)}
+.history-entry{padding:5px 0;border-bottom:1px solid rgba(0,245,255,0.06)}
 .history-entry .q{color:rgba(255,195,0,0.6)}
 .history-entry .a{color:rgba(0,245,255,0.5);margin-top:2px}
+.memory-entry{padding:4px 0;border-bottom:1px solid rgba(170,68,255,0.1);display:flex;justify-content:space-between;align-items:flex-start;gap:6px}
+.memory-entry .mk{color:rgba(170,68,255,0.7);font-size:0.65rem;text-transform:uppercase;white-space:nowrap}
+.memory-entry .mv{color:rgba(200,170,255,0.85)}
+.memory-del{cursor:pointer;color:rgba(255,34,68,0.4);font-size:0.7rem;flex-shrink:0}
+.memory-del:hover{color:var(--red)}
 footer{position:relative;z-index:10;padding:12px 24px 16px;background:rgba(0,10,20,0.92);border-top:1px solid var(--border);backdrop-filter:blur(8px)}
-.input-row{display:flex;gap:10px;align-items:flex-end}
+.input-row{display:flex;gap:8px;align-items:flex-end}
 #user-input{flex:1;background:rgba(0,245,255,0.04);border:1px solid var(--border);border-radius:4px;color:var(--text);font-family:'Share Tech Mono',monospace;font-size:0.88rem;padding:10px 14px;resize:none;min-height:42px;max-height:120px;outline:none;transition:border-color 0.2s,box-shadow 0.2s;line-height:1.4}
 #user-input:focus{border-color:var(--cyan);box-shadow:0 0 12px rgba(0,245,255,0.15),inset 0 0 8px rgba(0,245,255,0.04)}
 #user-input::placeholder{color:rgba(0,245,255,0.25)}
-.btn{font-family:'Orbitron',sans-serif;font-size:0.65rem;letter-spacing:0.15em;padding:10px 14px;border:1px solid;border-radius:4px;cursor:pointer;transition:all 0.2s;white-space:nowrap}
+.btn{font-family:'Orbitron',sans-serif;font-size:0.62rem;letter-spacing:0.12em;padding:9px 12px;border:1px solid;border-radius:4px;cursor:pointer;transition:all 0.2s;white-space:nowrap}
 #send-btn{background:rgba(0,245,255,0.08);border-color:var(--cyan);color:var(--cyan)}
 #send-btn:hover:not(:disabled){background:rgba(0,245,255,0.18);box-shadow:0 0 16px rgba(0,245,255,0.3)}
 #send-btn:disabled{opacity:0.35;cursor:not-allowed}
-#mic-btn{background:rgba(0,255,136,0.06);border-color:rgba(0,255,136,0.4);color:#00ff88;font-size:0.9rem;padding:8px 14px;letter-spacing:0}
-#mic-btn:hover{background:rgba(0,255,136,0.15);box-shadow:0 0 16px rgba(0,255,136,0.3)}
+#mic-btn{background:rgba(0,255,136,0.06);border-color:rgba(0,255,136,0.4);color:#00ff88;font-size:0.9rem;padding:8px 12px;letter-spacing:0}
+#mic-btn:hover{background:rgba(0,255,136,0.15)}
 #mic-btn.active{background:rgba(0,255,136,0.2);border-color:#00ff88;box-shadow:0 0 20px rgba(0,255,136,0.5)}
 #stop-btn{background:rgba(255,34,68,0.08);border-color:var(--red);color:var(--red);display:none}
 #stop-btn.visible{display:block}
-#stop-btn:hover{background:rgba(255,34,68,0.2)}
-#hist-btn{background:rgba(255,195,0,0.06);border-color:rgba(255,195,0,0.4);color:var(--gold)}
-#hist-btn:hover{background:rgba(255,195,0,0.14)}
-#clear-btn{background:transparent;border-color:rgba(255,34,68,0.3);color:rgba(255,34,68,0.5);font-size:0.6rem}
+#panels-btn{background:rgba(255,195,0,0.06);border-color:rgba(255,195,0,0.4);color:var(--gold)}
+#panels-btn:hover{background:rgba(255,195,0,0.14)}
+#clear-btn{background:transparent;border-color:rgba(255,34,68,0.3);color:rgba(255,34,68,0.5);font-size:0.58rem}
 #clear-btn:hover{border-color:var(--red);color:var(--red)}
 .btn-row-2{display:flex;gap:8px;margin-top:8px;justify-content:flex-end}
 .corner{position:fixed;width:60px;height:60px;z-index:6;opacity:0.35}
@@ -91,13 +105,22 @@ footer{position:relative;z-index:10;padding:12px 24px 16px;background:rgba(0,10,
 <body>
 <div class="corner tl"></div><div class="corner tr"></div>
 <div class="corner bl"></div><div class="corner br"></div>
-<div id="overlay" onclick="closeHistory()"></div>
+<div id="overlay" onclick="closePanels()"></div>
 <div id="voice-banner">ECOUTE ACTIVE - DIS JARVIS</div>
 <div id="mic-ring"><span id="mic-icon">&#127908;</span></div>
-<div id="history-panel">
-  <h3>HISTORIQUE</h3>
-  <div id="history-list"></div>
+<div id="memory-flash"></div>
+
+<div id="side-panels">
+  <div class="side-panel" id="history-panel-inner">
+    <h3>HISTORIQUE</h3>
+    <div class="panel-list" id="history-list-inner"></div>
+  </div>
+  <div class="side-panel" id="memory-panel-inner">
+    <h3>MEMOIRE JARVIS</h3>
+    <div class="panel-list" id="memory-list-inner"></div>
+  </div>
 </div>
+
 <header>
   <div class="logo">J.<span>A</span>.R.V.I.S</div>
   <div class="status-row">
@@ -107,7 +130,7 @@ footer{position:relative;z-index:10;padding:12px 24px 16px;background:rgba(0,10,
     <span>claude-haiku-4-5</span>
   </div>
 </header>
-<main><div id="chat-log"><div class="sys-msg">SYSTEME INITIALISE - JARVIS V3.3</div></div></main>
+<main><div id="chat-log"><div class="sys-msg">SYSTEME INITIALISE - JARVIS V3.4</div></div></main>
 <footer>
   <div class="input-row">
     <textarea id="user-input" placeholder='Dis "Jarvis" ou tape ta question...' rows="1"></textarea>
@@ -116,42 +139,113 @@ footer{position:relative;z-index:10;padding:12px 24px 16px;background:rgba(0,10,
     <button class="btn" id="stop-btn" onclick="stopAll()">STOP</button>
   </div>
   <div class="btn-row-2">
-    <button class="btn" id="hist-btn" onclick="toggleHistory()">HISTORIQUE</button>
-    <button class="btn" id="clear-btn" onclick="clearHistory()">EFFACER</button>
+    <button class="btn" id="panels-btn" onclick="togglePanels()">MEMOIRE / HIST.</button>
+    <button class="btn" id="clear-btn" onclick="clearAll()">TOUT EFFACER</button>
   </div>
 </footer>
 
 <script>
-// ── STATE ──────────────────────────────────────────────
-const HISTORY_KEY = 'jarvis_conv_history_v2';
-const MAX_HISTORY = 50;
+// ── CONSTANTES ────────────────────────────────────────
+const HISTORY_KEY = 'jarvis_history_v3';
+const MEMORY_KEY  = 'jarvis_memory_v3';
+const MAX_HISTORY = 50;  // stockage max
+const SEND_LIMIT  = 10;  // envoye a l'IA
+
+// ── STATE ─────────────────────────────────────────────
 let abortFlag    = false;
 let isGenerating = false;
 let isSpeaking   = false;
 let voiceActive  = false;
 let recognition  = null;
 let listenTimer  = null;
-let userName     = null; // prenom detecte
+let memoryFlashTimer = null;
 
-// ── HISTORY ────────────────────────────────────────────
+// ── HISTORY ───────────────────────────────────────────
 async function loadHistory() {
   try { const r = await puter.kv.get(HISTORY_KEY); return r ? JSON.parse(r) : []; }
   catch { return []; }
 }
 async function saveHistory(h) {
   try { await puter.kv.set(HISTORY_KEY, JSON.stringify(h.slice(-MAX_HISTORY))); }
-  catch(e) { console.warn('KV:', e); }
-}
-async function clearHistory() {
-  if (!confirm('Effacer tout l\'historique ?')) return;
-  try { await puter.kv.del(HISTORY_KEY); } catch {}
-  userName = null;
-  addSysMsg('HISTORIQUE EFFACE');
-  renderHistoryPanel([]);
+  catch(e) { console.warn('KV history:', e); }
 }
 
-// ── TTS GRATUIT - Web Speech API (voix Henri Microsoft) ──
-// Pas de credit consomme, 100% navigateur
+// ── MEMOIRE PERSISTANTE ───────────────────────────────
+// Structure : { cle: valeur, ... }
+// Ex: { prenom: "Alan", anniversaire: "15 mars", prof_maths: "M. Martin" }
+async function loadMemory() {
+  try { const r = await puter.kv.get(MEMORY_KEY); return r ? JSON.parse(r) : {}; }
+  catch { return {}; }
+}
+async function saveMemory(mem) {
+  try { await puter.kv.set(MEMORY_KEY, JSON.stringify(mem)); }
+  catch(e) { console.warn('KV memory:', e); }
+}
+
+// Extraction d'infos importantes via l'IA (appel leger)
+async function extractAndSaveMemory(userText, memory) {
+  const existingKeys = Object.keys(memory).join(', ') || 'aucune';
+  const prompt =
+    'Analyse ce message et extrait uniquement les informations personnelles importantes a retenir a long terme.\n' +
+    'Informations deja connues : ' + existingKeys + '\n' +
+    'Message : "' + userText + '"\n\n' +
+    'Reponds UNIQUEMENT en JSON valide, format : {"cle": "valeur"}\n' +
+    'Exemples de cles : prenom, nom, anniversaire, age, emploi, ecole, prof_maths, prof_francais, cours_lundi, adresse, ville, hobby, etc.\n' +
+    'Si aucune info importante, reponds exactement : {}\n' +
+    'IMPORTANT : JSON pur, aucun texte avant ou apres, aucun backtick.';
+
+  try {
+    const resp = await puter.ai.chat([{ role: 'user', content: prompt }], {
+      model: 'claude-haiku-4-5',
+      stream: false
+    });
+    const raw = (resp && resp.message && resp.message.content) ? resp.message.content : (resp && resp.text ? resp.text : '{}');
+    const text = raw.trim().replace(/```json|```/g, '').trim();
+    if (text === '{}') return false;
+    const extracted = JSON.parse(text);
+    if (Object.keys(extracted).length === 0) return false;
+    let updated = false;
+    for (const [k, v] of Object.entries(extracted)) {
+      if (v && String(v).trim()) {
+        memory[k] = String(v).trim();
+        updated = true;
+      }
+    }
+    if (updated) {
+      await saveMemory(memory);
+      return extracted;
+    }
+    return false;
+  } catch(e) {
+    console.warn('Memory extract error:', e);
+    return false;
+  }
+}
+
+function showMemoryFlash(extracted) {
+  const keys = Object.keys(extracted).join(', ');
+  const el = document.getElementById('memory-flash');
+  el.textContent = 'MEMOIRE MISE A JOUR : ' + keys;
+  el.classList.add('show');
+  clearTimeout(memoryFlashTimer);
+  memoryFlashTimer = setTimeout(() => el.classList.remove('show'), 3000);
+
+  const log = document.getElementById('chat-log');
+  const d = document.createElement('div');
+  d.className = 'mem-msg';
+  d.textContent = 'Memorise : ' + Object.entries(extracted).map(([k,v]) => k + ' = ' + v).join(' | ');
+  log.appendChild(d);
+  scrollDown();
+}
+
+// Formater la memoire en contexte lisible pour l'IA
+function memoryToContext(memory) {
+  if (Object.keys(memory).length === 0) return '';
+  const lines = Object.entries(memory).map(([k, v]) => k.replace(/_/g,' ') + ' : ' + v);
+  return 'Informations connues sur l\'utilisateur :\n' + lines.join('\n');
+}
+
+// ── TTS GRATUIT - Web Speech API ──────────────────────
 let ttsQueue   = [];
 let ttsRunning = false;
 
@@ -161,7 +255,6 @@ function enqueueTTS(phrase) {
   ttsQueue.push(phrase);
   if (!ttsRunning) drainTTS();
 }
-
 function drainTTS() {
   if (ttsRunning || ttsQueue.length === 0) return;
   ttsRunning = true;
@@ -169,48 +262,32 @@ function drainTTS() {
   setStatus('speaking');
   speakNext();
 }
-
 function speakNext() {
   if (abortFlag || ttsQueue.length === 0) {
-    ttsRunning = false;
-    isSpeaking = false;
+    ttsRunning = false; isSpeaking = false;
     setStatus('online');
     if (voiceActive && !isGenerating) setTimeout(startListening, 300);
     return;
   }
-
   const phrase = ttsQueue.shift();
   const utter  = new SpeechSynthesisUtterance(phrase);
-
-  // Choisir la meilleure voix masculine francaise disponible
-  // Priorite : Henri (Microsoft Neural, top qualite) > Thomas > autre voix fr male
   const voices = window.speechSynthesis.getVoices();
   const best = voices.find(v => /henri/i.test(v.name))
-            || voices.find(v => v.lang === 'fr-FR' && /male|homme|thomas|claude|pierre/i.test(v.name))
+            || voices.find(v => v.lang === 'fr-FR' && /male|homme|thomas|pierre/i.test(v.name))
             || voices.find(v => v.lang === 'fr-FR')
             || voices.find(v => v.lang.startsWith('fr'))
             || voices[0];
   if (best) utter.voice = best;
-
-  utter.lang   = 'fr-FR';
-  utter.pitch  = 0.7;  // grave mais pas trop - plus naturel que 0.5
-  utter.rate   = 0.9;  // pose
-  utter.volume = 1;
-
+  utter.lang = 'fr-FR'; utter.pitch = 0.7; utter.rate = 0.9; utter.volume = 1;
   utter.onend   = () => speakNext();
   utter.onerror = () => speakNext();
-
   window.speechSynthesis.speak(utter);
 }
-
 function stopTTS() {
-  ttsQueue   = [];
-  ttsRunning = false;
+  ttsQueue = []; ttsRunning = false;
   window.speechSynthesis.cancel();
   isSpeaking = false;
 }
-
-// Precharger les voix (Chrome les charge en async)
 if (window.speechSynthesis) {
   window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
   window.speechSynthesis.getVoices();
@@ -218,24 +295,17 @@ if (window.speechSynthesis) {
 
 // ── SPEECH RECOGNITION ────────────────────────────────
 const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-
 function initRecognition() {
   if (!SpeechRecognition) return null;
   const r = new SpeechRecognition();
-  r.lang = 'fr-FR';
-  r.continuous      = false;
-  r.interimResults  = false;
-  r.maxAlternatives = 3; // plusieurs alternatives pour mieux capter "jarvis"
-
+  r.lang = 'fr-FR'; r.continuous = false; r.interimResults = false; r.maxAlternatives = 3;
   r.onresult = e => {
-    // Verifier toutes les alternatives pour trouver "jarvis"
     let best = '';
     for (let i = 0; i < e.results[0].length; i++) {
       const t = e.results[0][i].transcript.trim().toLowerCase();
-      if (t.includes('jarvis')) { best = t; break; }
+      if (containsJarvis(t)) { best = t; break; }
       if (!best) best = t;
     }
-    console.log('STT:', best);
     handleVoiceInput(best);
   };
   r.onerror = e => {
@@ -248,7 +318,6 @@ function initRecognition() {
   };
   return r;
 }
-
 function startListening() {
   clearTimeout(listenTimer);
   if (!recognition) recognition = initRecognition();
@@ -261,7 +330,6 @@ function startListening() {
     setStatus('listening');
   } catch(e) {}
 }
-
 function stopListening() {
   clearTimeout(listenTimer);
   setVoiceBanner(false);
@@ -269,59 +337,27 @@ function stopListening() {
   document.getElementById('mic-ring').classList.remove('show');
   if (recognition) try { recognition.abort(); } catch {}
 }
-
 function toggleVoice() {
-  if (!SpeechRecognition) { alert('Utilise Chrome ou Edge pour la voix.'); return; }
+  if (!SpeechRecognition) { alert('Utilise Chrome ou Edge.'); return; }
   voiceActive = !voiceActive;
-  if (voiceActive) {
-    addSysMsg('ECOUTE VOCALE ACTIVEE - DIS JARVIS');
-    startListening();
-  } else {
-    stopListening();
-    setStatus('online');
-    addSysMsg('ECOUTE VOCALE DESACTIVEE');
-  }
+  if (voiceActive) { addSysMsg('ECOUTE VOCALE ACTIVEE'); startListening(); }
+  else { stopListening(); setStatus('online'); addSysMsg('ECOUTE VOCALE DESACTIVEE'); }
 }
-
 function setVoiceBanner(on) {
   document.getElementById('voice-banner').classList.toggle('show', on);
 }
-
-// Detection plus robuste du mot-cle "jarvis"
-// Gere: "jarvis", "jarvice", "jarvi", "vis", "harvey" (mauvaise reco)
 function containsJarvis(text) {
-  // Detection large pour compenser les erreurs de reconnaissance vocale
-  return /jarv|harv|jarb|jarvi|jarvie|jarvic|jarvis/i.test(text);
+  return /jarv|harv[ei]|jarbi|jarvi/i.test(text);
 }
-
-// Detection du prenom dans la phrase
-function extractName(text) {
-  const m = text.match(/je m'appelle\s+(\w+)|mon nom est\s+(\w+)|appelle[- ]moi\s+(\w+)|c'est\s+(\w+)/i);
-  if (m) return (m[1]||m[2]||m[3]||m[4]);
-  return null;
-}
-
 function handleVoiceInput(raw) {
-  // Detecter si l'utilisateur donne son prenom
-  const name = extractName(raw);
-  if (name) {
-    userName = name;
-    addSysMsg('Prenom enregistre : ' + name);
-  }
-
   if (!containsJarvis(raw)) return;
-
-  // Extraire la question apres "jarvis"
-  let question = raw.replace(/^.*?(jarv[ia]s?|harvey|jarvi|jarbi)[,!?.\s]*/i, '').trim();
-
+  let question = raw.replace(/^.*?(jarv\w*|harv\w*|jarbi)[,!?.\s]*/i, '').trim();
   if (!question || question.length < 2) {
-    const rep = userName ? ('Oui ' + userName + ', monsieur ?') : 'Oui monsieur !';
     addUserBubble('Jarvis');
-    addJarvisInstant(rep);
-    enqueueTTS(rep);
+    addJarvisInstant('Oui monsieur.');
+    enqueueTTS('Oui monsieur.');
     return;
   }
-
   addUserBubble('Jarvis, ' + question);
   processQuery(question);
 }
@@ -331,96 +367,110 @@ function setStatus(state) {
   const dot = document.getElementById('status-dot');
   const txt = document.getElementById('status-text');
   dot.className = 'dot';
-  const m = {
-    listening: ['listening', 'ECOUTE...'],
-    thinking:  ['thinking',  'TRAITEMENT...'],
-    speaking:  ['speaking',  'JARVIS PARLE'],
-    offline:   ['off',       'HORS LIGNE']
-  };
+  const m = { listening:['listening','ECOUTE...'], thinking:['thinking','TRAITEMENT...'], speaking:['speaking','JARVIS PARLE'], offline:['off','HORS LIGNE'] };
   if (m[state]) { dot.classList.add(m[state][0]); txt.textContent = m[state][1]; }
   else txt.textContent = 'EN LIGNE';
 }
 function addSysMsg(t) {
   const l = document.getElementById('chat-log');
-  const d = document.createElement('div');
-  d.className = 'sys-msg'; d.textContent = t;
+  const d = document.createElement('div'); d.className = 'sys-msg'; d.textContent = t;
   l.appendChild(d); scrollDown();
 }
 function addUserBubble(t) {
   const l = document.getElementById('chat-log');
-  const w = document.createElement('div');
-  w.className = 'msg user';
+  const w = document.createElement('div'); w.className = 'msg user';
   w.innerHTML = '<div class="msg-label">VOUS</div><div class="msg-bubble">' + escHtml(t) + '</div>';
   l.appendChild(w); scrollDown();
 }
 function addJarvisInstant(t) {
   const l = document.getElementById('chat-log');
-  const w = document.createElement('div');
-  w.className = 'msg jarvis';
+  const w = document.createElement('div'); w.className = 'msg jarvis';
   w.innerHTML = '<div class="msg-label">JARVIS</div><div class="msg-bubble">' + escHtml(t) + '</div>';
   l.appendChild(w); scrollDown();
 }
 function createJarvisBubble() {
   const l = document.getElementById('chat-log');
-  const w = document.createElement('div');
-  w.className = 'msg jarvis';
-  const bubble = document.createElement('div');
-  bubble.className = 'msg-bubble';
-  const cursor = document.createElement('span');
-  cursor.className = 'cursor';
+  const w = document.createElement('div'); w.className = 'msg jarvis';
+  const bubble = document.createElement('div'); bubble.className = 'msg-bubble';
+  const cursor = document.createElement('span'); cursor.className = 'cursor';
   bubble.appendChild(cursor);
   w.innerHTML = '<div class="msg-label">JARVIS</div>';
-  w.appendChild(bubble);
-  l.appendChild(w); scrollDown();
+  w.appendChild(bubble); l.appendChild(w); scrollDown();
   return { bubble, cursor };
 }
 function scrollDown() { const l = document.getElementById('chat-log'); l.scrollTop = l.scrollHeight; }
 function escHtml(t) { return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 function autoResize(el) { el.style.height='auto'; el.style.height=Math.min(el.scrollHeight,120)+'px'; }
 
-// ── HISTORY PANEL ─────────────────────────────────────
-function toggleHistory() {
-  document.getElementById('history-panel').classList.toggle('open');
+// ── PANELS ────────────────────────────────────────────
+function togglePanels() {
+  document.getElementById('side-panels').classList.toggle('open');
   document.getElementById('overlay').classList.toggle('show');
-  loadHistory().then(renderHistoryPanel);
+  Promise.all([loadHistory(), loadMemory()]).then(([h, m]) => {
+    renderHistoryPanel(h);
+    renderMemoryPanel(m);
+  });
 }
-function closeHistory() {
-  document.getElementById('history-panel').classList.remove('open');
+function closePanels() {
+  document.getElementById('side-panels').classList.remove('open');
   document.getElementById('overlay').classList.remove('show');
 }
 function renderHistoryPanel(h) {
-  const el = document.getElementById('history-list');
+  const el = document.getElementById('history-list-inner');
   if (!h.length) { el.innerHTML = '<div style="opacity:.4;font-size:.7rem">Aucun historique.</div>'; return; }
-  el.innerHTML = h.map(e =>
+  el.innerHTML = [...h].reverse().map(e =>
     '<div class="history-entry">' +
-    '<div class="q">' + escHtml(e.user.substring(0,80)) + (e.user.length>80?'...':'') + '</div>' +
-    '<div class="a">' + escHtml(e.assistant.substring(0,100)) + (e.assistant.length>100?'...':'') + '</div>' +
+    '<div class="q">' + escHtml(e.user.substring(0,60)) + (e.user.length>60?'...':'') + '</div>' +
+    '<div class="a">' + escHtml(e.assistant.substring(0,80)) + (e.assistant.length>80?'...':'') + '</div>' +
     '</div>'
   ).join('');
 }
+function renderMemoryPanel(mem) {
+  const el = document.getElementById('memory-list-inner');
+  const entries = Object.entries(mem);
+  if (!entries.length) { el.innerHTML = '<div style="opacity:.4;font-size:.7rem">Aucune memoire.</div>'; return; }
+  el.innerHTML = entries.map(([k, v]) =>
+    '<div class="memory-entry">' +
+    '<span class="mk">' + escHtml(k.replace(/_/g,' ')) + '</span>' +
+    '<span class="mv">' + escHtml(v) + '</span>' +
+    '<span class="memory-del" onclick="deleteMemoryKey(\'' + escHtml(k) + '\')">x</span>' +
+    '</div>'
+  ).join('');
+}
+async function deleteMemoryKey(key) {
+  const mem = await loadMemory();
+  delete mem[key];
+  await saveMemory(mem);
+  renderMemoryPanel(mem);
+  addSysMsg('Memoire supprimee : ' + key);
+}
+async function clearAll() {
+  if (!confirm('Effacer historique ET memoire ?')) return;
+  try { await puter.kv.del(HISTORY_KEY); await puter.kv.del(MEMORY_KEY); } catch {}
+  addSysMsg('TOUT EFFACE');
+  renderHistoryPanel([]); renderMemoryPanel({});
+}
 
 // ── BUILD MESSAGES ────────────────────────────────────
-function buildMessages(history, userText) {
-  const nameContext = userName
-    ? 'Le prenom de l\'utilisateur est ' + userName + '. Tu le vouvoies toujours (vous, votre, vos).'
-    : 'Tu ne connais pas encore le prenom de l\'utilisateur.';
+function buildMessages(history, memory, userText) {
+  const memCtx = memoryToContext(memory);
 
   const system =
-    'Tu es JARVIS, l\'IA de Tony Stark. Tu parles avec calme, precision et une legere formalite. ' +
-    nameContext + ' ' +
-    'Si l\'utilisateur te donne son prenom, retiens-le et utilise-le.';
+    'Tu es JARVIS, l\'IA de Tony Stark. Tu parles avec calme, precision et une legere formalite.\n' +
+    'Tu vouvoies TOUJOURS l\'utilisateur (vous, votre, vos). Jamais de tutoiement.\n' +
+    (memCtx ? memCtx + '\n' : '') +
+    'Tu peux ajouter "monsieur" a la fin de certaines phrases, de facon occasionnelle et naturelle, pas systematique.';
 
   const wrapped =
     'REGLES ABSOLUES :\n' +
     '1. Reponds en 1 phrase. 2 phrases MAXIMUM. Jamais plus.\n' +
     '2. Aucun emoji. Aucun symbole. Aucun astérisque. Aucun tiret de liste. Texte brut uniquement.\n' +
     '3. Commence directement par la reponse sans introduction.\n' +
-    '4. Si tu connais le prenom, vouvoie et utilise-le naturellement.\n' +
+    '4. Vouvoie toujours. Ajoute "monsieur" occasionnellement en fin de phrase.\n' +
     'Question : ' + userText;
 
   const messages = [];
-  // Envoyer tout l'historique
-  history.forEach(e => {
+  history.slice(-SEND_LIMIT).forEach(e => {
     messages.push({ role: 'user',      content: e.user });
     messages.push({ role: 'assistant', content: e.assistant });
   });
@@ -428,30 +478,27 @@ function buildMessages(history, userText) {
   return { system, messages };
 }
 
-// ── STOP ALL ──────────────────────────────────────────
-function stopAll() {
-  abortFlag = true;
-  stopTTS();
-}
+// ── STOP ──────────────────────────────────────────────
+function stopAll() { abortFlag = true; stopTTS(); }
 
 // ── PROCESS QUERY ─────────────────────────────────────
 async function processQuery(text) {
   if (isGenerating) return;
-  isGenerating = true;
-  abortFlag = false;
+  isGenerating = true; abortFlag = false;
   stopTTS();
-
-  // Detecter prenom dans le texte tape aussi
-  const name = extractName(text);
-  if (name) { userName = name; addSysMsg('Prenom enregistre : ' + name); }
-
   if (voiceActive) stopListening();
   document.getElementById('send-btn').disabled = true;
   document.getElementById('stop-btn').classList.add('visible');
   setStatus('thinking');
 
-  const history = await loadHistory();
-  const { system, messages } = buildMessages(history, text);
+  const [history, memory] = await Promise.all([loadHistory(), loadMemory()]);
+
+  // Extraction memoire en parallele (non bloquant)
+  extractAndSaveMemory(text, memory).then(extracted => {
+    if (extracted) showMemoryFlash(extracted);
+  });
+
+  const { system, messages } = buildMessages(history, memory, text);
   const { bubble, cursor } = createJarvisBubble();
 
   let fullText = '';
@@ -475,7 +522,6 @@ async function processQuery(text) {
       textNode.textContent = fullText;
       scrollDown();
 
-      // Envoyer chaque phrase au TTS des qu'elle est complete
       let match;
       while ((match = sentenceEndRe.exec(buffer)) !== null) {
         const idx    = match.index + match[0].length;
@@ -484,7 +530,6 @@ async function processQuery(text) {
         if (phrase) enqueueTTS(phrase);
       }
     }
-
     if (buffer.trim() && !abortFlag) enqueueTTS(buffer.trim());
 
   } catch(err) {
@@ -494,14 +539,11 @@ async function processQuery(text) {
     console.error(err);
   } finally {
     cursor.remove();
-
     if (fullText && !abortFlag) {
       history.push({ user: text, assistant: fullText });
       await saveHistory(history);
     }
-
-    isGenerating = false;
-    abortFlag    = false;
+    isGenerating = false; abortFlag = false;
     document.getElementById('send-btn').disabled = false;
     document.getElementById('stop-btn').classList.remove('visible');
     scrollDown();
@@ -517,7 +559,6 @@ async function sendMessage() {
   addUserBubble(text);
   processQuery(text);
 }
-
 document.getElementById('user-input').addEventListener('keydown', e => {
   if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
 });
@@ -525,18 +566,12 @@ document.getElementById('user-input').addEventListener('input', function() { aut
 
 // ── BOOT ──────────────────────────────────────────────
 (async () => {
-  const history = await loadHistory();
-  // Recuperer le prenom depuis l'historique si deja dit avant
-  for (const e of history) {
-    const n = extractName(e.user);
-    if (n) { userName = n; break; }
-  }
-  if (history.length) {
-    addSysMsg(history.length + ' echange(s) charges');
-    if (userName) addSysMsg('Prenom retrouve : ' + userName);
-  }
+  const [history, memory] = await Promise.all([loadHistory(), loadMemory()]);
+  const memCount = Object.keys(memory).length;
+  if (history.length) addSysMsg(history.length + ' echange(s) en memoire');
+  if (memCount) addSysMsg(memCount + ' info(s) personnelle(s) chargee(s)');
   if (!SpeechRecognition) addSysMsg('Reconnaissance vocale indisponible - utilise Chrome ou Edge');
-  else addSysMsg('Clique MIC pour activer la voix - dis JARVIS pour activer');
+  else addSysMsg('Clique MIC pour activer la voix - dis JARVIS');
 })();
 </script>
 </body>
