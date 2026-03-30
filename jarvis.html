@@ -358,10 +358,6 @@ function buildMessages(history, userText) {
     'Question : ' + userText;
 
   const messages = [];
-  history.slice(-6).forEach(e => {
-    messages.push({ role: 'user',      content: 'Reponds en max 2 phrases, texte brut : ' + e.user });
-    messages.push({ role: 'assistant', content: e.assistant });
-  });
   messages.push({ role: 'user', content: wrapped });
   return { system, messages };
 }
