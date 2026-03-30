@@ -106,7 +106,7 @@ footer{position:relative;z-index:10;padding:12px 24px 16px;background:rgba(0,10,
     <div class="dot" id="status-dot"></div>
     <span id="status-text">EN LIGNE</span>
     <span style="color:rgba(0,245,255,0.2)">|</span>
-    <span>claude-3-5-sonnet</span>
+    <span>claude-haiku-4-5</span>
   </div>
 </header>
 <main><div id="chat-log"><div class="sys-msg">SYSTEME INITIALISE - JARVIS V3.2</div></div></main>
@@ -398,7 +398,7 @@ async function processQuery(text) {
 
   try {
     const response = await puter.ai.chat(messages, {
-      model: 'claude-3-5-sonnet',
+      model: 'claude-haiku-4-5',
       stream: true,
       system_prompt: system
     });
