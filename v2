@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NETFLOX</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#141414;
+  --bg-card:#1c1c1c;
+  --red:#e50914;
+  --red-dark:#b0060f;
+  --text:#ffffff;
+  --text-dim:#b3b3b3;
+  --header-h:70px;
+}
+
+*{margin:0;padding:0;box-sizing:border-box;}
+
+body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:'Montserrat',sans-serif;
+  overflow-x:hidden;
+}
+
+a{color:inherit;text-decoration:none;}
+button{font-family:inherit;border:none;cursor:pointer;}
+
+/* ---------- HEADER ---------- */
+.header{
+  position:fixed;
+  top:0;left:0;right:0;
+  height:var(--header-h);
+  z-index:100;
+  display:flex;
+  align-items:center;
+  padding:0 40px;
+  background:linear-gradient(to bottom, rgba(0,0,0,0.85), transparent);
+  transition:background .3s ease;
+}
+.header.scrolled{background:#141414;box-shadow:0 2px 10px rgba(0,0,0,.5);}
+
+.nav{
+  width:100%;
+  display:flex;
+  align-items:center;
+  gap:30px;
+}
+
+.logo{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:32px;
+  letter-spacing:2px;
+  color:var(--red);
+  flex-shrink:0;
+}
+
+.nav-links{
+  list-style:none;
+  display:flex;
+  gap:22px;
+  flex:1;
+}
+.nav-links a{
+  font-size:14px;
+  font-weight:500;
+  color:var(--text-dim);
+  transition:color .2s;
+}
+.nav-links a:hover{color:var(--text);}
+
+.nav-right{flex-shrink:0;}
+
+/* search */
+.search-container{
+  position:relative;
+  display:flex;
+  align-items:center;
+  background:rgba(0,0,0,.55);
+  border:1px solid rgba(255,255,255,.25);
+  border-radius:4px;
+  padding:8px 12px;
+  gap:8px;
+}
+.search-icon{color:var(--text-dim);flex-shrink:0;}
+#searchInput{
+  background:transparent;
+  border:none;
+  outline:none;
+  color:var(--text);
+  font-size:14px;
+  width:200px;
+}
+#searchInput::placeholder{color:var(--text-dim);}
+
+.suggestions{
+  position:absolute;
+  top:calc(100% + 8px);
+  right:0;
+  width:340px;
+  max-height:70vh;
+  overflow-y:auto;
+  background:#181818;
+  border-radius:6px;
+  box-shadow:0 10px 30px rgba(0,0,0,.6);
+  display:none;
+  flex-direction:column;
+}
+.suggestions.active{display:flex;}
+.suggestion-item{
+  display:flex;
+  gap:12px;
+  padding:10px 12px;
+  cursor:pointer;
+  transition:background .15s;
+}
+.suggestion-item:hover{background:rgba(255,255,255,.08);}
+.suggestion-item img{
+  width:44px;height:64px;object-fit:cover;border-radius:3px;background:#333;flex-shrink:0;
+}
+.suggestion-info{display:flex;flex-direction:column;justify-content:center;overflow:hidden;}
+.suggestion-title{font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.suggestion-meta{font-size:12px;color:var(--text-dim);}
+.suggestion-empty{padding:16px;color:var(--text-dim);font-size:14px;text-align:center;}
+
+/* burger */
+.burger{display:none;flex-direction:column;gap:5px;cursor:pointer;}
+.burger div{width:24px;height:2px;background:var(--text);}
+
+/* ---------- HERO ---------- */
+.hero{
+  position:relative;
+  height:90vh;
+  background-size:cover;
+  background-position:center;
+  transition:background-image .6s ease-in-out;
+}
+.hero-overlay{
+  position:relative;
+  height:100%;
+  width:100%;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:0 60px;
+  background:linear-gradient(to top, var(--bg) 0%, rgba(20,20,20,.3) 55%, rgba(20,20,20,.75) 100%),
+             linear-gradient(to right, rgba(20,20,20,.85) 0%, transparent 60%);
+}
+.hero-content{max-width:520px;z-index:2;}
+.hero-title{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:56px;
+  letter-spacing:1px;
+  margin-bottom:16px;
+}
+.hero-description{
+  font-size:15px;
+  line-height:1.5;
+  color:var(--text-dim);
+  margin-bottom:24px;
+  display:-webkit-box;
+  -webkit-line-clamp:4;
+  -webkit-box-orient:vertical;
+  overflow:hidden;
+}
+.hero-buttons{display:flex;gap:14px;}
+.btn{
+  padding:12px 24px;
+  border-radius:4px;
+  font-size:15px;
+  font-weight:600;
+  transition:opacity .2s, background .2s;
+}
+.btn-primary{background:var(--red);color:#fff;}
+.btn-primary:hover{background:var(--red-dark);}
+.btn-secondary{background:rgba(255,255,255,.18);color:#fff;}
+.btn-secondary:hover{background:rgba(255,255,255,.3);}
+
+.hero-poster{
+  width:230px;
+  border-radius:10px;
+  box-shadow:0 10px 30px rgba(0,0,0,.6);
+  z-index:2;
+}
+.hero-nav{
+  position:absolute;
+  top:50%;
+  transform:translateY(-50%);
+  background:rgba(20,20,20,.6);
+  color:#fff;
+  font-size:22px;
+  width:44px;height:44px;
+  border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  z-index:5;
+  transition:background .2s;
+}
+.hero-nav:hover{background:var(--red);}
+.hero-prev{left:20px;}
+.hero-next{right:20px;}
+
+/* ---------- CONTENT ---------- */
+.content{padding:40px 60px 20px;}
+.section{margin-bottom:44px;}
+.section-title{
+  font-size:20px;
+  font-weight:600;
+  margin-bottom:14px;
+}
+.row{
+  display:flex;
+  gap:10px;
+  overflow-x:auto;
+  padding-bottom:10px;
+  scrollbar-width:thin;
+  scrollbar-color:var(--red) #333;
+}
+.row::-webkit-scrollbar{height:7px;}
+.row::-webkit-scrollbar-track{background:#282828;border-radius:10px;}
+.row::-webkit-scrollbar-thumb{background:var(--red);border-radius:10px;}
+
+.row-loading{color:var(--text-dim);font-size:14px;padding:20px 0;}
+
+.card{
+  position:relative;
+  min-width:180px;
+  height:260px;
+  border-radius:6px;
+  overflow:hidden;
+  cursor:pointer;
+  flex-shrink:0;
+  background:var(--bg-card);
+  transition:transform .25s ease;
+}
+.card:hover{transform:scale(1.06);z-index:3;}
+.card img{width:100%;height:100%;object-fit:cover;}
+.card-overlay{
+  position:absolute;bottom:0;left:0;right:0;
+  padding:10px 8px;
+  background:linear-gradient(to top, rgba(0,0,0,.9), transparent);
+  opacity:0;
+  transition:opacity .2s;
+}
+.card:hover .card-overlay{opacity:1;}
+.card-title{font-size:13px;font-weight:600;line-height:1.2;}
+.card-rating{font-size:11px;color:#f5c518;margin-top:2px;}
+
+/* ---------- MODAL ---------- */
+.modal-backdrop{
+  position:fixed;inset:0;
+  background:rgba(0,0,0,.8);
+  display:none;
+  align-items:center;justify-content:center;
+  z-index:200;
+  padding:20px;
+}
+.modal-backdrop.active{display:flex;}
+.modal{
+  background:#181818;
+  width:100%;
+  max-width:760px;
+  max-height:88vh;
+  overflow-y:auto;
+  border-radius:8px;
+  position:relative;
+}
+.modal-close{
+  position:absolute;top:14px;right:14px;
+  background:rgba(0,0,0,.6);
+  color:#fff;
+  width:34px;height:34px;
+  border-radius:50%;
+  font-size:16px;
+  z-index:5;
+}
+.modal-media{width:100%;aspect-ratio:16/9;background:#000;}
+.modal-media iframe, .modal-media img{width:100%;height:100%;object-fit:cover;border:none;}
+.modal-body{padding:24px;}
+.modal-body h2{font-family:'Bebas Neue',sans-serif;font-size:30px;letter-spacing:1px;margin-bottom:8px;}
+.modal-meta{color:var(--text-dim);font-size:13px;margin-bottom:14px;display:flex;gap:12px;flex-wrap:wrap;}
+.modal-body p{font-size:14px;line-height:1.6;color:#e5e5e5;}
+.suggestion-item.saga{background:rgba(229,9,20,.12);}
+.suggestion-item.saga:hover{background:rgba(229,9,20,.22);}
+
+/* ---------- FOOTER ---------- */
+.footer{
+  text-align:center;
+  padding:30px 20px 50px;
+  color:var(--text-dim);
+  font-size:12px;
+}
+
+/* ---------- RESPONSIVE ---------- */
+@media (max-width:1024px){
+  .content{padding:30px 30px 20px;}
+  .hero-overlay{padding:0 30px;}
+  .hero-title{font-size:44px;}
+}
+
+@media (max-width:768px){
+  .header{padding:0 16px;}
+  .nav-links{
+    position:fixed;
+    top:var(--header-h);
+    left:0;right:0;
+    background:#141414;
+    flex-direction:column;
+    padding:20px;
+    gap:16px;
+    display:none;
+  }
+  .nav-links.active{display:flex;}
+  .burger{display:flex;}
+  #searchInput{width:120px;}
+  .suggestions{width:270px;right:-10px;}
+
+  .hero{height:75vh;}
+  .hero-overlay{flex-direction:column;justify-content:flex-end;padding:0 20px 30px;text-align:center;gap:16px;}
+  .hero-content{max-width:100%;}
+  .hero-title{font-size:32px;}
+  .hero-description{font-size:13px;-webkit-line-clamp:3;}
+  .hero-poster{display:none;}
+  .hero-buttons{justify-content:center;flex-wrap:wrap;}
+
+  .card{min-width:130px;height:190px;}
+  .content{padding:20px 16px;}
+}
+
+@media (max-width:420px){
+  .logo{font-size:26px;}
+  #searchInput{width:90px;}
+  .hero-title{font-size:26px;}
+  .btn{padding:10px 16px;font-size:13px;}
+}
+
+</style>
+</head>
+<body>
+
+  <!-- HEADER -->
+  <header class="header" id="header">
+    <nav class="nav">
+      <a href="#" class="logo">NETFLOX</a>
+
+      <ul class="nav-links" id="navLinks">
+        <li><a href="#accueil">Accueil</a></li>
+        <li><a href="#films">Films</a></li>
+        <li><a href="#series">Séries</a></li>
+        <li><a href="#populaire">Populaire</a></li>
+      </ul>
+
+      <div class="nav-right">
+        <div class="search-container">
+          <svg class="search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="7"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+          <input type="text" id="searchInput" placeholder="Films, séries..." autocomplete="off">
+          <div class="suggestions" id="suggestions"></div>
+        </div>
+      </div>
+
+      <div class="burger" id="burger">
+        <div></div><div></div><div></div>
+      </div>
+    </nav>
+  </header>
+
+  <!-- HERO -->
+  <section class="hero" id="hero">
+    <div class="hero-overlay">
+      <div class="hero-content" id="heroContent">
+        <h1 class="hero-title" id="heroTitle">Chargement...</h1>
+        <p class="hero-description" id="heroDescription"></p>
+        <div class="hero-buttons">
+          <button class="btn btn-primary" id="heroPlayBtn">▶ Bande-annonce</button>
+          <button class="btn btn-secondary" id="heroInfoBtn">ℹ Plus d'infos</button>
+        </div>
+      </div>
+      <img class="hero-poster" id="heroPoster" alt="Affiche">
+      <button class="hero-nav hero-prev" id="heroPrev" aria-label="Précédent">❮</button>
+      <button class="hero-nav hero-next" id="heroNext" aria-label="Suivant">❯</button>
+    </div>
+  </section>
+
+  <!-- CONTENU -->
+  <main class="content" id="accueil">
+
+    <section class="section" id="populaire">
+      <h2 class="section-title">Populaire en ce moment</h2>
+      <div class="row" id="rowPopulaire"><div class="row-loading">Chargement...</div></div>
+    </section>
+
+    <section class="section" id="films">
+      <h2 class="section-title">Films</h2>
+      <div class="row" id="rowFilms"><div class="row-loading">Chargement...</div></div>
+    </section>
+
+    <section class="section" id="series">
+      <h2 class="section-title">Séries</h2>
+      <div class="row" id="rowSeries"><div class="row-loading">Chargement...</div></div>
+    </section>
+
+  </main>
+
+  <!-- MODAL DETAILS -->
+  <div class="modal-backdrop" id="modalBackdrop">
+    <div class="modal" id="modal">
+      <button class="modal-close" id="modalClose">✕</button>
+      <div class="modal-media" id="modalMedia"></div>
+      <div class="modal-body">
+        <h2 id="modalTitle"></h2>
+        <div class="modal-meta" id="modalMeta"></div>
+        <div id="modalOverview"></div>
+      </div>
+    </div>
+  </div>
+
+  <footer class="footer">
+    <p>NETFLOX — projet perso, données fournies par TMDB. Non affilié à Netflix.</p>
+  </footer>
+
+  <script>
+/* =========================================================
+   NETFLOX — app.js
+   Source des données : TMDB (The Movie Database)
+   Ce site est un clone "vitrine" : découverte, recherche,
+   fiches et bandes-annonces. Il ne diffuse aucun contenu
+   protégé — pas de lecteur ni de liens de streaming.
+   ========================================================= */
+
+const TMDB_KEY   = "9bb76e7829aacc0197000636ecf535b1"; // <-- ta clé, trouvée dans ton ancien code
+const TMDB_BASE  = "https://api.themoviedb.org/3";
+const LANG       = "language=fr-FR";
+
+const IMG = {
+  poster:   p => p ? `https://image.tmdb.org/t/p/w342${p}` : "",
+  thumb:    p => p ? `https://image.tmdb.org/t/p/w185${p}` : "",
+  card:     p => p ? `https://image.tmdb.org/t/p/w500${p}` : "",
+  backdrop: p => p ? `https://image.tmdb.org/t/p/w1280${p}` : "",
+};
+
+function tmdb(path, extra = "") {
+  return fetch(`${TMDB_BASE}${path}?api_key=${TMDB_KEY}&${LANG}${extra}`)
+    .then(r => r.json())
+    .catch(() => ({ results: [] }));
+}
+
+function removeAccents(str = "") {
+  return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+}
+
+/* =========================================================
+   HEADER : scroll, burger, fermeture recherche au clic dehors
+   ========================================================= */
+const header = document.getElementById("header");
+window.addEventListener("scroll", () => {
+  header.classList.toggle("scrolled", window.scrollY > 40);
+});
+
+const burger = document.getElementById("burger");
+const navLinks = document.getElementById("navLinks");
+burger.addEventListener("click", () => navLinks.classList.toggle("active"));
+
+document.addEventListener("click", (e) => {
+  if (!e.target.closest(".search-container")) {
+    document.getElementById("suggestions").classList.remove("active");
+  }
+});
+
+/* =========================================================
+   HERO — carrousel de tendances
+   ========================================================= */
+let heroItems = [];
+let heroIndex = 0;
+let heroTimer = null;
+
+async function initHero() {
+  const data = await tmdb("/trending/all/week");
+  heroItems = (data.results || []).filter(it => it.backdrop_path).slice(0, 8);
+  if (!heroItems.length) return;
+  renderHero(0);
+  heroTimer = setInterval(() => renderHero(heroIndex + 1), 7000);
+
+  document.getElementById("heroPrev").addEventListener("click", () => {
+    renderHero(heroIndex - 1);
+    restartHeroTimer();
+  });
+  document.getElementById("heroNext").addEventListener("click", () => {
+    renderHero(heroIndex + 1);
+    restartHeroTimer();
+  });
+  document.getElementById("heroInfoBtn").addEventListener("click", () => {
+    const item = heroItems[heroIndex];
+    openDetailModal(item.id, item.media_type || (item.title ? "movie" : "tv"));
+  });
+  document.getElementById("heroPlayBtn").addEventListener("click", () => {
+    const item = heroItems[heroIndex];
+    openDetailModal(item.id, item.media_type || (item.title ? "movie" : "tv"), true);
+  });
+}
+
+function restartHeroTimer() {
+  clearInterval(heroTimer);
+  heroTimer = setInterval(() => renderHero(heroIndex + 1), 7000);
+}
+
+function renderHero(i) {
+  heroIndex = (i + heroItems.length) % heroItems.length;
+  const item = heroItems[heroIndex];
+  const hero = document.getElementById("hero");
+  hero.style.backgroundImage = `url("${IMG.backdrop(item.backdrop_path)}")`;
+  document.getElementById("heroTitle").textContent = item.title || item.name;
+  document.getElementById("heroDescription").textContent = item.overview || "";
+  document.getElementById("heroPoster").src = IMG.poster(item.poster_path);
+}
+
+/* =========================================================
+   RANGÉES DE CONTENU
+   ========================================================= */
+function renderRow(containerId, items) {
+  const el = document.getElementById(containerId);
+  el.innerHTML = "";
+  items.forEach(item => el.appendChild(createCard(item)));
+}
+
+function createCard(item) {
+  const type = item.media_type || (item.title ? "movie" : "tv");
+  const title = item.title || item.name;
+  const year = (item.release_date || item.first_air_date || "").slice(0, 4);
+  const card = document.createElement("div");
+  card.className = "card";
+  card.innerHTML = `
+    <img src="${IMG.card(item.backdrop_path || item.poster_path)}" alt="${title}" loading="lazy">
+    <div class="card-overlay">
+      <div class="card-title">${title}</div>
+      <div class="card-rating">${year ? year + " · " : ""}★ ${(item.vote_average || 0).toFixed(1)}</div>
+    </div>
+  `;
+  card.addEventListener("click", () => openDetailModal(item.id, type));
+  return card;
+}
+
+async function initRows() {
+  const [trending, movies, series] = await Promise.all([
+    tmdb("/trending/all/week"),
+    tmdb("/movie/popular"),
+    tmdb("/tv/popular"),
+  ]);
+  renderRow("rowPopulaire", (trending.results || []).filter(i => i.backdrop_path));
+  renderRow("rowFilms", movies.results || []);
+  renderRow("rowSeries", series.results || []);
+}
+
+/* =========================================================
+   RECHERCHE — films, séries + reconnaissance des SAGAS
+   (Star Wars, Harry Potter, Marvel, etc. via /search/collection)
+   ========================================================= */
+const searchInput = document.getElementById("searchInput");
+const suggestionsBox = document.getElementById("suggestions");
+
+let searchDebounce = null;
+let currentQueryToken = 0;
+
+searchInput.addEventListener("input", () => {
+  clearTimeout(searchDebounce);
+  const query = searchInput.value.trim();
+  if (query.length < 2) {
+    suggestionsBox.classList.remove("active");
+    suggestionsBox.innerHTML = "";
+    return;
+  }
+  searchDebounce = setTimeout(() => runSearch(query), 250);
+});
+
+async function runSearch(query) {
+  const token = ++currentQueryToken;
+  const enc = encodeURIComponent(query);
+
+  const [movieData, tvData, collectionData] = await Promise.all([
+    tmdb("/search/movie", `&query=${enc}`),
+    tmdb("/search/tv", `&query=${enc}`),
+    tmdb("/search/collection", `&query=${enc}`),
+  ]);
+  if (token !== currentQueryToken) return; // une recherche plus récente est en cours
+
+  const movies = (movieData.results || []).map(m => ({ ...m, _type: "movie" }));
+  const series = (tvData.results || []).map(s => ({ ...s, _type: "tv" }));
+  const combined = [...movies, ...series];
+
+  // Tri par pertinence + popularité (recherche "floue" simplifiée, sans dépendance externe)
+  const nq = removeAccents(query);
+  combined.forEach(item => {
+    const name = removeAccents(item.title || item.name || "");
+    item._score = name.startsWith(nq) ? 3 : name.includes(nq) ? 2 : 1;
+  });
+  combined.sort((a, b) => (b._score - a._score) || ((b.popularity || 0) - (a.popularity || 0)));
+
+  // Meilleure saga correspondante (ex: "star wars" -> collection Star Wars)
+  const bestCollection = (collectionData.results || [])
+    .sort((a, b) => removeAccents(a.name).indexOf(nq) - removeAccents(b.name).indexOf(nq))[0];
+
+  renderSuggestions(combined.slice(0, 6), bestCollection);
+}
+
+function renderSuggestions(items, collection) {
+  suggestionsBox.innerHTML = "";
+  suggestionsBox.classList.add("active");
+
+  if (collection) {
+    const div = document.createElement("div");
+    div.className = "suggestion-item saga";
+    div.innerHTML = `
+      <img src="${IMG.thumb(collection.poster_path)}" alt="">
+      <div class="suggestion-info">
+        <div class="suggestion-title">🎬 ${collection.name}</div>
+        <div class="suggestion-meta">Saga complète</div>
+      </div>
+    `;
+    div.addEventListener("click", () => openCollectionModal(collection.id));
+    suggestionsBox.appendChild(div);
+  }
+
+  if (!items.length && !collection) {
+    suggestionsBox.innerHTML += `<div class="suggestion-empty">Aucun résultat</div>`;
+    return;
+  }
+
+  items.forEach(item => {
+    const title = item.title || item.name;
+    const year = (item.release_date || item.first_air_date || "").slice(0, 4);
+    const div = document.createElement("div");
+    div.className = "suggestion-item";
+    div.innerHTML = `
+      <img src="${IMG.thumb(item.poster_path)}" alt="">
+      <div class="suggestion-info">
+        <div class="suggestion-title">${title}</div>
+        <div class="suggestion-meta">${year || "—"} · ${item._type === "movie" ? "Film" : "Série"}</div>
+      </div>
+    `;
+    div.addEventListener("click", () => {
+      suggestionsBox.classList.remove("active");
+      searchInput.value = "";
+      openDetailModal(item.id, item._type);
+    });
+    suggestionsBox.appendChild(div);
+  });
+}
+
+/* =========================================================
+   MODAL — détail film / série (avec bande-annonc
