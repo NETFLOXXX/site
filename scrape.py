@@ -20,7 +20,12 @@ def get_latest_movix_url():
     for message in reversed(messages):
         matches = re.findall(PATTERN, message, re.IGNORECASE)
         if matches:
-            return matches[0]
+            url = matches[0]
+            if not url.startswith("http"):
+                url = "https://" + url
+            else:
+                url = url.replace("http://", "https://")
+            return url
 
     return None
 
