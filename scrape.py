@@ -4,7 +4,9 @@ import json
 from datetime import datetime, timezone
 
 URL = "https://t.me/s/movix_site"
-PATTERN = r'(https?://[^\s"\'<]*movix[^\s"\'<]*|\bmovix\.[a-z]{2,10}\b)'
+
+# Ne matche que movix.xxx comme domaine (avec ou sans http/https/www devant)
+PATTERN = r'(?:https?://)?(?:www\.)?\bmovix\.[a-z]{2,10}(?:/[^\s"\'<]*)?'
 
 def get_latest_movix_url():
     resp = requests.get(URL, headers={"User-Agent": "Mozilla/5.0"})
