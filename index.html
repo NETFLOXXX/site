@@ -50,32 +50,67 @@
   .chip:hover { background:rgba(220,38,38,0.15); border-color:var(--red); color:#fff; }
 
   /* ── PLAYER ── */
+/* ── PLAYER ── */
   #player-wrap {
     display:none; width:100%; max-width:1100px; position:relative;
     border-radius:16px; overflow:hidden; background:#000;
     box-shadow:0 40px 80px rgba(0,0,0,0.8); aspect-ratio:16/9;
   }
 
+  /* VIDEO — grayscale instantané à la pause */
   video { width:100%; height:100%; object-fit:contain; display:block; }
   #player-wrap.paused video { filter:grayscale(1); }
 
+  /* gradients */
   .overlay-gradient {
     position:absolute; inset:0;
     background:linear-gradient(to top, rgba(0,0,0,0.92) 0%, transparent 45%);
     pointer-events:none; opacity:0; transition:opacity 0.3s;
   }
-  #player-wrap.cv .overlay-gradient { opacity:1; }
+  .overlay-top {
+    position:absolute; top:0; left:0; right:0; height:130px;
+    background:linear-gradient(to bottom, rgba(0,0,0,0.75), transparent);
+    pointer-events:none; opacity:0; transition:opacity 0.3s;
+  }
+  #player-wrap.cv .overlay-gradient, #player-wrap.cv .overlay-top { opacity:1; }
 
+  /* BACK BTN — keyframe bounce scale on hover */
   #back-btn {
     position:absolute; top:16px; left:16px; z-index:50;
     display:flex; align-items:center; gap:8px; padding:8px 14px;
     background:var(--glass); border:none; outline:none; border-radius:10px;
     color:#fff; cursor:pointer; font-family:'Outfit',sans-serif; font-size:0.9rem; font-weight:500;
-    opacity:0; transform:translateY(-4px); transition:opacity 0.3s, transform 0.25s;
+    opacity:0; transform:translateY(-4px);
+    transition:opacity 0.3s, transform 0.25s, background 0.2s;
     backdrop-filter:blur(8px);
+  }
+  #back-btn:hover {
+    background:rgba(15,15,15,0.95);
+    animation:back-pop 0.35s cubic-bezier(0.34,1.56,0.64,1) forwards;
+  }
+  @keyframes back-pop {
+    0%   { transform:translateY(0) scale(1); }
+    60%  { transform:translateY(0) scale(1.22); }
+    100% { transform:translateY(0) scale(1.18); }
   }
   #player-wrap.cv #back-btn { opacity:1; transform:translateY(0); }
 
+  /* title */
+  #title-info {
+    position:absolute; top:64px; left:16px; z-index:40;
+    display:flex; align-items:center; gap:12px;
+    opacity:0; transform:translateY(-4px); transition:opacity 0.3s, transform 0.3s;
+  }
+  #player-wrap.cv #title-info { opacity:1; transform:translateY(0); }
+  #title-poster {
+    width:52px; height:72px; border-radius:6px; overflow:hidden;
+    box-shadow:0 4px 12px rgba(0,0,0,0.5); background:#222;
+    display:flex; align-items:center; justify-content:center; color:#555;
+  }
+  #title-text h3 { font-size:0.95rem; font-weight:700; }
+  #title-text p { font-size:0.75rem; color:rgba(255,255,255,0.5); margin-top:2px; }
+
+  /* ── CENTER CONTROLS ── */
   #center-controls {
     position:absolute; inset:0; z-index:50;
     display:flex; align-items:center; justify-content:center; gap:32px;
@@ -84,29 +119,330 @@
   }
   #player-wrap.cv #center-controls { opacity:1; transform:scale(1); pointer-events:all; }
 
+  /* Side buttons (rewind/forward) — bigger */
   .cc-btn {
-    border:none; outline:none; border-radius:50%; color:#fff; cursor:pointer;
+    border:none; outline:none; -webkit-tap-highlight-color:transparent;
+    border-radius:50%; color:#fff; cursor:pointer;
     display:flex; align-items:center; justify-content:center;
-    background:rgba(0,0,0,0.55); backdrop-filter:blur(8px);
-    width:90px; height:90px;
+    transition:transform 0.22s cubic-bezier(0.34,1.56,0.64,1), background 0.2s, box-shadow 0.15s;
+  }
+  .cc-btn:focus { outline:none; }
+  .cc-btn:active { transform:scale(0.86) !important; transition-duration:0.08s !important; }
+
+  /* Small side buttons — bigger */
+  .cc-btn.sm {
+    width:88px; height:88px;
+    background:rgba(0,0,0,0.55);
+    backdrop-filter:blur(8px);
+  }
+  .cc-btn.rewind:hover { transform:scale(1.14) rotate(-14deg); background:rgba(0,0,0,0.8); }
+  .cc-btn.forward:hover { transform:scale(1.14) rotate(14deg); background:rgba(0,0,0,0.8); }
+
+  /* BIG center button */
+  .cc-btn.lg {
+    width:104px; height:104px;
+    background:rgba(0,0,0,0.55);
+    backdrop-filter:blur(8px);
+    box-shadow:0 4px 24px rgba(0,0,0,0.5);
+  }
+  .cc-btn.lg:hover {
+    transform:scale(1.12);
+    background:rgba(0,0,0,0.72);
   }
 
+  /* seek flash — much bigger text */
+  #seek-flash {
+    position:absolute; inset:0; z-index:49;
+    display:flex; align-items:center; justify-content:space-between;
+    padding:0 60px; pointer-events:none;
+  }
+  .seek-label {
+    font-size:2rem; font-weight:700; color:#fff;
+    background:rgba(0,0,0,0.55); padding:12px 22px; border-radius:24px;
+    opacity:0; transition:opacity 0.12s;
+  }
+  .seek-label.show { opacity:1; }
+
+  /* ── BOTTOM BAR ── */
   #bottom-bar {
     position:absolute; bottom:0; left:0; right:0; z-index:50; padding:0 18px 18px;
     opacity:0; transform:translateY(8px); transition:opacity 0.3s, transform 0.3s;
   }
   #player-wrap.cv #bottom-bar { opacity:1; transform:translateY(0); }
 
-  #progress-wrap { position:relative; height:18px; margin-bottom:10px; cursor:pointer; display:flex; align-items:center; }
-  #progress-bg { width:100%; height:4px; background:rgba(255,255,255,0.2); border-radius:4px; overflow:hidden; position:relative; }
-  #progress-fill { position:absolute; left:0; top:0; height:100%; background:var(--red); }
+  /* progress */
+  #progress-wrap {
+    position:relative; height:18px; margin-bottom:10px;
+    cursor:pointer; display:flex; align-items:center;
+  }
+  #progress-bg {
+    width:100%; height:4px; background:rgba(255,255,255,0.2);
+    border-radius:4px; overflow:hidden; position:relative; transition:height 0.15s;
+  }
+  #progress-wrap:hover #progress-bg { height:6px; }
+  #progress-buf { position:absolute; left:0; top:0; height:100%; background:rgba(255,255,255,0.22); border-radius:4px; pointer-events:none; }
+  #progress-fill { position:absolute; left:0; top:0; height:100%; background:var(--red); border-radius:4px; pointer-events:none; }
+  #progress-thumb {
+    position:absolute; top:50%; transform:translateY(-50%) translateX(-50%);
+    width:14px; height:14px; background:var(--red); border-radius:50%;
+    pointer-events:none; box-shadow:0 0 6px rgba(220,38,38,0.6);
+  }
+  /* Preview tooltip — timecode only */
+  #preview-tip {
+    position:absolute; bottom:22px;
+    pointer-events:none; transform:translateX(-50%);
+    opacity:0; transition:opacity 0.12s;
+    z-index:100;
+  }
+  #progress-wrap:hover #preview-tip { opacity:1; }
+  #preview-time {
+    background:rgba(10,10,10,0.92); color:#fff;
+    font-size:0.78rem; font-weight:600; padding:4px 10px; border-radius:6px;
+    white-space:nowrap; font-family:'Outfit',sans-serif;
+    border:1px solid rgba(255,255,255,0.1);
+    box-shadow:0 2px 12px rgba(0,0,0,0.6);
+  }
 
-  .bottom-row { display:flex; align-items:center; justify-content:space-between; }
-  .ctrl-btn { background:none; border:none; color:#fff; cursor:pointer; padding:8px; }
+  /* bottom row */
+  .bottom-row { display:flex; align-items:center; justify-content:space-between; gap:8px; }
+  .left-ctrls, .right-ctrls { display:flex; align-items:center; gap:4px; }
+
+  /* CTRL-BTN — hover = red, active = brief scale, NO sticky red */
+  .ctrl-btn {
+    background:none; border:none; outline:none; color:#fff; cursor:pointer;
+    display:flex; align-items:center; justify-content:center; padding:8px;
+    border-radius:8px; transition:color 0.12s, transform 0.18s cubic-bezier(0.34,1.56,0.64,1), background 0.2s;
+    -webkit-tap-highlight-color:transparent;
+  }
   .ctrl-btn svg { width:26px; height:26px; }
+  .ctrl-btn:hover { color:var(--red-h); transform:scale(1.16); background:rgba(255,255,255,0.06); }
+  .ctrl-btn:focus { outline:none; }
+  .ctrl-btn:active { transform:scale(0.88); color:var(--red); }
 
-  #error-msg { position:absolute; inset:0; display:none; flex-direction:column; align-items:center; justify-content:center; gap:12px; z-index:70; background:rgba(0,0,0,0.85); }
-  #open-url-btn { display:none; margin-top:16px; background:rgba(255,255,255,0.07); border:1px solid rgba(255,255,255,0.12); border-radius:10px; padding:8px 18px; color:#fff; cursor:pointer; }
+  /* GEAR — rotate one notch on open */
+  #gear-icon { transition:transform 0.35s cubic-bezier(0.34,1.56,0.64,1); transform:rotate(0deg); }
+  #settings-btn.open #gear-icon { transform:rotate(45deg); }
+  #settings-btn.open { color:var(--red-h); }
+
+  /* volume */
+  .volume-wrap { display:flex; align-items:center; gap:6px; }
+  #vol-slider {
+    width:84px; height:4px; appearance:none; -webkit-appearance:none;
+    border-radius:4px; outline:none; cursor:pointer;
+  }
+  #vol-slider::-webkit-slider-thumb {
+    -webkit-appearance:none; width:14px; height:14px;
+    background:var(--red); border-radius:50%; cursor:pointer;
+    box-shadow:0 0 4px rgba(220,38,38,0.6);
+  }
+  #vol-slider::-moz-range-thumb {
+    width:14px; height:14px; background:var(--red);
+    border-radius:50%; border:none; cursor:pointer;
+  }
+
+  /* time — clickable */
+  #time-display {
+    font-size:0.8rem; color:rgba(255,255,255,0.8); white-space:nowrap;
+    min-width:100px; cursor:pointer; user-select:none; transition:color 0.15s;
+  }
+  #time-display:hover { color:#fff; }
+
+  /* menus */
+  .menu-popup {
+    position:absolute; bottom:115%; right:0;
+    background:rgba(12,12,12,0.97); border:1px solid rgba(255,255,255,0.1);
+    border-radius:10px; padding:6px 0; min-width:120px;
+    backdrop-filter:blur(14px); display:none; z-index:200;
+  }
+  .menu-popup.open { display:block; }
+  .menu-item {
+    padding:8px 16px; font-size:0.85rem; cursor:pointer;
+    transition:background 0.15s; display:flex; align-items:center; justify-content:space-between;
+  }
+  .menu-item:hover { background:rgba(255,255,255,0.08); }
+  .menu-item.active { color:var(--red); }
+  .menu-label { font-size:0.7rem; color:rgba(255,255,255,0.38); padding:6px 16px 2px; text-transform:uppercase; letter-spacing:0.08em; }
+
+  /* ── SETTINGS SIDEBAR (Sources / Format / Vitesse) — full-height lateral panel ── */
+  .settings-scrim {
+    position:absolute; inset:0; z-index:150;
+    background:rgba(0,0,0,0.55);
+    opacity:0; pointer-events:none; transition:opacity 0.3s;
+  }
+  .settings-scrim.open { opacity:1; pointer-events:all; }
+
+  .settings-panel {
+    position:absolute; top:0; right:0; bottom:0; z-index:200;
+    width:420px; max-width:78%;
+    background:rgba(9,9,9,0.98); border-left:1px solid rgba(255,255,255,0.1);
+    backdrop-filter:blur(20px);
+    box-shadow:-24px 0 60px rgba(0,0,0,0.55);
+    display:flex; flex-direction:column; overflow:hidden;
+    transform:translateX(100%); pointer-events:none;
+    transition:transform 0.36s cubic-bezier(0.22,1,0.36,1);
+  }
+  .settings-panel.open { transform:translateX(0); pointer-events:all; }
+
+  .settings-header {
+    display:flex; align-items:center; justify-content:space-between;
+    padding:22px 24px; border-bottom:1px solid rgba(255,255,255,0.08); flex-shrink:0;
+  }
+  .settings-header span { font-size:1.2rem; font-weight:700; letter-spacing:-0.01em; }
+  .settings-close {
+    background:none; border:none; color:rgba(255,255,255,0.5); cursor:pointer;
+    display:flex; align-items:center; justify-content:center; padding:6px; border-radius:8px;
+    transition:color 0.15s, background 0.15s, transform 0.15s;
+  }
+  .settings-close:hover { color:#fff; background:rgba(255,255,255,0.08); transform:scale(1.08); }
+
+  .settings-tabs {
+    display:flex; border-bottom:1px solid rgba(255,255,255,0.08); flex-shrink:0; padding:0 8px;
+  }
+  .settings-tab {
+    flex:1; background:none; border:none; outline:none; cursor:pointer;
+    color:rgba(255,255,255,0.45); font-family:'Outfit',sans-serif; font-size:0.92rem; font-weight:600;
+    padding:16px 6px; position:relative; transition:color 0.15s;
+  }
+  .settings-tab:hover { color:rgba(255,255,255,0.75); }
+  .settings-tab.active { color:#fff; }
+  .settings-tab.active::after {
+    content:''; position:absolute; left:16%; right:16%; bottom:-1px; height:3px;
+    background:var(--red); border-radius:3px 3px 0 0;
+  }
+
+  .settings-content { overflow-y:auto; padding:10px 0; flex:1; }
+  .settings-content::-webkit-scrollbar { width:6px; }
+  .settings-content::-webkit-scrollbar-thumb { background:rgba(255,255,255,0.15); border-radius:6px; }
+
+  .settings-pane { display:none; padding:6px 0; }
+  .settings-pane.active { display:block; }
+
+  /* rows shared by sources / format / vitesse */
+  .set-row {
+    display:flex; align-items:center; justify-content:space-between;
+    padding:15px 20px; margin:3px 12px; border-radius:12px; cursor:pointer;
+    font-size:0.97rem; color:rgba(255,255,255,0.85);
+    border:1px solid transparent; transition:background 0.15s, border-color 0.15s, color 0.15s;
+  }
+  .set-row:hover { background:rgba(255,255,255,0.06); }
+  .set-row.active {
+    background:rgba(220,38,38,0.14); border-color:rgba(220,38,38,0.5); color:#fff;
+  }
+  .set-row-label { display:flex; align-items:center; gap:11px; }
+  .set-badge {
+    font-size:0.68rem; font-weight:700; text-transform:uppercase; letter-spacing:0.04em;
+    background:var(--red); color:#fff; padding:4px 11px; border-radius:20px;
+    opacity:0; transform:scale(0.8); transition:opacity 0.15s, transform 0.15s;
+  }
+  .set-row.active .set-badge { opacity:1; transform:scale(1); }
+  .set-dot { width:8px; height:8px; border-radius:50%; background:rgba(255,255,255,0.25); flex-shrink:0; transition:background 0.15s; }
+  .set-row.active .set-dot { background:var(--red); box-shadow:0 0 6px rgba(220,38,38,0.7); }
+
+  /* Spinner inside center button */
+  .cc-btn.lg { position:relative; overflow:hidden; }
+  #cc-spin-ring {
+    position:absolute; inset:0;
+    display:flex; align-items:center; justify-content:center;
+    opacity:0; pointer-events:none; transition:opacity 0.15s;
+  }
+  #cc-spin-ring .spin-ring { width:52px; height:52px; }
+  #player-wrap.buffering #cc-spin-ring { opacity:1; }
+  #player-wrap.buffering #cc-play,
+  #player-wrap.buffering #cc-pause { opacity:0; }
+
+  .spin-ring { border:3px solid rgba(255,255,255,0.15); border-top-color:var(--red); border-radius:50%; animation:spin 0.8s linear infinite; }
+  @keyframes spin { to { transform:rotate(360deg); } }
+
+  /* error */
+  #error-msg { position:absolute; inset:0; display:none; flex-direction:column; align-items:center; justify-content:center; gap:12px; z-index:70; }
+  #error-msg svg { color:var(--red); }
+  #error-msg p { font-size:0.9rem; color:rgba(255,255,255,0.6); }
+
+  #player-wrap:fullscreen { max-width:100%; border-radius:0; }
+  #player-wrap:-webkit-full-screen { max-width:100%; border-radius:0; }
+
+  #open-url-btn {
+    display:none; margin-top:16px; background:rgba(255,255,255,0.07);
+    border:1px solid rgba(255,255,255,0.12); outline:none; border-radius:10px;
+    padding:8px 18px; color:rgba(255,255,255,0.6); font-family:'Outfit',sans-serif;
+    font-size:0.85rem; cursor:pointer; transition:all 0.2s;
+  }
+  #open-url-btn:hover { background:rgba(255,255,255,0.12); color:#fff; }
+
+  /* ══════════════════════════ RESPONSIVE ══════════════════════════ */
+
+  /* Tablet */
+  @media (max-width:900px) {
+    .settings-panel { width:360px; }
+  }
+
+  /* Mobile (portrait & landscape, tablets in portrait) */
+  @media (max-width:640px) {
+    body { padding:10px; }
+    #load-screen h1 { font-size:1.5rem; }
+    #load-screen > p { font-size:0.8rem; margin-bottom:24px; }
+    .input-row { flex-wrap:wrap; padding:10px; }
+    .input-row input { min-width:0; flex-basis:100%; padding:6px 4px; }
+    .input-row button { flex:1; }
+
+    #player-wrap { border-radius:10px; }
+    #back-btn { padding:7px 12px; font-size:0.82rem; top:10px; left:10px; }
+    #title-info { top:52px; left:10px; }
+    #title-poster { display:none; }
+
+    .cc-btn.sm { width:56px; height:56px; }
+    .cc-btn.sm svg { width:32px; height:32px; }
+    .cc-btn.lg { width:78px; height:78px; }
+    .cc-btn.lg svg { width:38px; height:38px; }
+    #center-controls { gap:20px; }
+
+    #bottom-bar { padding:0 10px 12px; }
+    .bottom-row { gap:2px; }
+    .left-ctrls { gap:0; }
+    .right-ctrls { gap:0; }
+    .ctrl-btn { padding:7px; }
+    .ctrl-btn svg { width:23px; height:23px; }
+
+    #vol-slider { width:0; opacity:0; margin-left:-6px; transition:width 0.2s, opacity 0.2s, margin 0.2s; }
+    .volume-wrap:hover #vol-slider,
+    .volume-wrap:active #vol-slider { width:56px; opacity:1; margin-left:0; }
+
+    #time-display { font-size:0.72rem; min-width:auto; }
+
+    .settings-panel { width:100%; max-width:100%; border-left:none; }
+    .settings-header { padding:16px 18px; }
+    .settings-header span { font-size:1.05rem; }
+    .settings-tab { font-size:0.82rem; padding:14px 4px; }
+    .set-row { padding:14px 16px; font-size:0.9rem; }
+  }
+
+  @media (max-width:380px) {
+    .cc-btn.sm { width:46px; height:46px; }
+    .cc-btn.sm svg { width:26px; height:26px; }
+    .cc-btn.lg { width:64px; height:64px; }
+    .cc-btn.lg svg { width:30px; height:30px; }
+    .ctrl-btn { padding:5px; }
+    .ctrl-btn svg { width:21px; height:21px; }
+    #time-display { display:none; }
+  }
+
+  /* Mobile landscape — player takes over the whole viewport, immersive style */
+  @media (max-height:520px) and (orientation:landscape) {
+    body { padding:0; min-height:100dvh; }
+    #load-screen { padding:0 24px; }
+    #player-wrap {
+      position:fixed; inset:0; width:100vw; height:100dvh;
+      max-width:none; aspect-ratio:auto; border-radius:0; z-index:1000;
+    }
+    #player-wrap:fullscreen, #player-wrap:-webkit-full-screen { inset:0; }
+    .cc-btn.sm { width:52px; height:52px; }
+    .cc-btn.lg { width:68px; height:68px; }
+    #bottom-bar { padding:0 max(12px, env(safe-area-inset-right)) 10px max(12px, env(safe-area-inset-left)); }
+    #back-btn { top:max(10px, env(safe-area-inset-top)); left:max(10px, env(safe-area-inset-left)); }
+    .settings-panel { max-width:60%; }
+  }
+
+  svg { flex-shrink:0; }
 </style>
 </head>
 <body>
@@ -139,23 +475,179 @@
 
   <button id="back-btn" onclick="goBack()">← Retour</button>
 
+<!-- PLAYER -->
+<div id="player-wrap">
+  <video id="video" playsinline></video>
+  <div class="overlay-gradient"></div>
+  <div class="overlay-top"></div>
+
+  <div id="seek-flash">
+    <div class="seek-label" id="flash-rw">−10s</div>
+    <div class="seek-label" id="flash-fw">+10s</div>
+  </div>
+
+  <div id="error-msg">
+    <svg width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+    <p id="error-text">Impossible de lire ce flux.</p>
+  </div>
+
+  <button id="back-btn" onclick="goBack()">
+    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M10 19l-7-7 7-7M3 12h18"/></svg>
+    Retour
+  </button>
+
+  <div id="title-info">
+    <div id="title-poster">
+      <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20" rx="2"/><path d="M7 2v20M17 2v20M2 12h20"/></svg>
+    </div>
+    <div id="title-text">
+      <h3 id="media-title">Flux vidéo</h3>
+      <p id="media-sub">0:00 / --:--</p>
+    </div>
+  </div>
+
+  <!-- CENTER CONTROLS -->
   <div id="center-controls">
-    <button class="cc-btn" onclick="togglePlay()">
-      <svg id="cc-play" width="48" height="48" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-      <svg id="cc-pause" width="48" height="48" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="display:none"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+    <button class="cc-btn sm rewind" onclick="seekFlash(-10)">
+      <svg width="42" height="42" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polygon points="11 19 2 12 11 5 11 19"/><polygon points="22 19 13 12 22 5 22 19"/></svg>
+    </button>
+    <button class="cc-btn lg" onclick="togglePlay()">
+      <div id="cc-spin-ring"><div class="spin-ring"></div></div>
+      <svg id="cc-play" width="50" height="50" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+      <svg id="cc-pause" width="50" height="50" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" style="display:none"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+    </button>
+    <button class="cc-btn sm forward" onclick="seekFlash(10)">
+      <svg width="42" height="42" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polygon points="13 19 22 12 13 5 13 19"/><polygon points="2 19 11 12 2 5 2 19"/></svg>
     </button>
   </div>
 
+  <!-- BOTTOM BAR -->
   <div id="bottom-bar">
-    <div id="progress-wrap" onclick="doScrub(event)">
-      <div id="progress-bg"><div id="progress-fill"></div></div>
+    <div id="progress-wrap" onmousedown="startScrub(event)" ontouchstart="startScrub(event)" onmousemove="hoverProg(event)">
+      <div id="progress-bg">
+        <div id="progress-buf"></div>
+        <div id="progress-fill"></div>
+      </div>
+      <div id="progress-thumb"></div>
+      <div id="preview-tip">
+        <div id="preview-time">0:00</div>
+      </div>
     </div>
+
     <div class="bottom-row">
-      <button class="ctrl-btn" onclick="togglePlay()">
-        <svg id="play-icon" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-        <svg id="pause-icon" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="display:none"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+      <div class="left-ctrls">
+        <button class="ctrl-btn" data-no-press onclick="handleCtrlClick(this, togglePlay)">
+          <svg id="play-icon" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          <svg id="pause-icon" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="display:none"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+        </button>
+        <button class="ctrl-btn" data-no-press onclick="handleCtrlClick(this, ()=>seekFlash(-10))">
+          <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polygon points="11 19 2 12 11 5 11 19"/><polygon points="22 19 13 12 22 5 22 19"/></svg>
+        </button>
+        <button class="ctrl-btn" data-no-press onclick="handleCtrlClick(this, ()=>seekFlash(10))">
+          <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polygon points="13 19 22 12 13 5 13 19"/><polygon points="2 19 11 12 2 5 2 19"/></svg>
+        </button>
+
+        <div class="volume-wrap">
+          <button class="ctrl-btn" onclick="handleCtrlClick(this, toggleMute)">
+            <svg id="vi-full" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>
+            <svg id="vi-half" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="display:none"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+            <svg id="vi-mute" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="display:none"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>
+          </button>
+          <input type="range" id="vol-slider" min="0" max="1" step="0.01" value="1" oninput="setVolume(this.value)" />
+        </div>
+
+        <span id="time-display" onclick="toggleTimeMode()" title="Cliquer pour le temps restant">0:00 / --:--</span>
+      </div>
+
+      <div class="right-ctrls">
+        <!-- settings -->
+        <button class="ctrl-btn" id="settings-btn" onclick="handleCtrlClick(this, toggleSettings)">
+          <svg id="gear-icon" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        </button>
+
+        <!-- pip -->
+        <button class="ctrl-btn" onclick="handleCtrlClick(this, togglePiP)">
+          <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M8 4.5v5H3m-1-6 6 6m13 0v-3c0-1.16-.84-2-2-2h-7m-9 9v2c0 1.05.95 2 2 2h3"/><rect width="10" height="7" x="12" y="13.5" ry="2"/></svg>
+        </button>
+
+        <!-- fullscreen -->
+        <button class="ctrl-btn" onclick="handleCtrlClick(this, toggleFullscreen)">
+          <svg id="fs-exp" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M21 8V5a2 2 0 0 0-2-2h-3"/><path d="M3 16v3a2 2 0 0 0 2 2h3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/></svg>
+          <svg id="fs-col" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="display:none"><path d="M8 3v3a2 2 0 0 1-2 2H3"/><path d="M21 8h-3a2 2 0 0 1-2-2V3"/><path d="M3 16h3a2 2 0 0 1 2 2v3"/><path d="M16 21v-3a2 2 0 0 1 2-2h3"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SETTINGS SIDEBAR (Sources / Format / Vitesse) -->
+  <div class="settings-scrim" id="settings-scrim" onclick="toggleSettings()"></div>
+  <div class="settings-panel" id="settings-panel">
+    <div class="settings-header">
+      <span>Paramètres</span>
+      <button class="settings-close" onclick="toggleSettings()">
+        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
       </button>
-      <span id="time-display">0:00 / --:--</span>
+    </div>
+
+    <div class="settings-tabs">
+      <button class="settings-tab active" data-tab="sources" onclick="switchSettingsTab('sources')">Sources</button>
+      <button class="settings-tab" data-tab="format" onclick="switchSettingsTab('format')">Format</button>
+      <button class="settings-tab" data-tab="vitesse" onclick="switchSettingsTab('vitesse')">Vitesse</button>
+    </div>
+
+    <div class="settings-content">
+      <div class="settings-pane active" id="pane-sources">
+        <div class="set-row active" data-lang="vf" onclick="setSource(this,'vf')">
+          <span class="set-row-label"><span class="set-dot"></span>Français</span>
+          <span class="set-badge">Actif</span>
+        </div>
+        <div class="set-row" data-lang="vo" onclick="setSource(this,'vo')">
+          <span class="set-row-label"><span class="set-dot"></span>VO</span>
+          <span class="set-badge">Actif</span>
+        </div>
+      </div>
+
+      <div class="settings-pane" id="pane-format">
+        <div class="set-row active" data-fit="contain" onclick="setFormat(this,'contain')">
+          <span class="set-row-label"><span class="set-dot"></span>Ajusté</span>
+          <span class="set-badge">Actif</span>
+        </div>
+        <div class="set-row" data-fit="cover" onclick="setFormat(this,'cover')">
+          <span class="set-row-label"><span class="set-dot"></span>Remplir</span>
+          <span class="set-badge">Actif</span>
+        </div>
+        <div class="set-row" data-fit="fill" onclick="setFormat(this,'fill')">
+          <span class="set-row-label"><span class="set-dot"></span>Étirer 16:9</span>
+          <span class="set-badge">Actif</span>
+        </div>
+      </div>
+
+      <div class="settings-pane" id="pane-vitesse">
+        <div class="set-row" data-speed="0.5" onclick="setSpeed(this,0.5)">
+          <span class="set-row-label"><span class="set-dot"></span>0.5×</span>
+          <span class="set-badge">Actif</span>
+        </div>
+        <div class="set-row" data-speed="0.75" onclick="setSpeed(this,0.75)">
+          <span class="set-row-label"><span class="set-dot"></span>0.75×</span>
+          <span class="set-badge">Actif</span>
+        </div>
+        <div class="set-row active" data-speed="1" onclick="setSpeed(this,1)">
+          <span class="set-row-label"><span class="set-dot"></span>1× (normal)</span>
+          <span class="set-badge">Actif</span>
+        </div>
+        <div class="set-row" data-speed="1.25" onclick="setSpeed(this,1.25)">
+          <span class="set-row-label"><span class="set-dot"></span>1.25×</span>
+          <span class="set-badge">Actif</span>
+        </div>
+        <div class="set-row" data-speed="1.5" onclick="setSpeed(this,1.5)">
+          <span class="set-row-label"><span class="set-dot"></span>1.5×</span>
+          <span class="set-badge">Actif</span>
+        </div>
+        <div class="set-row" data-speed="2" onclick="setSpeed(this,2)">
+          <span class="set-row-label"><span class="set-dot"></span>2×</span>
+          <span class="set-badge">Actif</span>
+        </div>
+      </div>
     </div>
   </div>
 </div>
