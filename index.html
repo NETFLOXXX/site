@@ -2,43 +2,349 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<title>Derniers liens</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Stream Player - Autonomous</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/hls.js/1.4.12/hls.min.js"></script>
 <style>
-  body { font-family: sans-serif; text-align: center; margin-top: 80px; }
-  button { padding: 15px 30px; font-size: 18px; cursor: pointer; margin: 10px; }
-  .result { margin-top: 15px; margin-bottom: 40px; font-size: 18px; min-height: 20px; }
+  @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
+  * { margin:0; padding:0; box-sizing:border-box; }
+  :root { --red:#dc2626; --red-h:#ef4444; --glass:rgba(0,0,0,0.72); }
+
+  body {
+    background:#0a0a0a; font-family:'Outfit',sans-serif; color:#fff;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    min-height:100vh; padding:20px;
+  }
+
+  /* ── LOAD SCREEN ── */
+  #load-screen { width:100%; max-width:600px; text-align:center; }
+  #load-screen h1 { font-size:2rem; font-weight:700; letter-spacing:-0.03em; margin-bottom:8px; }
+  #load-screen h1 span { color:var(--red); }
+  #load-screen > p { color:rgba(255,255,255,0.5); margin-bottom:20px; font-size:0.9rem; }
+  
+  .status-badge {
+    display:inline-block; font-size:0.75rem; background:rgba(255,255,255,0.08); 
+    padding:6px 14px; border-radius:20px; border:1px solid rgba(255,255,255,0.12); margin-bottom:24px;
+    color:rgba(255,255,255,0.7);
+  }
+
+  .input-row {
+    display:flex; gap:10px; background:rgba(255,255,255,0.06);
+    border:1px solid rgba(255,255,255,0.12); border-radius:12px; padding:6px 6px 6px 16px;
+  }
+  .input-row input { flex:1; background:none; border:none; outline:none; color:#fff; font-family:'Outfit',sans-serif; font-size:0.95rem; }
+  .input-row input::placeholder { color:rgba(255,255,255,0.3); }
+  .input-row button {
+    background:var(--red); border:none; color:#fff; font-family:'Outfit',sans-serif;
+    font-weight:600; font-size:0.9rem; padding:10px 20px; border-radius:8px;
+    cursor:pointer; transition:background 0.2s; white-space:nowrap;
+  }
+  .input-row button:hover { background:var(--red-h); }
+  .examples { margin-top:20px; display:flex; flex-wrap:wrap; gap:8px; justify-content:center; }
+  .examples span { font-size:0.75rem; color:rgba(255,255,255,0.4); width:100%; margin-bottom:4px; }
+  .chip {
+    background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.1);
+    border-radius:20px; padding:5px 12px; font-size:0.75rem;
+    color:rgba(255,255,255,0.5); cursor:pointer; transition:all 0.2s;
+  }
+  .chip:hover { background:rgba(220,38,38,0.15); border-color:var(--red); color:#fff; }
+
+  /* ── PLAYER ── */
+  #player-wrap {
+    display:none; width:100%; max-width:1100px; position:relative;
+    border-radius:16px; overflow:hidden; background:#000;
+    box-shadow:0 40px 80px rgba(0,0,0,0.8); aspect-ratio:16/9;
+  }
+
+  video { width:100%; height:100%; object-fit:contain; display:block; }
+  #player-wrap.paused video { filter:grayscale(1); }
+
+  .overlay-gradient {
+    position:absolute; inset:0;
+    background:linear-gradient(to top, rgba(0,0,0,0.92) 0%, transparent 45%);
+    pointer-events:none; opacity:0; transition:opacity 0.3s;
+  }
+  .overlay-top {
+    position:absolute; top:0; left:0; right:0; height:130px;
+    background:linear-gradient(to bottom, rgba(0,0,0,0.75), transparent);
+    pointer-events:none; opacity:0; transition:opacity 0.3s;
+  }
+  #player-wrap.cv .overlay-gradient, #player-wrap.cv .overlay-top { opacity:1; }
+
+  #back-btn {
+    position:absolute; top:16px; left:16px; z-index:50;
+    display:flex; align-items:center; gap:8px; padding:8px 14px;
+    background:var(--glass); border:none; outline:none; border-radius:10px;
+    color:#fff; cursor:pointer; font-family:'Outfit',sans-serif; font-size:0.9rem; font-weight:500;
+    opacity:0; transform:translateY(-4px);
+    transition:opacity 0.3s, transform 0.25s, background 0.2s;
+    backdrop-filter:blur(8px);
+  }
+  #back-btn:hover { background:rgba(15,15,15,0.95); }
+  #player-wrap.cv #back-btn { opacity:1; transform:translateY(0); }
+
+  #title-info {
+    position:absolute; top:64px; left:16px; z-index:40;
+    display:flex; align-items:center; gap:12px;
+    opacity:0; transform:translateY(-4px); transition:opacity 0.3s, transform 0.3s;
+  }
+  #player-wrap.cv #title-info { opacity:1; transform:translateY(0); }
+  #title-poster {
+    width:52px; height:72px; border-radius:6px; overflow:hidden;
+    box-shadow:0 4px 12px rgba(0,0,0,0.5); background:#222;
+    display:flex; align-items:center; justify-content:center; color:#555;
+  }
+  #title-text h3 { font-size:0.95rem; font-weight:700; }
+  #title-text p { font-size:0.75rem; color:rgba(255,255,255,0.5); margin-top:2px; }
+
+  #center-controls {
+    position:absolute; inset:0; z-index:50;
+    display:flex; align-items:center; justify-content:center; gap:32px;
+    opacity:0; transform:scale(0.88); transition:opacity 0.25s, transform 0.25s;
+    pointer-events:none;
+  }
+  #player-wrap.cv #center-controls { opacity:1; transform:scale(1); pointer-events:all; }
+
+  .cc-btn {
+    border:none; outline:none; border-radius:50%; color:#fff; cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+    transition:transform 0.22s, background 0.2s;
+  }
+  .cc-btn.sm { width:88px; height:88px; background:rgba(0,0,0,0.55); backdrop-filter:blur(8px); }
+  .cc-btn.lg { width:104px; height:104px; background:rgba(0,0,0,0.55); backdrop-filter:blur(8px); }
+
+  #bottom-bar {
+    position:absolute; bottom:0; left:0; right:0; z-index:50; padding:0 18px 18px;
+    opacity:0; transform:translateY(8px); transition:opacity 0.3s, transform 0.3s;
+  }
+  #player-wrap.cv #bottom-bar { opacity:1; transform:translateY(0); }
+
+  #progress-wrap { position:relative; height:18px; margin-bottom:10px; cursor:pointer; display:flex; align-items:center; }
+  #progress-bg { width:100%; height:4px; background:rgba(255,255,255,0.2); border-radius:4px; overflow:hidden; position:relative; }
+  #progress-buf { position:absolute; left:0; top:0; height:100%; background:rgba(255,255,255,0.22); }
+  #progress-fill { position:absolute; left:0; top:0; height:100%; background:var(--red); }
+  #progress-thumb { position:absolute; top:50%; transform:translate(-50%, -50%); width:14px; height:14px; background:var(--red); border-radius:50%; }
+
+  .bottom-row { display:flex; align-items:center; justify-content:space-between; gap:8px; }
+  .left-ctrls, .right-ctrls { display:flex; align-items:center; gap:4px; }
+
+  .ctrl-btn { background:none; border:none; color:#fff; cursor:pointer; padding:8px; border-radius:8px; }
+  .ctrl-btn svg { width:26px; height:26px; }
+
+  .volume-wrap { display:flex; align-items:center; gap:6px; }
+  #vol-slider { width:84px; height:4px; appearance:none; border-radius:4px; outline:none; cursor:pointer; }
+  #vol-slider::-webkit-slider-thumb { appearance:none; width:14px; height:14px; background:var(--red); border-radius:50%; }
+
+  #time-display { font-size:0.8rem; color:rgba(255,255,255,0.8); white-space:nowrap; }
+
+  #cc-spin-ring { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; opacity:0; pointer-events:none; }
+  #player-wrap.buffering #cc-spin-ring { opacity:1; }
+  .spin-ring { width:52px; height:52px; border:3px solid rgba(255,255,255,0.15); border-top-color:var(--red); border-radius:50%; animation:spin 0.8s linear infinite; }
+  @keyframes spin { to { transform:rotate(360deg); } }
+
+  #error-msg { position:absolute; inset:0; display:none; flex-direction:column; align-items:center; justify-content:center; gap:12px; z-index:70; background:rgba(0,0,0,0.85); }
+  #error-msg svg { color:var(--red); }
+
+  #open-url-btn { display:none; margin-top:16px; background:rgba(255,255,255,0.07); border:1px solid rgba(255,255,255,0.12); border-radius:10px; padding:8px 18px; color:#fff; cursor:pointer; }
 </style>
 </head>
 <body>
 
-<div>
-  <button onclick="getUrl('movix_url', 'result-movix')">Obtenir le lien Movix</button>
-  <div id="result-movix" class="result"></div>
+<!-- LOAD SCREEN -->
+<div id="load-screen">
+  <h1>Stream <span>Player</span></h1>
+  <p>Entrez un ID de film Streamflix (ex: 424) ou une URL vidéo direct</p>
+
+  <div class="status-badge" id="domain-status">📡 Chargement du domaine Streamflix...</div>
+
+  <div class="input-row">
+    <input type="text" id="url-input" placeholder="ID TMDB (ex: 424) ou URL .m3u8 / .mp4" value="424" />
+    <button onclick="loadURL()">▶ Lancer</button>
+  </div>
+
+  <div class="examples">
+    <span>Lancements rapides Streamflix :</span>
+    <div class="chip" onclick="fillEx('424')">Movie ID 424</div>
+    <div class="chip" onclick="fillEx('550')">Movie ID 550</div>
+    <div class="chip" onclick="fillEx('https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4')">MP4 Test</div>
+  </div>
 </div>
 
-<div>
-  <button onclick="getUrl('streamflix_url', 'result-streamflix')">Obtenir le lien Streamflix</button>
-  <div id="result-streamflix" class="result"></div>
+<!-- PLAYER -->
+<div id="player-wrap">
+  <video id="video" playsinline crossorigin="anonymous"></video>
+  <div class="overlay-gradient"></div>
+  <div class="overlay-top"></div>
+
+  <div id="error-msg">
+    <svg width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+    <p id="error-text">Impossible de lire cette vidéo.</p>
+  </div>
+
+  <button id="back-btn" onclick="goBack()">← Retour</button>
+
+  <div id="title-info">
+    <div id="title-poster">🎬</div>
+    <div id="title-text">
+      <h3 id="media-title">Film</h3>
+      <p id="media-sub">0:00 / --:--</p>
+    </div>
+  </div>
+
+  <div id="center-controls">
+    <button class="cc-btn lg" onclick="togglePlay()">
+      <div id="cc-spin-ring"><div class="spin-ring"></div></div>
+      <svg id="cc-play" width="50" height="50" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+      <svg id="cc-pause" width="50" height="50" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" style="display:none"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+    </button>
+  </div>
+
+  <div id="bottom-bar">
+    <div id="progress-wrap" onclick="doScrub(event)">
+      <div id="progress-bg">
+        <div id="progress-buf"></div>
+        <div id="progress-fill"></div>
+      </div>
+      <div id="progress-thumb"></div>
+    </div>
+
+    <div class="bottom-row">
+      <div class="left-ctrls">
+        <button class="ctrl-btn" onclick="togglePlay()">
+          <svg id="play-icon" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          <svg id="pause-icon" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="display:none"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+        </button>
+        <span id="time-display">0:00 / --:--</span>
+      </div>
+    </div>
+  </div>
 </div>
+
+<button id="open-url-btn" onclick="goBack()">⊕ Choisir une autre vidéo</button>
 
 <script>
-async function getUrl(field, targetId) {
-  const resultDiv = document.getElementById(targetId);
-  resultDiv.textContent = "Chargement...";
+const video = document.getElementById('video');
+const pw = document.getElementById('player-wrap');
+const loadScreen = document.getElementById('load-screen');
+const openBtn = document.getElementById('open-url-btn');
+const statusBadge = document.getElementById('domain-status');
+
+let hls = null;
+let currentStreamflixBase = "https://streamflix.mom"; // Valeur par défaut
+
+// 1. Charger automatiquement le domaine à jour depuis latest.json
+async function initDomains() {
   try {
-    const res = await fetch("./latest.json?t=" + Date.now());
-    const data = await res.json();
-    const url = data[field];
-    if (url) {
-      resultDiv.innerHTML = `<a href="${url}" target="_blank">${url}</a><br><small>Mis à jour: ${new Date(data.updated_at).toLocaleString()}</small>`;
-    } else {
-      resultDiv.textContent = "Aucun lien trouvé.";
+    const res = await fetch('./latest.json?t=' + Date.now());
+    if (res.ok) {
+      const data = await res.json();
+      if (data.streamflix_url) {
+        currentStreamflixBase = data.streamflix_url;
+        statusBadge.textContent = `🟢 Domaine actif : ${currentStreamflixBase}`;
+        statusBadge.style.borderColor = "rgba(34,197,94,0.4)";
+      }
     }
   } catch (e) {
-    resultDiv.textContent = "Erreur: " + e.message;
+    statusBadge.textContent = "🟡 Mode fallback actif (" + currentStreamflixBase + ")";
   }
 }
-</script>
 
+initDomains();
+
+function fillEx(val) {
+  document.getElementById('url-input').value = val;
+  loadURL();
+}
+
+// Proxy permettant de contourner les restrictions CORS / Referer dans le navigateur
+function buildBypassUrl(targetUrl, referer) {
+  // Utilisation du proxy CORS-Anywhere / Corsproxy pour injecter les requêtes
+  return `https://corsproxy.io/?${encodeURIComponent(targetUrl)}`;
+}
+
+function loadURL() {
+  const input = document.getElementById('url-input').value.trim();
+  if (!input) return;
+
+  let finalMediaUrl = input;
+  
+  // Si l'utilisateur entre juste un numéro ID (ex: 424)
+  if (/^\d+$/.test(input)) {
+    const rawApiUrl = `${currentStreamflixBase}/api/movies/${input}/video-proxy`;
+    finalMediaUrl = buildBypassUrl(rawApiUrl, currentStreamflixBase);
+    document.getElementById('media-title').textContent = `Film ID #${input}`;
+  } else {
+    document.getElementById('media-title').textContent = "Flux Vidéo";
+  }
+
+  loadMedia(finalMediaUrl);
+}
+
+function loadMedia(url) {
+  clearHLS(); hideError(); showSpinner();
+  loadScreen.style.display = 'none';
+  pw.style.display = 'block';
+  openBtn.style.display = 'inline-block';
+
+  const isHLS = url.includes('.m3u8');
+
+  if (isHLS && Hls.isSupported()) {
+    hls = new Hls({ enableWorker: true });
+    hls.loadSource(url);
+    hls.attachMedia(video);
+    hls.on(Hls.Events.MANIFEST_PARSED, () => { hideSpinner(); video.play().catch(()=>{}); });
+    hls.on(Hls.Events.ERROR, (e, d) => { if(d.fatal){ hideSpinner(); showError('Erreur de lecture HLS'); } });
+  } else {
+    video.src = url;
+    video.play().catch(()=>{});
+  }
+
+  video.onerror = () => { hideSpinner(); showError('Accès refusé ou flux incompatible.'); };
+}
+
+function clearHLS() {
+  if (hls) { hls.destroy(); hls = null; }
+  video.src = '';
+}
+
+function goBack() {
+  video.pause(); clearHLS();
+  pw.style.display = 'none'; openBtn.style.display = 'none';
+  loadScreen.style.display = 'block';
+}
+
+function togglePlay() { if (video.paused) video.play(); else video.pause(); }
+
+function doScrub(e) {
+  const r = document.getElementById('progress-wrap').getBoundingClientRect();
+  const x = Math.max(0, Math.min((e.clientX||e.pageX)-r.left, r.width));
+  if (video.duration) video.currentTime = (x/r.width)*video.duration;
+}
+
+video.addEventListener('timeupdate', () => {
+  const pct = video.duration ? (video.currentTime/video.duration)*100 : 0;
+  document.getElementById('progress-fill').style.width = pct + '%';
+  document.getElementById('progress-thumb').style.left = pct + '%';
+});
+
+video.addEventListener('play', () => {
+  document.getElementById('play-icon').style.display = 'none';
+  document.getElementById('pause-icon').style.display = '';
+  document.getElementById('cc-play').style.display = 'none';
+  document.getElementById('cc-pause').style.display = '';
+});
+
+video.addEventListener('pause', () => {
+  document.getElementById('play-icon').style.display = '';
+  document.getElementById('pause-icon').style.display = 'none';
+  document.getElementById('cc-play').style.display = '';
+  document.getElementById('cc-pause').style.display = 'none';
+});
+
+function showSpinner() { pw.classList.add('buffering'); }
+function hideSpinner() { pw.classList.remove('buffering'); }
+function showError(msg) { document.getElementById('error-text').textContent=msg; document.getElementById('error-msg').style.display='flex'; }
+function hideError() { document.getElementById('error-msg').style.display='none'; }
+</script>
 </body>
 </html>
