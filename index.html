@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>NETFLOX Player</title>
+<title>Movix Player</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/hls.js/1.4.12/hls.min.js"></script>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
@@ -20,14 +20,7 @@
   #load-screen { width:100%; max-width:600px; text-align:center; }
   #load-screen h1 { font-size:2rem; font-weight:700; letter-spacing:-0.03em; margin-bottom:8px; }
   #load-screen h1 span { color:var(--red); }
-  #load-screen > p { color:rgba(255,255,255,0.5); margin-bottom:16px; font-size:0.9rem; }
-  
-  .status-badge {
-    display:inline-block; font-size:0.75rem; background:rgba(255,255,255,0.08); 
-    padding:6px 14px; border-radius:20px; border:1px solid rgba(255,255,255,0.12); margin-bottom:24px;
-    color:rgba(255,255,255,0.7);
-  }
-
+  #load-screen > p { color:rgba(255,255,255,0.5); margin-bottom:32px; font-size:0.9rem; }
   .input-row {
     display:flex; gap:10px; background:rgba(255,255,255,0.06);
     border:1px solid rgba(255,255,255,0.12); border-radius:12px; padding:6px 6px 6px 16px;
@@ -50,7 +43,6 @@
   .chip:hover { background:rgba(220,38,38,0.15); border-color:var(--red); color:#fff; }
 
   /* ── PLAYER ── */
-/* ── PLAYER ── */
   #player-wrap {
     display:none; width:100%; max-width:1100px; position:relative;
     border-radius:16px; overflow:hidden; background:#000;
@@ -447,6 +439,7 @@
 </head>
 <body>
 
+<!-- LOAD SCREEN -->
 <div id="load-screen">
   <h1>NETFLOX <span>Player</span></h1>
   <p>Entrez un ID de film TMDB (ex: 424) ou une URL direct .m3u8 / .mp4</p>
@@ -652,7 +645,7 @@
   </div>
 </div>
 
-<button id="open-url-btn" onclick="goBack()">⊕ Choisir une autre vidéo</button>
+<button id="open-url-btn" onclick="goBack()">⊕ Ouvrir une autre URL</button>
 
 <script>
 const WORKER_PROXY = "https://netfloxxx.blague-drole-67.workers.dev/";
@@ -662,7 +655,8 @@ const loadScreen = document.getElementById('load-screen');
 const openBtn = document.getElementById('open-url-btn');
 let hls = null;
 let streamflixBase = "https://streamflix.mom";
-
+const timeDsp = document.getElementById('time-display');
+const volSlider = document.getElementById('vol-slider');
 async function initDomains() {
   try {
     const res = await fetch('./latest.json?t=' + Date.now());
@@ -689,6 +683,32 @@ function loadURL() {
   // Passage systématique par le Cloudflare Worker
   const finalProxyUrl = `${WORKER_PROXY}?url=${encodeURIComponent(targetUrl)}`;
   loadMedia(finalProxyUrl);
+}
+
+let hls = null, hideTimer = null, scrubbing = false;
+let showRemaining = false;
+let prevVolBeforeMute = 1;
+let keyboardAction = false; // prevents pause event from showing controls when triggered by keyboard
+const flashT = {};
+
+// ── CTRL BTN CLICK — just call the function, no sticky red ──
+function handleCtrlClick(btn, fn) { fn(); }
+
+// ── LOAD ──
+function fillEx(url) { document.getElementById('url-input').value = url; loadURL(); }
+
+function loadURL() {
+  const url = document.getElementById('url-input').value.trim();
+  if (!url) return;
+  loadMedia(url, guessTitle(url));
+}
+
+function guessTitle(url) {
+  try {
+    const p = new URL(url).pathname.split('/');
+    const last = p[p.length-1] || p[p.length-2] || '';
+    return decodeURIComponent(last.replace(/\.[^.]+$/,'').replace(/[-_]/g,' ')) || 'Flux vidéo';
+  } catch { return 'Flux vidéo'; }
 }
 
 function loadMedia(url, title) {
@@ -1037,5 +1057,4 @@ function hideError() { document.getElementById('error-msg').style.display='none'
 updateVolUI();
 </script>
 </body>
-  
 </html>
