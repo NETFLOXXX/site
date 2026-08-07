@@ -56,11 +56,9 @@
     box-shadow:0 40px 80px rgba(0,0,0,0.8); aspect-ratio:16/9;
   }
 
-  /* VIDEO — grayscale instantané à la pause */
   video { width:100%; height:100%; object-fit:contain; display:block; }
   #player-wrap.paused video { filter:grayscale(1); }
 
-  /* gradients */
   .overlay-gradient {
     position:absolute; inset:0;
     background:linear-gradient(to top, rgba(0,0,0,0.92) 0%, transparent 45%);
@@ -73,7 +71,6 @@
   }
   #player-wrap.cv .overlay-gradient, #player-wrap.cv .overlay-top { opacity:1; }
 
-  /* BACK BTN — keyframe bounce scale on hover */
   #back-btn {
     position:absolute; top:16px; left:16px; z-index:50;
     display:flex; align-items:center; gap:8px; padding:8px 14px;
@@ -94,7 +91,6 @@
   }
   #player-wrap.cv #back-btn { opacity:1; transform:translateY(0); }
 
-  /* title */
   #title-info {
     position:absolute; top:64px; left:16px; z-index:40;
     display:flex; align-items:center; gap:12px;
@@ -118,7 +114,6 @@
   }
   #player-wrap.cv #center-controls { opacity:1; transform:scale(1); pointer-events:all; }
 
-  /* Side buttons (rewind/forward) */
   .cc-btn {
     border:none; outline:none; -webkit-tap-highlight-color:transparent;
     border-radius:50%; color:#fff; cursor:pointer;
@@ -128,27 +123,13 @@
   .cc-btn:focus { outline:none; }
   .cc-btn:active { transform:scale(0.86) !important; transition-duration:0.08s !important; }
 
-  .cc-btn.sm {
-    width:88px; height:88px;
-    background:rgba(0,0,0,0.55);
-    backdrop-filter:blur(8px);
-  }
+  .cc-btn.sm { width:88px; height:88px; background:rgba(0,0,0,0.55); backdrop-filter:blur(8px); }
   .cc-btn.rewind:hover { transform:scale(1.14) rotate(-14deg); background:rgba(0,0,0,0.8); }
   .cc-btn.forward:hover { transform:scale(1.14) rotate(14deg); background:rgba(0,0,0,0.8); }
 
-  /* BIG center button */
-  .cc-btn.lg {
-    width:104px; height:104px;
-    background:rgba(0,0,0,0.55);
-    backdrop-filter:blur(8px);
-    box-shadow:0 4px 24px rgba(0,0,0,0.5);
-  }
-  .cc-btn.lg:hover {
-    transform:scale(1.12);
-    background:rgba(0,0,0,0.72);
-  }
+  .cc-btn.lg { width:104px; height:104px; background:rgba(0,0,0,0.55); backdrop-filter:blur(8px); box-shadow:0 4px 24px rgba(0,0,0,0.5); }
+  .cc-btn.lg:hover { transform:scale(1.12); background:rgba(0,0,0,0.72); }
 
-  /* seek flash */
   #seek-flash {
     position:absolute; inset:0; z-index:49;
     display:flex; align-items:center; justify-content:space-between;
@@ -168,7 +149,6 @@
   }
   #player-wrap.cv #bottom-bar { opacity:1; transform:translateY(0); }
 
-  /* progress */
   #progress-wrap {
     position:relative; height:18px; margin-bottom:10px;
     cursor:pointer; display:flex; align-items:center;
@@ -185,27 +165,21 @@
     width:14px; height:14px; background:var(--red); border-radius:50%;
     pointer-events:none; box-shadow:0 0 6px rgba(220,38,38,0.6);
   }
-  /* Preview tooltip */
   #preview-tip {
-    position:absolute; bottom:22px;
-    pointer-events:none; transform:translateX(-50%);
-    opacity:0; transition:opacity 0.12s;
-    z-index:100;
+    position:absolute; bottom:22px; pointer-events:none; transform:translateX(-50%);
+    opacity:0; transition:opacity 0.12s; z-index:100;
   }
   #progress-wrap:hover #preview-tip { opacity:1; }
   #preview-time {
     background:rgba(10,10,10,0.92); color:#fff;
     font-size:0.78rem; font-weight:600; padding:4px 10px; border-radius:6px;
     white-space:nowrap; font-family:'Outfit',sans-serif;
-    border:1px solid rgba(255,255,255,0.1);
-    box-shadow:0 2px 12px rgba(0,0,0,0.6);
+    border:1px solid rgba(255,255,255,0.1); box-shadow:0 2px 12px rgba(0,0,0,0.6);
   }
 
-  /* bottom row */
   .bottom-row { display:flex; align-items:center; justify-content:space-between; gap:8px; }
   .left-ctrls, .right-ctrls { display:flex; align-items:center; gap:4px; }
 
-  /* CTRL-BTN */
   .ctrl-btn {
     background:none; border:none; outline:none; color:#fff; cursor:pointer;
     display:flex; align-items:center; justify-content:center; padding:8px;
@@ -217,12 +191,10 @@
   .ctrl-btn:focus { outline:none; }
   .ctrl-btn:active { transform:scale(0.88); color:var(--red); }
 
-  /* GEAR */
   #gear-icon { transition:transform 0.35s cubic-bezier(0.34,1.56,0.64,1); transform:rotate(0deg); }
   #settings-btn.open #gear-icon { transform:rotate(45deg); }
   #settings-btn.open { color:var(--red-h); }
 
-  /* volume */
   .volume-wrap { display:flex; align-items:center; gap:6px; }
   #vol-slider {
     width:84px; height:4px; appearance:none; -webkit-appearance:none;
@@ -238,338 +210,11 @@
     border-radius:50%; border:none; cursor:pointer;
   }
 
-  /* time */
   #time-display {
     font-size:0.8rem; color:rgba(255,255,255,0.8); white-space:nowrap;
     min-width:100px; cursor:pointer; user-select:none; transition:color 0.15s;
   }
   #time-display:hover { color:#fff; }
-
-  /* ── SETTINGS SIDEBAR ── */
-  .settings-scrim {
-    position:absolute; inset:0; z-index:150;
-    background:rgba(0,0,0,0.55);
-    opacity:0; pointer-events:none; transition:opacity 0.3s;
-  }
-  .settings-scrim.open { opacity:1; pointer-events:all; }
-
-  .settings-panel {
-    position:absolute; top:0; right:0; bottom:0; z-index:200;
-    width:420px; max-width:78%;
-    background:rgba(9,9,9,0.98); border-left:1px solid rgba(255,255,255,0.1);
-    backdrop-filter:blur(20px);
-    box-shadow:-24px 0 60px rgba(0,0,0,0.55);
-    display:flex; flex-direction:column; overflow:hidden;
-    transform:translateX(100%); pointer-events:none;
-    transition:transform 0.36s cubic-bezier(0.22,1,0.36,1);
-  }
-  .settings-panel.open { transform:translateX(0); pointer-events:all; }
-
-  .settings-header {
-    display:flex; align-items:center; justify-content:space-between;
-    padding:22px 24px; border-bottom:1px solid rgba(255,255,255,0.08); flex-shrink:0;
-  }
-  .settings-header span { font-size:1.2rem; font-weight:700; letter-spacing:-0.01em; }
-  .settings-close {
-    background:none; border:none; color:rgba(255,255,255,0.5); cursor:pointer;
-    display:flex; align-items:center; justify-content:center; padding:6px; border-radius:8px;
-    transition:color 0.15s, background 0.15s, transform 0.15s;
-  }
-  .settings-close:hover { color:#fff; background:rgba(255,255,255,0.08); transform:scale(1.08); }
-
-  .settings-tabs {
-    display:flex; border-bottom:1px solid rgba(255,255,255,0.08); flex-shrink:0; padding:0 8px;
-  }
-  .settings-tab {
-    flex:1; background:none; border:none; outline:none; cursor:pointer;
-    color:rgba(255,255,255,0.45); font-family:'Outfit',sans-serif; font-size:0.92rem; font-weight:600;
-    padding:16px 6px; position:relative; transition:color 0.15s;
-  }
-  .settings-tab:hover { color:rgba(255,255,255,0.75); }
-  .settings-tab.active { color:#fff; }
-  .settings-tab.active::after {
-    content:''; position:absolute; left:16%; right:16%; bottom:-1px; height:3px;
-    background:var(--red); border-radius:3px 3px 0 0;
-  }
-
-  .settings-content { overflow-y:auto; padding:10px 0; flex:1; }
-  .settings-content::-webkit-scrollbar { width:6px; }
-  .settings-content::-webkit-scrollbar-thumb { background:rgba(255,255,255,0.15); border-radius:6px; }
-
-  .settings-pane { display:none; padding:6px 0; }
-  .settings-pane.active { display:block; }
-
-  .set-row {
-    display:flex; align-items:centerVoici le fichier complet mis à jour. J'ai repris l'intégralité du design, des icônes, des animations et des paramètres du lecteur avancé[cite: 2], tout en y injectant la logique de récupération de flux via le Cloudflare Worker et l'API Streamflix de votre fichier d'origine[cite: 1].
-
-*   **Interface utilisateur** : Le lecteur intègre les contrôles avancés de volume, les paramètres latéraux (sources, format, vitesse), le Picture-in-Picture et les raccourcis clavier[cite: 2].
-*   **Logique de connexion** : L'initialisation recherche le fichier `latest.json` pour mettre à jour le domaine cible et passe systématiquement par l'adresse proxy `WORKER_PROXY` pour contourner les restrictions[cite: 1].
-*   **Gestion des entrées** : La barre de recherche accepte aussi bien les URL directes que les ID TMDB (ex: 424), qui sont automatiquement convertis en requêtes API vidéo[cite: 1].
-*   **Identité visuelle** : L'écran de chargement conserve le titre "NETFLOX Player", le badge de statut du proxy et les raccourcis d'exemples spécifiques (Film 424, 550, MP4 Test)[cite: 1].
-
-```html
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>NETFLOX Player</title>
-<script src="[https://cdnjs.cloudflare.com/ajax/libs/hls.js/1.4.12/hls.min.js](https://cdnjs.cloudflare.com/ajax/libs/hls.js/1.4.12/hls.min.js)"></script>
-<style>
-  @import url('[https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap](https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap)');
-  * { margin:0; padding:0; box-sizing:border-box; }
-  :root { --red:#dc2626; --red-h:#ef4444; --glass:rgba(0,0,0,0.72); }
-
-  body {
-    background:#0a0a0a; font-family:'Outfit',sans-serif; color:#fff;
-    display:flex; flex-direction:column; align-items:center; justify-content:center;
-    min-height:100vh; padding:20px;
-  }
-
-  /* ── LOAD SCREEN ── */
-  #load-screen { width:100%; max-width:600px; text-align:center; }
-  #load-screen h1 { font-size:2rem; font-weight:700; letter-spacing:-0.03em; margin-bottom:8px; }
-  #load-screen h1 span { color:var(--red); }
-  #load-screen > p { color:rgba(255,255,255,0.5); margin-bottom:16px; font-size:0.9rem; }
-  
-  .status-badge {
-    display:inline-block; font-size:0.75rem; background:rgba(255,255,255,0.08); 
-    padding:6px 14px; border-radius:20px; border:1px solid rgba(255,255,255,0.12); margin-bottom:24px;
-    color:rgba(255,255,255,0.7);
-  }
-
-  .input-row {
-    display:flex; gap:10px; background:rgba(255,255,255,0.06);
-    border:1px solid rgba(255,255,255,0.12); border-radius:12px; padding:6px 6px 6px 16px;
-  }
-  .input-row input { flex:1; background:none; border:none; outline:none; color:#fff; font-family:'Outfit',sans-serif; font-size:0.95rem; }
-  .input-row input::placeholder { color:rgba(255,255,255,0.3); }
-  .input-row button {
-    background:var(--red); border:none; color:#fff; font-family:'Outfit',sans-serif;
-    font-weight:600; font-size:0.9rem; padding:10px 20px; border-radius:8px;
-    cursor:pointer; transition:background 0.2s; white-space:nowrap;
-  }
-  .input-row button:hover { background:var(--red-h); }
-  .examples { margin-top:20px; display:flex; flex-wrap:wrap; gap:8px; justify-content:center; }
-  .examples span { font-size:0.75rem; color:rgba(255,255,255,0.4); width:100%; margin-bottom:4px; }
-  .chip {
-    background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.1);
-    border-radius:20px; padding:5px 12px; font-size:0.75rem;
-    color:rgba(255,255,255,0.5); cursor:pointer; transition:all 0.2s;
-  }
-  .chip:hover { background:rgba(220,38,38,0.15); border-color:var(--red); color:#fff; }
-
-  /* ── PLAYER ── */
-  #player-wrap {
-    display:none; width:100%; max-width:1100px; position:relative;
-    border-radius:16px; overflow:hidden; background:#000;
-    box-shadow:0 40px 80px rgba(0,0,0,0.8); aspect-ratio:16/9;
-  }
-
-  /* VIDEO — grayscale instantané à la pause */
-  video { width:100%; height:100%; object-fit:contain; display:block; }
-  #player-wrap.paused video { filter:grayscale(1); }
-
-  /* gradients */
-  .overlay-gradient {
-    position:absolute; inset:0;
-    background:linear-gradient(to top, rgba(0,0,0,0.92) 0%, transparent 45%);
-    pointer-events:none; opacity:0; transition:opacity 0.3s;
-  }
-  .overlay-top {
-    position:absolute; top:0; left:0; right:0; height:130px;
-    background:linear-gradient(to bottom, rgba(0,0,0,0.75), transparent);
-    pointer-events:none; opacity:0; transition:opacity 0.3s;
-  }
-  #player-wrap.cv .overlay-gradient, #player-wrap.cv .overlay-top { opacity:1; }
-
-  /* BACK BTN — keyframe bounce scale on hover */
-  #back-btn {
-    position:absolute; top:16px; left:16px; z-index:50;
-    display:flex; align-items:center; gap:8px; padding:8px 14px;
-    background:var(--glass); border:none; outline:none; border-radius:10px;
-    color:#fff; cursor:pointer; font-family:'Outfit',sans-serif; font-size:0.9rem; font-weight:500;
-    opacity:0; transform:translateY(-4px);
-    transition:opacity 0.3s, transform 0.25s, background 0.2s;
-    backdrop-filter:blur(8px);
-  }
-  #back-btn:hover {
-    background:rgba(15,15,15,0.95);
-    animation:back-pop 0.35s cubic-bezier(0.34,1.56,0.64,1) forwards;
-  }
-  @keyframes back-pop {
-    0%   { transform:translateY(0) scale(1); }
-    60%  { transform:translateY(0) scale(1.22); }
-    100% { transform:translateY(0) scale(1.18); }
-  }
-  #player-wrap.cv #back-btn { opacity:1; transform:translateY(0); }
-
-  /* title */
-  #title-info {
-    position:absolute; top:64px; left:16px; z-index:40;
-    display:flex; align-items:center; gap:12px;
-    opacity:0; transform:translateY(-4px); transition:opacity 0.3s, transform 0.3s;
-  }
-  #player-wrap.cv #title-info { opacity:1; transform:translateY(0); }
-  #title-poster {
-    width:52px; height:72px; border-radius:6px; overflow:hidden;
-    box-shadow:0 4px 12px rgba(0,0,0,0.5); background:#222;
-    display:flex; align-items:center; justify-content:center; color:#555;
-  }
-  #title-text h3 { font-size:0.95rem; font-weight:700; }
-  #title-text p { font-size:0.75rem; color:rgba(255,255,255,0.5); margin-top:2px; }
-
-  /* ── CENTER CONTROLS ── */
-  #center-controls {
-    position:absolute; inset:0; z-index:50;
-    display:flex; align-items:center; justify-content:center; gap:32px;
-    opacity:0; transform:scale(0.88); transition:opacity 0.25s, transform 0.25s;
-    pointer-events:none;
-  }
-  #player-wrap.cv #center-controls { opacity:1; transform:scale(1); pointer-events:all; }
-
-  /* Side buttons (rewind/forward) */
-  .cc-btn {
-    border:none; outline:none; -webkit-tap-highlight-color:transparent;
-    border-radius:50%; color:#fff; cursor:pointer;
-    display:flex; align-items:center; justify-content:center;
-    transition:transform 0.22s cubic-bezier(0.34,1.56,0.64,1), background 0.2s, box-shadow 0.15s;
-  }
-  .cc-btn:focus { outline:none; }
-  .cc-btn:active { transform:scale(0.86) !important; transition-duration:0.08s !important; }
-
-  .cc-btn.sm {
-    width:88px; height:88px;
-    background:rgba(0,0,0,0.55);
-    backdrop-filter:blur(8px);
-  }
-  .cc-btn.rewind:hover { transform:scale(1.14) rotate(-14deg); background:rgba(0,0,0,0.8); }
-  .cc-btn.forward:hover { transform:scale(1.14) rotate(14deg); background:rgba(0,0,0,0.8); }
-
-  /* BIG center button */
-  .cc-btn.lg {
-    width:104px; height:104px;
-    background:rgba(0,0,0,0.55);
-    backdrop-filter:blur(8px);
-    box-shadow:0 4px 24px rgba(0,0,0,0.5);
-  }
-  .cc-btn.lg:hover {
-    transform:scale(1.12);
-    background:rgba(0,0,0,0.72);
-  }
-
-  /* seek flash */
-  #seek-flash {
-    position:absolute; inset:0; z-index:49;
-    display:flex; align-items:center; justify-content:space-between;
-    padding:0 60px; pointer-events:none;
-  }
-  .seek-label {
-    font-size:2rem; font-weight:700; color:#fff;
-    background:rgba(0,0,0,0.55); padding:12px 22px; border-radius:24px;
-    opacity:0; transition:opacity 0.12s;
-  }
-  .seek-label.show { opacity:1; }
-
-  /* ── BOTTOM BAR ── */
-  #bottom-bar {
-    position:absolute; bottom:0; left:0; right:0; z-index:50; padding:0 18px 18px;
-    opacity:0; transform:translateY(8px); transition:opacity 0.3s, transform 0.3s;
-  }
-  #player-wrap.cv #bottom-bar { opacity:1; transform:translateY(0); }
-
-  /* progress */
-  #progress-wrap {
-    position:relative; height:18px; margin-bottom:10px;
-    cursor:pointer; display:flex; align-items:center;
-  }
-  #progress-bg {
-    width:100%; height:4px; background:rgba(255,255,255,0.2);
-    border-radius:4px; overflow:hidden; position:relative; transition:height 0.15s;
-  }
-  #progress-wrap:hover #progress-bg { height:6px; }
-  #progress-buf { position:absolute; left:0; top:0; height:100%; background:rgba(255,255,255,0.22); border-radius:4px; pointer-events:none; }
-  #progress-fill { position:absolute; left:0; top:0; height:100%; background:var(--red); border-radius:4px; pointer-events:none; }
-  #progress-thumb {
-    position:absolute; top:50%; transform:translateY(-50%) translateX(-50%);
-    width:14px; height:14px; background:var(--red); border-radius:50%;
-    pointer-events:none; box-shadow:0 0 6px rgba(220,38,38,0.6);
-  }
-  /* Preview tooltip */
-  #preview-tip {
-    position:absolute; bottom:22px;
-    pointer-events:none; transform:translateX(-50%);
-    opacity:0; transition:opacity 0.12s;
-    z-index:100;
-  }
-  #progress-wrap:hover #preview-tip { opacity:1; }
-  #preview-time {
-    background:rgba(10,10,10,0.92); color:#fff;
-    font-size:0.78rem; font-weight:600; padding:4px 10px; border-radius:6px;
-    white-space:nowrap; font-family:'Outfit',sans-serif;
-    border:1px solid rgba(255,255,255,0.1);
-    box-shadow:0 2px 12px rgba(0,0,0,0.6);
-  }
-
-  /* bottom row */
-  .bottom-row { display:flex; align-items:center; justify-content:space-between; gap:8px; }
-  .left-ctrls, .right-ctrls { display:flex; align-items:center; gap:4px; }
-
-  /* CTRL-BTN */
-  .ctrl-btn {
-    background:none; border:none; outline:none; color:#fff; cursor:pointer;
-    display:flex; align-items:center; justify-content:center; padding:8px;
-    border-radius:8px; transition:color 0.12s, transform 0.18s cubic-bezier(0.34,1.56,0.64,1), background 0.2s;
-    -webkit-tap-highlight-color:transparent;
-  }
-  .ctrl-btn svg { width:26px; height:26px; }
-  .ctrl-btn:hover { color:var(--red-h); transform:scale(1.16); background:rgba(255,255,255,0.06); }
-  .ctrl-btn:focus { outline:none; }
-  .ctrl-btn:active { transform:scale(0.88); color:var(--red); }
-
-  /* GEAR */
-  #gear-icon { transition:transform 0.35s cubic-bezier(0.34,1.56,0.64,1); transform:rotate(0deg); }
-  #settings-btn.open #gear-icon { transform:rotate(45deg); }
-  #settings-btn.open { color:var(--red-h); }
-
-  /* volume */
-  .volume-wrap { display:flex; align-items:center; gap:6px; }
-  #vol-slider {
-    width:84px; height:4px; appearance:none; -webkit-appearance:none;
-    border-radius:4px; outline:none; cursor:pointer;
-  }
-  #vol-slider::-webkit-slider-thumb {
-    -webkit-appearance:none; width:14px; height:14px;
-    background:var(--red); border-radius:50%; cursor:pointer;
-    box-shadow:0 0 4px rgba(220,38,38,0.6);
-  }
-  #vol-slider::-moz-range-thumb {
-    width:14px; height:14px; background:var(--red);
-    border-radius:50%; border:none; cursor:pointer;
-  }
-
-  /* time */
-  #time-display {
-    font-size:0.8rem; color:rgba(255,255,255,0.8); white-space:nowrap;
-    min-width:100px; cursor:pointer; user-select:none; transition:color 0.15s;
-  }
-  #time-display:hover { color:#fff; }
-
-  /* menus */
-  .menu-popup {
-    position:absolute; bottom:115%; right:0;
-    background:rgba(12,12,12,0.97); border:1px solid rgba(255,255,255,0.1);
-    border-radius:10px; padding:6px 0; min-width:120px;
-    backdrop-filter:blur(14px); display:none; z-index:200;
-  }
-  .menu-popup.open { display:block; }
-  .menu-item {
-    padding:8px 16px; font-size:0.85rem; cursor:pointer;
-    transition:background 0.15s; display:flex; align-items:center; justify-content:space-between;
-  }
-  .menu-item:hover { background:rgba(255,255,255,0.08); }
-  .menu-item.active { color:var(--red); }
-  .menu-label { font-size:0.7rem; color:rgba(255,255,255,0.38); padding:6px 16px 2px; text-transform:uppercase; letter-spacing:0.08em; }
 
   /* ── SETTINGS SIDEBAR ── */
   .settings-scrim {
@@ -660,13 +305,9 @@
   .spin-ring { border:3px solid rgba(255,255,255,0.15); border-top-color:var(--red); border-radius:50%; animation:spin 0.8s linear infinite; }
   @keyframes spin { to { transform:rotate(360deg); } }
 
-  /* error */
-  #error-msg { position:absolute; inset:0; display:none; flex-direction:column; align-items:center; justify-content:center; gap:12px; z-index:70; }
+  #error-msg { position:absolute; inset:0; display:none; flex-direction:column; align-items:center; justify-content:center; gap:12px; z-index:70; background:rgba(0,0,0,0.85); }
   #error-msg svg { color:var(--red); }
-  #error-msg p { font-size:0.9rem; color:rgba(255,255,255,0.6); }
-
-  #player-wrap:fullscreen { max-width:100%; border-radius:0; }
-  #player-wrap:-webkit-full-screen { max-width:100%; border-radius:0; }
+  #error-msg p { font-size:0.9rem; color:rgba(255,255,255,0.7); text-align:center; padding:0 20px; }
 
   #open-url-btn {
     display:none; margin-top:16px; background:rgba(255,255,255,0.07);
@@ -676,8 +317,6 @@
   }
   #open-url-btn:hover { background:rgba(255,255,255,0.12); color:#fff; }
 
-  /* ════════════════ RESPONSIVE ════════════════ */
-
   @media (max-width:900px) {
     .settings-panel { width:360px; }
   }
@@ -685,67 +324,11 @@
   @media (max-width:640px) {
     body { padding:10px; }
     #load-screen h1 { font-size:1.5rem; }
-    #load-screen > p { font-size:0.8rem; margin-bottom:24px; }
     .input-row { flex-wrap:wrap; padding:10px; }
-    .input-row input { min-width:0; flex-basis:100%; padding:6px 4px; }
+    .input-row input { flex-basis:100%; padding:6px 4px; }
     .input-row button { flex:1; }
-
-    #player-wrap { border-radius:10px; }
-    #back-btn { padding:7px 12px; font-size:0.82rem; top:10px; left:10px; }
-    #title-info { top:52px; left:10px; }
-    #title-poster { display:none; }
-
-    .cc-btn.sm { width:56px; height:56px; }
-    .cc-btn.sm svg { width:32px; height:32px; }
-    .cc-btn.lg { width:78px; height:78px; }
-    .cc-btn.lg svg { width:38px; height:38px; }
-    #center-controls { gap:20px; }
-
-    #bottom-bar { padding:0 10px 12px; }
-    .bottom-row { gap:2px; }
-    .left-ctrls { gap:0; }
-    .right-ctrls { gap:0; }
-    .ctrl-btn { padding:7px; }
-    .ctrl-btn svg { width:23px; height:23px; }
-
-    #vol-slider { width:0; opacity:0; margin-left:-6px; transition:width 0.2s, opacity 0.2s, margin 0.2s; }
-    .volume-wrap:hover #vol-slider,
-    .volume-wrap:active #vol-slider { width:56px; opacity:1; margin-left:0; }
-
-    #time-display { font-size:0.72rem; min-width:auto; }
-
     .settings-panel { width:100%; max-width:100%; border-left:none; }
-    .settings-header { padding:16px 18px; }
-    .settings-header span { font-size:1.05rem; }
-    .settings-tab { font-size:0.82rem; padding:14px 4px; }
-    .set-row { padding:14px 16px; font-size:0.9rem; }
   }
-
-  @media (max-width:380px) {
-    .cc-btn.sm { width:46px; height:46px; }
-    .cc-btn.sm svg { width:26px; height:26px; }
-    .cc-btn.lg { width:64px; height:64px; }
-    .cc-btn.lg svg { width:30px; height:30px; }
-    .ctrl-btn { padding:5px; }
-    .ctrl-btn svg { width:21px; height:21px; }
-    #time-display { display:none; }
-  }
-
-  @media (max-height:520px) and (orientation:landscape) {
-    body { padding:0; min-height:100dvh; }
-    #load-screen { padding:0 24px; }
-    #player-wrap {
-      position:fixed; inset:0; width:100vw; height:100dvh;
-      max-width:none; aspect-ratio:auto; border-radius:0; z-index:1000;
-    }
-    #player-wrap:fullscreen, #player-wrap:-webkit-full-screen { inset:0; }
-    .cc-btn.sm { width:52px; height:52px; }
-    .cc-btn.lg { width:68px; height:68px; }
-    #bottom-bar { padding:0 max(12px, env(safe-area-inset-right)) 10px max(12px, env(safe-area-inset-left)); }
-    #back-btn { top:max(10px, env(safe-area-inset-top)); left:max(10px, env(safe-area-inset-left)); }
-    .settings-panel { max-width:60%; }
-  }
-
   svg { flex-shrink:0; }
 </style>
 </head>
@@ -766,7 +349,7 @@
     <span>Exemples rapides :</span>
     <div class="chip" onclick="fillEx('424')">Film 424 (Streamflix)</div>
     <div class="chip" onclick="fillEx('550')">Film 550 (Fight Club)</div>
-    <div class="chip" onclick="fillEx('[https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4](https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4)')">MP4 Test</div>
+    <div class="chip" onclick="fillEx('https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4')">MP4 Test</div>
   </div>
 </div>
 
@@ -947,9 +530,8 @@
 <button id="open-url-btn" onclick="goBack()">⊕ Ouvrir une autre vidéo</button>
 
 <script>
-// --- LOGIQUE PROXY & INITIALISATION NETFLOX ---
-const WORKER_PROXY = "[https://netfloxxx.blague-drole-67.workers.dev/](https://netfloxxx.blague-drole-67.workers.dev/)";
-let streamflixBase = "[https://streamflix.mom](https://streamflix.mom)";
+const WORKER_PROXY = "https://netfloxxx.blague-drole-67.workers.dev/";
+let streamflixBase = "https://streamflix.mom";
 
 async function initDomains() {
   try {
@@ -963,7 +545,6 @@ async function initDomains() {
 }
 initDomains();
 
-// --- LECTEUR ET INTERFACE ---
 const video = document.getElementById('video');
 const pw = document.getElementById('player-wrap');
 const loadScreen = document.getElementById('load-screen');
@@ -978,7 +559,6 @@ let keyboardAction = false;
 const flashT = {};
 
 function handleCtrlClick(btn, fn) { fn(); }
-
 function fillEx(url) { document.getElementById('url-input').value = url; loadURL(); }
 
 function guessTitle(url) {
@@ -990,16 +570,31 @@ function guessTitle(url) {
   } catch { return 'Flux vidéo'; }
 }
 
-function loadURL() {
+async function loadURL() {
   const val = document.getElementById('url-input').value.trim();
   if (!val) return;
 
   let targetUrl = val;
   if (/^\d+$/.test(val)) {
-    targetUrl = `${streamflixBase}/api/movies/${val}/video-proxy`;
+    // Si c'est un ID TMDB, on récupère le lien réel depuis l'API streamflix via le proxy
+    try {
+      showSpinner();
+      const apiRes = await fetch(`${WORKER_PROXY}?url=${encodeURIComponent(`${streamflixBase}/api/movies/${val}`)}`);
+      if (apiRes.ok) {
+        const json = await apiRes.json();
+        if (json.videoUrl || json.url || json.streamUrl) {
+          targetUrl = json.videoUrl || json.url || json.streamUrl;
+        } else {
+          targetUrl = `${streamflixBase}/api/movies/${val}/video-proxy`;
+        }
+      } else {
+        targetUrl = `${streamflixBase}/api/movies/${val}/video-proxy`;
+      }
+    } catch(err) {
+      targetUrl = `${streamflixBase}/api/movies/${val}/video-proxy`;
+    }
   }
 
-  // Passage systématique par le Cloudflare Worker
   const finalProxyUrl = `${WORKER_PROXY}?url=${encodeURIComponent(targetUrl)}`;
   loadMedia(finalProxyUrl, targetUrl);
 }
@@ -1025,7 +620,7 @@ function loadMedia(url, originalUrl) {
   } else {
     video.src = url; video.play().catch(()=>{});
   }
-  video.onerror = () => { hideSpinner(); showError('Impossible de charger ce média.'); };
+  video.onerror = () => { hideSpinner(); showError('Impossible de charger ce média via le proxy.'); };
 }
 
 function clearHLS() {
@@ -1256,12 +851,6 @@ document.getElementById('bottom-bar').addEventListener('mouseleave', () => {
 pw.addEventListener('mousemove', showCtrls);
 pw.addEventListener('touchstart', () => { if (pw.classList.contains('cv')) hideCtrls(); else showCtrls(); }, {passive:true});
 video.addEventListener('click', togglePlay);
-video.addEventListener('pause', () => {
-  clearTimeout(hideTimer);
-  if (!keyboardAction) { pw.classList.add('cv'); pw.style.cursor = ''; }
-  keyboardAction = false;
-});
-video.addEventListener('play', () => { keyboardAction = false; hideTimer = setTimeout(hideCtrls, 3000); });
 
 document.addEventListener('keydown', e => {
   if (!pw.style.display || pw.style.display === 'none') return;
@@ -1296,6 +885,7 @@ function closeMenus() {
   document.getElementById('settings-scrim').classList.remove('open');
   document.getElementById('settings-btn').classList.remove('open');
 }
+
 document.addEventListener('click', e => {
   if (!e.target.closest('.ctrl-btn') && !e.target.closest('.menu-popup') && !e.target.closest('.settings-panel')) closeMenus();
 });
@@ -1310,14 +900,18 @@ function toggleSettings() {
 }
 
 function switchSettingsTab(tab) {
-  document.querySelectorAll('.settings-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
-  document.querySelectorAll('.settings-pane').forEach(p => p.classList.toggle('active', p.id === 'pane-' + tab));
+  document.querySelectorAll('.settings-tab').forEach(t => {
+    t.classList.toggle('active', t.dataset.tab === tab);
+  });
+  document.querySelectorAll('.settings-pane').forEach(p => {
+    p.classList.toggle('active', p.id === 'pane-' + tab);
+  });
 }
 
 function showSpinner() { pw.classList.add('buffering'); }
 function hideSpinner() { pw.classList.remove('buffering'); }
-function showError(msg) { document.getElementById('error-text').textContent=msg; document.getElementById('error-msg').style.display='flex'; }
-function hideError() { document.getElementById('error-msg').style.display='none'; }
+function showError(msg) { document.getElementById('error-text').textContent = msg; document.getElementById('error-msg').style.display = 'flex'; }
+function hideError() { document.getElementById('error-msg').style.display = 'none'; }
 
 updateVolUI();
 </script>
