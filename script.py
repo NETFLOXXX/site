@@ -50,7 +50,7 @@ def main():
     }
     with open("latest.json", "w", encoding="utf-8") as f:
         json.dump(data, f, indent=2, ensure_ascii=False)
-    print("latest.json mis à jour avec succès !")
 
 if __name__ == "__main__":
     main()
+    
