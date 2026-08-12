@@ -15,7 +15,7 @@
     if (typeof window.__gCastReadyCallback === 'function') window.__gCastReadyCallback(isAvailable);
   };
 </script>
-<script src="https://www.gstatic.com/cv/js/sender/v1/cast_sender.js" async></script>
+<script src="https://www.gstatic.com/cv/js/sender/v1/cast_sender.js?loadCastFramework=1" async></script>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
   * { margin:0; padding:0; box-sizing:border-box; }
@@ -2382,6 +2382,17 @@ async function castVideo() {
     }
   }
 
+  // Le SDK Cast se charge en arrière-plan (script async) : s'il n'est pas encore prêt
+  // au moment du clic (souvent le cas juste après le chargement de la page), on patiente un peu.
+  if (!castApiReady && location.protocol !== 'file:') {
+    await new Promise(resolve => {
+      const start = Date.now();
+      const check = setInterval(() => {
+        if (castApiReady || Date.now() - start > 2500) { clearInterval(check); resolve(); }
+      }, 100);
+    });
+  }
+
   // Chrome / Edge → SDK Google Cast : ouvre le même sélecteur natif que le menu ⋮ > « Caster »
   if (castApiReady && castContext) {
     if (!currentStreamUrl) {
@@ -2421,7 +2432,14 @@ async function castVideo() {
     }
   }
 
-  showCastToast('La diffusion (Cast/AirPlay) n\u2019est pas prise en charge par ce navigateur.');
+  // Diagnostic précis pour aider à comprendre pourquoi rien n'est disponible.
+  if (location.protocol === 'file:') {
+    showCastToast('Le Cast nécessite d\u2019ouvrir la page via http(s):// et non un fichier local (file://). Héberge-la sur un serveur ou un lien pour activer la diffusion.');
+  } else if (typeof cast === 'undefined') {
+    showCastToast('Le module Google Cast n\u2019a pas pu se charger (réseau bloqué, extension Chrome absente, ou navigateur non compatible).');
+  } else {
+    showCastToast('La diffusion (Cast/AirPlay) n\u2019est pas prise en charge par ce navigateur.');
+  }
 }
 
 video.addEventListener('webkitplaybacktargetavailabilitychanged', () => {
