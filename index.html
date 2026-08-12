@@ -5,6 +5,17 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Movix Player</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/hls.js/1.4.12/hls.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script>
+  // Pont robuste : le SDK Google Cast (chargé en async) peut appeler ce callback
+  // avant que le script principal (en bas de page) ne soit exécuté. On mémorise
+  // le résultat et on le relaie dès que le script principal s'enregistre.
+  window.__onGCastApiAvailable = function (isAvailable) {
+    window.__gCastAvailableFlag = isAvailable;
+    if (typeof window.__gCastReadyCallback === 'function') window.__gCastReadyCallback(isAvailable);
+  };
+</script>
+<script src="https://www.gstatic.com/cv/js/sender/v1/cast_sender.js" async></script>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
   * { margin:0; padding:0; box-sizing:border-box; }
@@ -453,6 +464,175 @@
   .src-row-label { display:flex; align-items:center; gap:9px; min-width:0; }
   .src-icon { width:16px; height:16px; flex-shrink:0; object-fit:contain; border-radius:3px; }
 
+  /* ═══════════════════ SOUS-TITRES ═══════════════════ */
+
+  /* overlay de rendu, posé sur la vidéo */
+  #subtitle-overlay {
+    position:absolute; left:6%; right:6%; z-index:40;
+    bottom: var(--sub-pos, 9%);
+    display:flex; justify-content:center; pointer-events:none;
+    text-align:center; transition:bottom 0.15s;
+  }
+  #subtitle-overlay span {
+    display:inline-block; max-width:100%;
+    font-family:'Outfit',sans-serif; white-space:pre-line;
+    font-size: var(--sub-size, 1.35rem);
+    color: var(--sub-color, #ffffff);
+    background: var(--sub-bg, rgba(0,0,0,0.55));
+    padding: var(--sub-pad, 3px 12px);
+    border-radius:6px; line-height:1.35; font-weight:600;
+    text-shadow: var(--sub-shadow, 0 2px 6px rgba(0,0,0,0.9));
+  }
+  #subtitle-overlay.hidden, #subtitle-overlay:empty { display:none; }
+
+  /* ── toast cast (retour utilisateur pour la diffusion) ── */
+  .cast-toast {
+    position:absolute; left:50%; bottom:78px; transform:translateX(-50%);
+    z-index:60; background:rgba(20,20,20,0.95); color:#fff; font-size:0.85rem; font-weight:500;
+    padding:10px 18px; border-radius:30px; border:1px solid rgba(255,255,255,0.12);
+    box-shadow:0 8px 24px rgba(0,0,0,0.5); display:flex; align-items:center; gap:8px;
+    opacity:1; transition:opacity .25s, transform .25s; pointer-events:none; white-space:nowrap;
+  }
+  .cast-toast.hidden { opacity:0; transform:translateX(-50%) translateY(8px); pointer-events:none; }
+  #cast-btn.is-casting { color:var(--red-h); }
+
+  /* ── ligne de bascule "danger" (désactiver tous les sous-titres) ── */
+  /* Rouge = sous-titres désactivés (état par défaut). Gris = sous-titres actifs. .is-locked = non cliquable (aucun sous-titre chargé). */
+  .sub-toggle-row {
+    display:flex; align-items:center; justify-content:space-between; gap:12px;
+    margin:14px 16px 10px; padding:13px 16px; border-radius:12px; cursor:pointer;
+    background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1);
+    transition:background .15s, border-color .15s;
+  }
+  .sub-toggle-row:hover { background:rgba(255,255,255,0.09); }
+  .sub-toggle-row.is-active-red { background:rgba(220,38,38,0.12); border-color:rgba(220,38,38,0.4); }
+  .sub-toggle-row.is-active-red:hover { background:rgba(220,38,38,0.18); }
+  .sub-toggle-row.is-locked { cursor:not-allowed; pointer-events:none; opacity:0.7; }
+  .sub-toggle-label { display:flex; align-items:center; gap:10px; font-size:0.92rem; font-weight:600; color:rgba(255,255,255,0.55); }
+  .sub-toggle-row.is-active-red .sub-toggle-label { color:var(--red-h); }
+  .sub-toggle-label svg { flex-shrink:0; }
+  .sub-toggle-badge { font-size:0.68rem; font-weight:700; text-transform:uppercase; letter-spacing:.04em;
+    background:rgba(255,255,255,0.12); color:rgba(255,255,255,0.5); padding:4px 11px; border-radius:20px;
+  }
+  .sub-toggle-row.is-active-red .sub-toggle-badge { background:var(--red); color:#fff; }
+
+  /* ── bandeau d'info bleu (retiré de l'UI, styles conservés au cas où) ── */
+  .sub-section-title {
+    padding:4px 20px 10px; color:rgba(255,255,255,0.4);
+    font-size:0.78rem; font-weight:700; text-transform:uppercase; letter-spacing:.06em;
+  }
+
+  /* ── sélecteur de langue (dropdown custom) ── */
+  .sub-lang-field { margin:0 16px 16px; }
+  .sub-lang-field > label {
+    display:block; font-size:0.8rem; color:rgba(255,255,255,0.5); margin-bottom:8px;
+  }
+  .sub-lang-select {
+    display:flex; align-items:center; justify-content:space-between; gap:10px;
+    padding:13px 16px; border-radius:12px; cursor:pointer; user-select:none;
+    background:rgba(255,255,255,0.05); border:1px solid rgba(220,38,38,0.55);
+    font-size:0.95rem; color:rgba(255,255,255,0.85); transition:border-color .15s, background .15s;
+  }
+  .sub-lang-select:hover { background:rgba(255,255,255,0.08); }
+  .sub-lang-select .sub-lang-current { display:flex; align-items:center; gap:10px; min-width:0; }
+  .sub-lang-select .sub-flag { font-size:1.1rem; line-height:1; flex-shrink:0; }
+  .sub-lang-select .sub-chevron { transition:transform .2s; flex-shrink:0; color:rgba(255,255,255,0.5); }
+  .sub-lang-select.open .sub-chevron { transform:rotate(180deg); }
+  .sub-lang-select .placeholder { color:rgba(255,255,255,0.35); }
+
+  .sub-lang-dropdown {
+    max-height:0; overflow:hidden; margin-top:8px; border-radius:12px;
+    background:rgba(20,20,20,0.98); border:1px solid rgba(255,255,255,0.1);
+    transition:max-height .25s ease;
+  }
+  .sub-lang-dropdown.open { max-height:380px; overflow-y:auto; }
+  .sub-lang-option {
+    display:flex; align-items:center; gap:11px; padding:12px 16px; cursor:pointer;
+    font-size:0.9rem; color:rgba(255,255,255,0.85); transition:background .15s;
+  }
+  .sub-lang-option:hover { background:rgba(255,255,255,0.06); }
+  .sub-lang-option.active { color:var(--red-h); background:rgba(220,38,38,0.1); }
+  .sub-lang-option .sub-flag { font-size:1.15rem; }
+  .sub-lang-option .sub-lang-count {
+    margin-left:auto; font-size:0.7rem; color:rgba(255,255,255,0.35);
+  }
+  .sub-lang-empty { padding:14px 16px; font-size:0.82rem; color:rgba(255,255,255,0.4); }
+
+  .sub-flag-img { flex-shrink:0; border-radius:2px; object-fit:cover; box-shadow:0 0 0 1px rgba(255,255,255,0.15); }
+  .sub-lang-select.is-loading { opacity:0.6; pointer-events:none; }
+
+  .sub-lang-option-wrap { border-bottom:1px solid rgba(255,255,255,0.05); }
+  .sub-lang-option-wrap:last-child { border-bottom:none; }
+
+  .sub-file-list { padding:2px 10px 10px 44px; display:flex; flex-direction:column; gap:5px; }
+  .sub-file-row {
+    display:flex; align-items:center; gap:8px; padding:9px 12px; border-radius:9px; cursor:pointer;
+    background:rgba(255,255,255,0.03); border:1px solid transparent; transition:background .15s, border-color .15s;
+  }
+  .sub-file-row:hover { background:rgba(255,255,255,0.07); }
+  .sub-file-row.active { background:rgba(220,38,38,0.14); border-color:var(--red); }
+  .sub-file-name { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:0.78rem; color:rgba(255,255,255,0.75); }
+  .sub-file-dl { flex-shrink:0; font-size:0.7rem; color:rgba(255,255,255,0.4); }
+  .sub-file-top {
+    flex-shrink:0; font-size:0.62rem; font-weight:700; text-transform:uppercase; letter-spacing:.03em;
+    background:rgba(34,197,94,0.18); color:#4ade80; padding:3px 8px; border-radius:20px;
+  }
+
+  /* ── réglages : décalage temporel ── */
+  .sub-offset-box { margin:6px 16px 22px; padding:16px; border-radius:14px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); }
+  .sub-offset-head { display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; }
+  .sub-offset-head span:first-child { font-size:0.92rem; font-weight:600; }
+  .sub-offset-value { font-family:'Outfit',sans-serif; font-weight:700; font-size:0.95rem; color:var(--red-h); min-width:64px; text-align:center; }
+  .sub-offset-buttons { display:flex; align-items:center; gap:8px; }
+  .sub-offset-btn {
+    flex:1; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.1); color:#fff;
+    font-family:'Outfit',sans-serif; font-weight:600; font-size:0.85rem; padding:10px 6px;
+    border-radius:10px; cursor:pointer; transition:background .15s;
+  }
+  .sub-offset-btn:hover { background:rgba(255,255,255,0.12); }
+  .sub-offset-btn.big { flex:1.3; }
+  .sub-offset-reset {
+    margin-top:10px; width:100%; background:none; border:none; color:rgba(255,255,255,0.4);
+    font-family:'Outfit',sans-serif; font-size:0.78rem; padding:8px; cursor:pointer; transition:color .15s;
+  }
+  .sub-offset-reset:hover { color:#fff; }
+  .sub-offset-hint { font-size:0.74rem; color:rgba(255,255,255,0.35); margin-top:10px; line-height:1.5; }
+
+  /* ── réglages : swatches (taille / couleur / fond / contour / position) ── */
+  .sub-style-group { margin:0 16px 22px; }
+  .sub-style-group > .sub-style-label {
+    font-size:0.78rem; font-weight:700; text-transform:uppercase; letter-spacing:.06em;
+    color:rgba(255,255,255,0.4); margin-bottom:10px;
+  }
+  .sub-swatch-row { display:flex; gap:8px; flex-wrap:wrap; }
+  .sub-swatch {
+    flex:1; min-width:64px; text-align:center; padding:10px 8px; border-radius:10px; cursor:pointer;
+    background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1);
+    font-size:0.82rem; color:rgba(255,255,255,0.7); transition:background .15s, border-color .15s, color .15s;
+  }
+  .sub-swatch:hover { background:rgba(255,255,255,0.09); }
+  .sub-swatch.active { background:rgba(220,38,38,0.16); border-color:var(--red); color:#fff; }
+  .sub-color-dot {
+    width:18px; height:18px; border-radius:50%; margin:0 auto 6px; border:2px solid rgba(255,255,255,0.3);
+  }
+  .sub-swatch.active .sub-color-dot { border-color:#fff; }
+  .sub-preview-box {
+    margin:0 16px 22px; padding:26px 14px; border-radius:14px; background:#000 url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="6" height="6"><rect width="6" height="6" fill="%23111"/></svg>');
+    background-size:cover; display:flex; align-items:flex-end; justify-content:center; min-height:88px;
+    border:1px solid rgba(255,255,255,0.08); position:relative; overflow:hidden;
+  }
+  .sub-preview-box::before {
+    content:''; position:absolute; inset:0;
+    background:linear-gradient(135deg,#3a3a3a,#111 60%);
+  }
+  .sub-preview-box span { position:relative; z-index:1; }
+
+  /* ── SOUS-ONGLET indisponible (lecteur non-Netflox) ── */
+  .sub-unavailable { margin:24px 16px; padding:18px 16px; border-radius:12px; text-align:center;
+    background:rgba(255,255,255,0.04); border:1px dashed rgba(255,255,255,0.15);
+    color:rgba(255,255,255,0.45); font-size:0.85rem; line-height:1.6;
+  }
+
   /* ── PANNEAU ÉPISODES / FILMS ── */
   .ep-panel-label {
     padding:16px 20px 6px; color:rgba(255,255,255,0.4);
@@ -686,6 +866,8 @@
   <iframe id="embed-frame" src="about:blank" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe>
   <div class="overlay-gradient"></div>
   <div class="overlay-top"></div>
+  <div id="subtitle-overlay" class="hidden"></div>
+  <div id="cast-toast" class="cast-toast hidden"></div>
 
   <div id="seek-flash">
     <div class="seek-label" id="flash-rw">−10s</div>
@@ -809,6 +991,16 @@
           <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M8 4.5v5H3m-1-6 6 6m13 0v-3c0-1.16-.84-2-2-2h-7m-9 9v2c0 1.05.95 2 2 2h3"/><rect width="10" height="7" x="12" y="13.5" ry="2"/></svg>
         </button>
 
+        <!-- cast (Chromecast / AirPlay / TV connectée) -->
+        <button class="ctrl-btn" id="cast-btn" onclick="handleCtrlClick(this, castVideo)">
+          <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+            <path d="M2 8V6a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-7"/>
+            <path d="M2 12a9 9 0 0 1 8 8"/>
+            <path d="M2 16a5 5 0 0 1 4 4"/>
+            <circle cx="2.5" cy="20" r="1" fill="currentColor" stroke="none"/>
+          </svg>
+        </button>
+
         <!-- fullscreen -->
         <button class="ctrl-btn" onclick="handleCtrlClick(this, toggleFullscreen)">
           <svg id="fs-exp" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M21 8V5a2 2 0 0 0-2-2h-3"/><path d="M3 16v3a2 2 0 0 0 2 2h3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/></svg>
@@ -923,8 +1115,13 @@
         <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
       </button>
     </div>
+    <div class="settings-tabs">
+      <button class="settings-tab active" data-tab="sub-choice" onclick="switchSubtitlesTab('sub-choice')">Choix des sous-titres</button>
+      <button class="settings-tab" data-tab="sub-settings" onclick="switchSubtitlesTab('sub-settings')">Réglages</button>
+    </div>
     <div class="settings-content" id="subtitles-panel-content">
-      <p style="padding:16px 20px;color:rgba(255,255,255,0.4);font-size:0.85rem;">Aucun sous-titre disponible.</p>
+      <div class="settings-pane active" id="pane-sub-choice"></div>
+      <div class="settings-pane" id="pane-sub-settings"></div>
     </div>
   </div>
 
@@ -954,6 +1151,9 @@ const timeDsp = document.getElementById('time-display');
 const volSlider = document.getElementById('vol-slider');
 
 let hls = null, hideTimer = null, scrubbing = false;
+let currentStreamUrl = null;    // URL brute du flux en lecture (pour Google Cast, non-blob)
+let currentStreamIsHLS = false;
+let currentStreamTitle = '';
 let showRemaining = false;
 let prevVolBeforeMute = 1;
 let keyboardAction = false; // prevents pause event from showing controls when triggered by keyboard
@@ -1315,6 +1515,7 @@ async function fetchTMDBSources(id, type, season, episode, allowSeriesFallback=f
     currentSourceIndex = -1;
     collapsedLangs.clear();
     expandedGroups.clear();
+    resetActiveSubtitle();
 
     loadScreen.style.display = 'none';
     pw.style.display = 'block';
@@ -1687,6 +1888,7 @@ async function playEpisode(season, episode) {
   closeEpisodesPanel();
   currentSeason = season;
   currentEpisode = episode;
+  resetActiveSubtitle();
   setStatus('Chargement de l’épisode…');
   const info = await fetchTMDBInfo(currentTMDB, 'tv');
   applyTMDBInfo(info, currentTMDB, season, episode);
@@ -1703,6 +1905,7 @@ async function playEpisode(season, episode) {
 
 async function playCollectionMovie(movieId) {
   closeEpisodesPanel();
+  resetActiveSubtitle();
   setStatus('Chargement du film…');
   const info = await fetchTMDBInfo(movieId, 'movie');
   applyTMDBInfo(info, movieId);
@@ -1877,6 +2080,8 @@ function showEmbedPlayer(url) {
   video.style.display = 'none';
   hideError();
   hideSpinner();
+  currentStreamUrl = null;
+  currentStreamIsHLS = false;
   const frame = document.getElementById('embed-frame');
   frame.src = url;
   frame.style.display = 'block';
@@ -1895,6 +2100,9 @@ function loadMedia(url, title) {
   openBtn.style.display = 'inline-block';
   showCtrls();
   const isHLS = url.includes('.m3u8') || url.includes('hls');
+  currentStreamUrl = url;
+  currentStreamIsHLS = isHLS;
+  currentStreamTitle = title || currentStreamTitle;
   if (isHLS && Hls.isSupported()) {
     hls = new Hls({ enableWorker:true });
     hls.loadSource(url); hls.attachMedia(video);
@@ -2088,6 +2296,142 @@ function togglePiP() {
   if (document.pictureInPictureElement) document.exitPictureInPicture();
   else video.requestPictureInPicture?.();
 }
+
+// ── CAST (Google Cast SDK pour Chromecast / TV connectées, + AirPlay natif pour Safari) ──
+let castToastTimer = null;
+function showCastToast(msg) {
+  const el = document.getElementById('cast-toast');
+  if (!el) return;
+  el.textContent = msg;
+  el.classList.remove('hidden');
+  clearTimeout(castToastTimer);
+  castToastTimer = setTimeout(() => el.classList.add('hidden'), 3200);
+}
+
+let castContext = null;
+let castApiReady = false;
+
+function initCastApi(isAvailable) {
+  if (!isAvailable || typeof cast === 'undefined' || typeof chrome === 'undefined' || !chrome.cast) return;
+  try {
+    castContext = cast.framework.CastContext.getInstance();
+    castContext.setOptions({
+      receiverApplicationId: chrome.cast.media.DEFAULT_MEDIA_RECEIVER_APP_ID,
+      autoJoinPolicy: chrome.cast.AutoJoinPolicy.ORIGIN_SCOPED
+    });
+    castApiReady = true;
+
+    castContext.addEventListener(cast.framework.CastContextEventType.SESSION_STATE_CHANGED, (e) => {
+      const btn = document.getElementById('cast-btn');
+      const connected = e.sessionState === cast.framework.SessionState.SESSION_STARTED
+        || e.sessionState === cast.framework.SessionState.SESSION_RESUMED;
+      if (btn) btn.classList.toggle('is-casting', connected);
+      if (connected) {
+        const session = castContext.getCurrentSession();
+        const deviceName = session && session.getCastDevice ? session.getCastDevice().friendlyName : null;
+        showCastToast('Diffusion en cours' + (deviceName ? ' sur ' + deviceName : '') + '.');
+        castCurrentStreamToSession(session);
+      } else if (e.sessionState === cast.framework.SessionState.SESSION_ENDED) {
+        showCastToast('Diffusion arrêtée.');
+      }
+    });
+  } catch (err) {
+    console.error('Erreur d’initialisation Google Cast:', err);
+  }
+}
+
+// Le SDK a peut-être déjà appelé le callback avant que ce script ne s'exécute (script async côté <head>).
+if (typeof window.__gCastAvailableFlag !== 'undefined') {
+  initCastApi(window.__gCastAvailableFlag);
+} else {
+  window.__gCastReadyCallback = initCastApi;
+}
+
+// Envoie le flux actuellement chargé (URL directe, pas blob) vers la session Cast active.
+async function castCurrentStreamToSession(session) {
+  if (!session || !currentStreamUrl) return;
+  try {
+    const contentType = currentStreamIsHLS ? 'application/x-mpegurl' : 'video/mp4';
+    const mediaInfo = new chrome.cast.media.MediaInfo(currentStreamUrl, contentType);
+    mediaInfo.streamType = chrome.cast.media.StreamType.BUFFERED;
+    mediaInfo.metadata = new chrome.cast.media.GenericMediaMetadata();
+    mediaInfo.metadata.title = currentStreamTitle || document.getElementById('media-title')?.textContent || 'Movix';
+
+    const request = new chrome.cast.media.LoadRequest(mediaInfo);
+    request.currentTime = video.currentTime || 0;
+    request.autoplay = !video.paused;
+
+    await session.loadMedia(request);
+    video.pause(); // évite la double lecture (locale + diffusée)
+  } catch (err) {
+    console.error('Erreur de chargement du média sur le Cast:', err);
+    showCastToast('Connecté, mais impossible de lancer la lecture sur l’appareil.');
+  }
+}
+
+async function castVideo() {
+  // Safari / iOS / macOS / Apple TV → AirPlay natif
+  if (typeof video.webkitShowPlaybackTargetPicker === 'function') {
+    try {
+      video.webkitShowPlaybackTargetPicker();
+      return;
+    } catch (err) {
+      console.error('Erreur AirPlay:', err);
+      showCastToast('Impossible d\u2019ouvrir le sélecteur AirPlay.');
+      return;
+    }
+  }
+
+  // Chrome / Edge → SDK Google Cast : ouvre le même sélecteur natif que le menu ⋮ > « Caster »
+  if (castApiReady && castContext) {
+    if (!currentStreamUrl) {
+      showCastToast('Aucun flux castable actuellement (source intégrée non prise en charge).');
+      return;
+    }
+    try {
+      await castContext.requestSession();
+      // le chargement effectif du média est géré par le listener SESSION_STATE_CHANGED
+      return;
+    } catch (err) {
+      // 'cancel' est renvoyé quand l'utilisateur ferme le sélecteur sans choisir d'appareil
+      if (err === 'cancel' || (err && err.code === 'cancel')) return;
+      if (err === 'no_devices_available' || (err && err.code === 'no_devices_available')) {
+        showCastToast('Aucun appareil de diffusion trouvé sur le réseau.');
+        return;
+      }
+      console.error('Erreur Google Cast:', err);
+      showCastToast('Diffusion impossible pour le moment.');
+      return;
+    }
+  }
+
+  // Repli générique : Remote Playback API (fonctionne uniquement pour les sources directes, pas blob)
+  if (video.remote && typeof video.remote.prompt === 'function') {
+    const src = video.currentSrc || video.src || '';
+    if (!src.startsWith('blob:')) {
+      try {
+        await video.remote.prompt();
+        return;
+      } catch (err) {
+        console.error('Erreur de diffusion:', err);
+        if (err && err.name === 'NotFoundError') showCastToast('Aucun appareil de diffusion trouvé sur le réseau.');
+        else if (err && err.name !== 'NotAllowedError') showCastToast('Diffusion impossible : ' + (err && err.message ? err.message : 'erreur inconnue') + '.');
+        return;
+      }
+    }
+  }
+
+  showCastToast('La diffusion (Cast/AirPlay) n\u2019est pas prise en charge par ce navigateur.');
+}
+
+video.addEventListener('webkitplaybacktargetavailabilitychanged', () => {
+  // disponibilité AirPlay détectée : rien à faire visuellement, le bouton reste toujours actionnable
+});
+video.addEventListener('webkitcurrentplaybacktargetiswirelesschanged', () => {
+  const btn = document.getElementById('cast-btn');
+  if (!btn) return;
+  btn.classList.toggle('is-casting', !!video.webkitCurrentPlaybackTargetIsWireless);
+});
 
 function toggleFullscreen() {
   if (!document.fullscreenElement) pw.requestFullscreen?.();
@@ -2367,6 +2711,7 @@ function toggleSubtitlesPanel() {
     document.getElementById('download-scrim').classList.remove('open');
     document.getElementById('download-btn').classList.remove('open');
     panel.classList.add('open'); scrim.classList.add('open'); btn.classList.add('open');
+    renderSubtitlesPanel();
   } else {
     panel.classList.remove('open');
     scrim.classList.remove('open');
@@ -2374,7 +2719,574 @@ function toggleSubtitlesPanel() {
   }
 }
 
-// ── TÉLÉCHARGEMENT SIDEBAR (même logique que le panneau Sources, indépendant) ──
+// ══════════════════════════ SOUS-TITRES — OPENSUBTITLES ══════════════════════════
+
+const OS_API_KEY = 'rCPS7RBARcmJdr2VJ8gqmp3ln9xtV52l';
+const OS_SEARCH_URL = 'https://api.opensubtitles.com/api/v1/subtitles';
+const OS_DOWNLOAD_URL = 'https://api.opensubtitles.com/api/v1/download';
+const OS_HEADERS = {
+  'Api-Key': OS_API_KEY,
+  'Content-Type': 'application/json',
+  'Accept': 'application/json',
+  'User-Agent': 'MovixPlayer v1.0'
+};
+
+// Table de correspondance code-langue OpenSubtitles → affichage FR + code pays (pour le drapeau image).
+// Clé = code langue OpenSubtitles en minuscule.
+const LANG_META = {
+  'fr':    { label: 'Français',            cc: 'fr' },
+  'en':    { label: 'Anglais',             cc: 'gb' },
+  'es':    { label: 'Espagnol',            cc: 'es' },
+  'es-mx': { label: 'Espagnol (Mexique)',  cc: 'mx' },
+  'pt-br': { label: 'Portugais (Brésil)',  cc: 'br' },
+  'pt-pt': { label: 'Portugais',           cc: 'pt' },
+  'pt':    { label: 'Portugais',           cc: 'pt' },
+  'de':    { label: 'Allemand',            cc: 'de' },
+  'tr':    { label: 'Turc',                cc: 'tr' },
+  'zh-cn': { label: 'Chinois simplifié',   cc: 'cn' },
+  'zh-tw': { label: 'Chinois traditionnel',cc: 'tw' },
+  'zh':    { label: 'Chinois',             cc: 'cn' },
+  'it':    { label: 'Italien',             cc: 'it' },
+  'ar':    { label: 'Arabe',               cc: 'sa' },
+  'ja':    { label: 'Japonais',            cc: 'jp' },
+  'ko':    { label: 'Coréen',              cc: 'kr' },
+  'ru':    { label: 'Russe',               cc: 'ru' },
+  'nl':    { label: 'Néerlandais',         cc: 'nl' },
+  'pl':    { label: 'Polonais',            cc: 'pl' },
+  'sv':    { label: 'Suédois',             cc: 'se' },
+  'da':    { label: 'Danois',              cc: 'dk' },
+  'no':    { label: 'Norvégien',           cc: 'no' },
+  'fi':    { label: 'Finnois',             cc: 'fi' },
+  'el':    { label: 'Grec',                cc: 'gr' },
+  'he':    { label: 'Hébreu',              cc: 'il' },
+  'hi':    { label: 'Hindi',               cc: 'in' },
+  'cs':    { label: 'Tchèque',             cc: 'cz' },
+  'sk':    { label: 'Slovaque',            cc: 'sk' },
+  'sl':    { label: 'Slovène',             cc: 'si' },
+  'ro':    { label: 'Roumain',             cc: 'ro' },
+  'hu':    { label: 'Hongrois',            cc: 'hu' },
+  'bg':    { label: 'Bulgare',             cc: 'bg' },
+  'hr':    { label: 'Croate',              cc: 'hr' },
+  'sr':    { label: 'Serbe',               cc: 'rs' },
+  'bs':    { label: 'Bosnien',             cc: 'ba' },
+  'mk':    { label: 'Macédonien',          cc: 'mk' },
+  'sq':    { label: 'Albanais',            cc: 'al' },
+  'uk':    { label: 'Ukrainien',           cc: 'ua' },
+  'lt':    { label: 'Lituanien',           cc: 'lt' },
+  'lv':    { label: 'Letton',              cc: 'lv' },
+  'et':    { label: 'Estonien',            cc: 'ee' },
+  'is':    { label: 'Islandais',           cc: 'is' },
+  'fa':    { label: 'Persan',              cc: 'ir' },
+  'ur':    { label: 'Ourdou',              cc: 'pk' },
+  'bn':    { label: 'Bengali',             cc: 'bd' },
+  'ta':    { label: 'Tamoul',              cc: 'in' },
+  'te':    { label: 'Télougou',            cc: 'in' },
+  'ml':    { label: 'Malayalam',           cc: 'in' },
+  'mr':    { label: 'Marathi',             cc: 'in' },
+  'pa':    { label: 'Pendjabi',            cc: 'in' },
+  'id':    { label: 'Indonésien',          cc: 'id' },
+  'ms':    { label: 'Malais',              cc: 'my' },
+  'vi':    { label: 'Vietnamien',          cc: 'vn' },
+  'th':    { label: 'Thaï',                cc: 'th' },
+  'my':    { label: 'Birman',              cc: 'mm' },
+  'km':    { label: 'Khmer',               cc: 'kh' },
+  'sw':    { label: 'Swahili',             cc: 'ke' },
+  'am':    { label: 'Amharique',           cc: 'et' },
+  'az':    { label: 'Azéri',               cc: 'az' },
+  'ka':    { label: 'Géorgien',            cc: 'ge' },
+  'kk':    { label: 'Kazakh',              cc: 'kz' },
+  'mn':    { label: 'Mongol',              cc: 'mn' },
+  'ne':    { label: 'Népalais',            cc: 'np' },
+  'si':    { label: 'Cinghalais',          cc: 'lk' },
+  'eu':    { label: 'Basque',              cc: 'es' },
+  'ca':    { label: 'Catalan',             cc: 'es' },
+  'gl':    { label: 'Galicien',            cc: 'es' },
+  'cy':    { label: 'Gallois',             cc: 'gb' },
+  'ga':    { label: 'Irlandais',           cc: 'ie' },
+  'eo':    { label: 'Espéranto',           cc: 'un' },
+};
+
+// Ordre de priorité demandé : français, anglais, espagnol, portugais, allemand, turc, chinois, puis le reste par ordre alphabétique.
+const LANG_PRIORITY = ['fr', 'en', 'es', 'es-mx', 'pt-br', 'pt-pt', 'pt', 'de', 'tr', 'zh-cn', 'zh-tw', 'zh'];
+
+function langMeta(code) {
+  const norm = String(code || '').trim().toLowerCase();
+  if (LANG_META[norm]) return LANG_META[norm];
+  const base = norm.split('-')[0];
+  if (LANG_META[base]) return LANG_META[base];
+  return { label: norm ? norm.toUpperCase() : 'Inconnu', cc: 'un' };
+}
+
+function flagImgHTML(cc) {
+  const code = cc || 'un';
+  return `<img class="sub-flag-img" src="https://flagcdn.com/24x18/${code}.png" width="24" height="18" alt="" loading="lazy" onerror="this.style.visibility='hidden'">`;
+}
+
+// ── état ──
+let subLangGroups = {};         // code langue → { label, cc, items:[{release,download_count,file_id,file_name,season,episode}] }
+let subFetchPromise = null;
+let subFetchedForKey = null;    // évite de re-fetch inutilement (tmdb+saison+épisode courants)
+let activeLangGroupKey = null;  // langue actuellement dépliée / chargée dans le sélecteur
+let activeFileId = null;        // file_id actuellement chargé
+let activeCues = [];            // [{start,end,text}]
+let subtitlesDisabled = true;   // "désactiver tous les sous-titres"
+let subLangDropdownOpen = false;
+let subFileLoading = false;
+
+const subtitleStyle = {
+  offset: 0,        // secondes ; positif = sous-titres en avance (affichés plus tôt)
+  size: 'md',        // sm | md | lg | xl
+  color: '#ffffff',
+  bg: 'semi',        // none | semi | opaque
+  edge: 'shadow',    // none | shadow | outline
+  position: 9        // % depuis le bas
+};
+
+const SUB_SIZES  = { sm: '1rem', md: '1.35rem', lg: '1.7rem', xl: '2.05rem' };
+const SUB_BGS    = { none: 'transparent', semi: 'rgba(0,0,0,0.55)', opaque: 'rgba(0,0,0,0.92)' };
+const SUB_EDGES  = { none: 'none', shadow: '0 2px 6px rgba(0,0,0,0.9)', outline: '0 0 3px #000,0 0 3px #000,0 0 3px #000,0 0 3px #000' };
+const SUB_COLORS = ['#ffffff', '#facc15', '#4ade80', '#38bdf8', '#f472b6', '#fb923c'];
+
+function resetActiveSubtitle() {
+  activeLangGroupKey = null;
+  activeFileId = null;
+  activeCues = [];
+  subLangGroups = {};
+  subFetchedForKey = null;
+  subtitlesDisabled = true;
+  const overlay = document.getElementById('subtitle-overlay');
+  if (overlay) { overlay.classList.add('hidden'); overlay.innerHTML = ''; }
+}
+
+function isNetfloxSourceActive() {
+  const s = currentSources[currentSourceIndex];
+  return !!(s && s.isDirect);
+}
+
+// ── récupération OpenSubtitles ──
+async function ensureSubsFetched() {
+  if (!currentTMDB) return;
+  const fetchKey = `${currentTMDB}|${currentMediaType}|${currentSeason || ''}|${currentEpisode || ''}`;
+  if (subFetchedForKey === fetchKey) return;
+  if (subFetchPromise) return subFetchPromise;
+
+  subFetchPromise = (async () => {
+    try {
+      const params = new URLSearchParams({
+        order_by: 'download_count',
+        order_direction: 'desc'
+      });
+      if (currentMediaType === 'tv') {
+        params.set('parent_tmdb_id', String(currentTMDB));
+        if (currentSeason) params.set('season_number', String(currentSeason));
+        if (currentEpisode) params.set('episode_number', String(currentEpisode));
+      } else {
+        params.set('tmdb_id', String(currentTMDB));
+      }
+
+      const res = await fetch(`${OS_SEARCH_URL}?${params.toString()}`, { headers: OS_HEADERS });
+      const data = await res.json();
+
+      const groups = {};
+      if (data && Array.isArray(data.data)) {
+        data.data.forEach(entry => {
+          const attr = entry.attributes || {};
+          const code = String(attr.language || '').toLowerCase();
+          if (!code || !attr.files || !attr.files.length) return;
+          const meta = langMeta(code);
+          if (!groups[code]) groups[code] = { label: meta.label, cc: meta.cc, items: [] };
+          groups[code].items.push({
+            file_id: attr.files[0].file_id,
+            file_name: attr.files[0].file_name || attr.release || 'sous-titre.srt',
+            release: attr.release || attr.files[0].file_name || 'Version inconnue',
+            download_count: attr.download_count || 0,
+            hearing_impaired: !!attr.hearing_impaired,
+            season: attr.feature_details ? attr.feature_details.season_number : null,
+            episode: attr.feature_details ? attr.feature_details.episode_number : null
+          });
+        });
+      }
+      // tri par nombre de téléchargements décroissant au sein de chaque langue
+      Object.values(groups).forEach(g => g.items.sort((a, b) => b.download_count - a.download_count));
+      subLangGroups = groups;
+      subFetchedForKey = fetchKey;
+    } catch (err) {
+      subLangGroups = {};
+      subFetchedForKey = null;
+      console.error('Erreur recherche OpenSubtitles:', err);
+    } finally {
+      subFetchPromise = null;
+    }
+  })();
+
+  return subFetchPromise;
+}
+
+// ── parsers SRT / VTT ──
+function srtTimeToSeconds(t) {
+  const m = t.trim().match(/(\d+):(\d{2}):(\d{2})[,.](\d{1,3})/);
+  if (!m) return 0;
+  return (+m[1]) * 3600 + (+m[2]) * 60 + (+m[3]) + (+m[4].padEnd(3, '0')) / 1000;
+}
+
+function parseSRT(text) {
+  const cues = [];
+  const blocks = text.replace(/\r/g, '').split(/\n\n+/);
+  for (const block of blocks) {
+    const lines = block.split('\n').filter(l => l.trim() !== '');
+    if (!lines.length) continue;
+    const timeLineIdx = lines.findIndex(l => l.includes('-->'));
+    if (timeLineIdx === -1) continue;
+    const [startStr, endStr] = lines[timeLineIdx].split('-->');
+    const start = srtTimeToSeconds(startStr);
+    const end = srtTimeToSeconds(endStr);
+    const textLines = lines.slice(timeLineIdx + 1);
+    const cleanText = textLines.join('\n').replace(/<[^>]+>/g, '').trim();
+    if (cleanText) cues.push({ start, end, text: cleanText });
+  }
+  return cues.sort((a, b) => a.start - b.start);
+}
+
+function parseVTT(text) {
+  const cleaned = text.replace(/\r/g, '').replace(/^WEBVTT.*\n/, '');
+  const blocks = cleaned.split(/\n\n+/);
+  const cues = [];
+  for (const block of blocks) {
+    const lines = block.split('\n').filter(l => l.trim() !== '');
+    if (!lines.length) continue;
+    const timeLineIdx = lines.findIndex(l => l.includes('-->'));
+    if (timeLineIdx === -1) continue;
+    const [startStr, endStr] = lines[timeLineIdx].split('-->');
+    const start = srtTimeToSeconds(startStr.replace('.', ','));
+    const end = srtTimeToSeconds(endStr.replace('.', ','));
+    const textLines = lines.slice(timeLineIdx + 1);
+    const cleanText = textLines.join('\n').replace(/<[^>]+>/g, '').trim();
+    if (cleanText) cues.push({ start, end, text: cleanText });
+  }
+  return cues.sort((a, b) => a.start - b.start);
+}
+
+// ── déplie/replie la langue sélectionnée dans le menu (affiche la liste des fichiers) ──
+// Ne ferme PAS le menu déroulant : on doit pouvoir choisir un fichier juste après.
+function selectSubtitleLangGroup(code) {
+  activeLangGroupKey = (activeLangGroupKey === code) ? null : code;
+  renderSubChoicePane();
+}
+
+// ── téléchargement + extraction d'un fichier précis (POST /download puis fetch du lien) ──
+async function selectSubtitleFile(code, fileId) {
+  const group = subLangGroups[code];
+  if (!group) return;
+  const item = group.items.find(it => String(it.file_id) === String(fileId));
+  if (!item) return;
+
+  subFileLoading = true;
+  renderSubChoicePane();
+
+  try {
+    const dlRes = await fetch(OS_DOWNLOAD_URL, {
+      method: 'POST',
+      headers: OS_HEADERS,
+      body: JSON.stringify({ file_id: item.file_id })
+    });
+    const dlData = await dlRes.json();
+    if (!dlData || !dlData.link) throw new Error(dlData && dlData.message ? dlData.message : 'Lien de téléchargement indisponible.');
+
+    const fileRes = await fetch(dlData.link);
+    if (!fileRes.ok) throw new Error('Téléchargement du fichier impossible.');
+    const text = await fileRes.text();
+
+    const isVTT = /^WEBVTT/.test(text.trim()) || /\.vtt($|\?)/i.test(dlData.link);
+    activeCues = isVTT ? parseVTT(text) : parseSRT(text);
+    activeLangGroupKey = code;
+    activeFileId = item.file_id;
+    subtitlesDisabled = false; // un sous-titre vient d'être chargé : on l'affiche tout de suite
+    subLangDropdownOpen = false; // sélection terminée, on referme le menu proprement
+  } catch (err) {
+    console.error('Erreur sous-titres OpenSubtitles:', err);
+    activeCues = [];
+    activeFileId = null;
+  } finally {
+    subFileLoading = false;
+    renderSubChoicePane();
+  }
+}
+
+function toggleAllSubtitles() {
+  if (!activeCues.length) return; // rien à activer/désactiver tant qu'aucun sous-titre n'est chargé
+  subtitlesDisabled = !subtitlesDisabled;
+  renderSubChoicePane();
+}
+
+// ── rendu overlay vidéo (appelé sur timeupdate) ──
+function updateSubtitleOverlay() {
+  const overlay = document.getElementById('subtitle-overlay');
+  if (!overlay) return;
+  if (subtitlesDisabled || !activeCues.length || pw.classList.contains('embed-mode')) {
+    overlay.classList.add('hidden');
+    overlay.innerHTML = '';
+    return;
+  }
+  const t = video.currentTime + subtitleStyle.offset;
+  let cue = null;
+  for (let i = 0; i < activeCues.length; i++) {
+    if (t >= activeCues[i].start && t <= activeCues[i].end) { cue = activeCues[i]; break; }
+    if (activeCues[i].start > t) break;
+  }
+  if (!cue) {
+    overlay.classList.add('hidden');
+    overlay.innerHTML = '';
+    return;
+  }
+  overlay.classList.remove('hidden');
+  overlay.innerHTML = `<span>${escapeHTML(cue.text).replace(/\n/g, '<br>')}</span>`;
+}
+video.addEventListener('timeupdate', updateSubtitleOverlay);
+
+function applySubtitleStyleVars() {
+  pw.style.setProperty('--sub-size', SUB_SIZES[subtitleStyle.size] || SUB_SIZES.md);
+  pw.style.setProperty('--sub-color', subtitleStyle.color);
+  pw.style.setProperty('--sub-bg', SUB_BGS[subtitleStyle.bg]);
+  pw.style.setProperty('--sub-shadow', SUB_EDGES[subtitleStyle.edge]);
+  pw.style.setProperty('--sub-pos', subtitleStyle.position + '%');
+}
+applySubtitleStyleVars();
+
+function setSubOffset(delta) {
+  subtitleStyle.offset = Math.round((subtitleStyle.offset + delta) * 10) / 10;
+  renderSubSettingsPane();
+}
+function resetSubOffset() {
+  subtitleStyle.offset = 0;
+  renderSubSettingsPane();
+}
+function setSubSize(v) { subtitleStyle.size = v; applySubtitleStyleVars(); renderSubSettingsPane(); }
+function setSubColor(v) { subtitleStyle.color = v; applySubtitleStyleVars(); renderSubSettingsPane(); }
+function setSubBg(v) { subtitleStyle.bg = v; applySubtitleStyleVars(); renderSubSettingsPane(); }
+function setSubEdge(v) { subtitleStyle.edge = v; applySubtitleStyleVars(); renderSubSettingsPane(); }
+function setSubPosition(v) { subtitleStyle.position = v; applySubtitleStyleVars(); renderSubSettingsPane(); }
+
+function toggleSubLangDropdown() {
+  subLangDropdownOpen = !subLangDropdownOpen;
+  const select = document.getElementById('sub-lang-select');
+  const dropdown = document.getElementById('sub-lang-dropdown');
+  if (select) select.classList.toggle('open', subLangDropdownOpen);
+  if (dropdown) dropdown.classList.toggle('open', subLangDropdownOpen);
+}
+
+// ── onglets internes du panneau Sous-titres ──
+const subtitlesTabOrder = ['sub-choice', 'sub-settings'];
+function switchSubtitlesTab(tab) {
+  const current = document.querySelector('#subtitles-panel .settings-tab.active');
+  const prevTab = current ? current.dataset.tab : tab;
+  const dir = subtitlesTabOrder.indexOf(tab) >= subtitlesTabOrder.indexOf(prevTab) ? 'slide-right' : 'slide-left';
+
+  document.querySelectorAll('#subtitles-panel .settings-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
+  document.querySelectorAll('#subtitles-panel .settings-pane').forEach(p => {
+    const isTarget = p.id === 'pane-' + tab;
+    p.classList.toggle('active', isTarget);
+    p.classList.remove('slide-left', 'slide-right');
+    if (isTarget) { void p.offsetWidth; p.classList.add(dir); }
+  });
+
+  if (tab === 'sub-choice') renderSubChoicePane();
+  if (tab === 'sub-settings') renderSubSettingsPane();
+}
+
+// ── rendu du panneau principal (appelé à l'ouverture) ──
+function renderSubtitlesPanel() {
+  const choicePane = document.getElementById('pane-sub-choice');
+  const settingsPane = document.getElementById('pane-sub-settings');
+  if (!choicePane || !settingsPane) return;
+
+  if (!isNetfloxSourceActive()) {
+    choicePane.innerHTML = `<div class="sub-unavailable">Les sous-titres externes (OpenSubtitles) sont disponibles uniquement pour le lecteur NETFLOX.<br>Changez de source depuis le panneau « Sources » pour y accéder.</div>`;
+    settingsPane.innerHTML = `<div class="sub-unavailable">Réglages disponibles une fois un sous-titre chargé via le lecteur NETFLOX.</div>`;
+    return;
+  }
+
+  choicePane.innerHTML = `<div class="sub-lang-empty" style="padding:24px 20px;">Recherche des sous-titres…</div>`;
+  ensureSubsFetched().then(renderSubChoicePane);
+  renderSubSettingsPane();
+}
+
+function renderSubChoicePane() {
+  const pane = document.getElementById('pane-sub-choice');
+  if (pane) buildSubChoiceHTML(pane);
+}
+
+function sortedLangKeys() {
+  return Object.keys(subLangGroups).sort((a, b) => {
+    const ia = LANG_PRIORITY.indexOf(a);
+    const ib = LANG_PRIORITY.indexOf(b);
+    const ra = ia === -1 ? 999 : ia;
+    const rb = ib === -1 ? 999 : ib;
+    if (ra !== rb) return ra - rb;
+    return subLangGroups[a].label.localeCompare(subLangGroups[b].label, 'fr');
+  });
+}
+
+function buildSubChoiceHTML(pane) {
+  if (!isNetfloxSourceActive()) {
+    pane.innerHTML = `<div class="sub-unavailable">Les sous-titres externes (OpenSubtitles) sont disponibles uniquement pour le lecteur NETFLOX.</div>`;
+    return;
+  }
+
+  const hasActive = activeCues.length > 0;
+  // Rouge = sous-titres désactivés (état par défaut, tant qu'aucun sous-titre n'est chargé). Gris = sous-titres actifs.
+  let toggleClass = 'sub-toggle-row';
+  if (subtitlesDisabled) toggleClass += ' is-active-red';
+  if (!hasActive) toggleClass += ' is-locked'; // non cliquable tant qu'aucun sous-titre n'est chargé
+  const toggleOnclick = hasActive ? `onclick="toggleAllSubtitles()"` : '';
+  const toggleBadge = subtitlesDisabled ? 'Actif' : 'Inactif';
+
+  const toggleRowHTML = `
+    <div class="${toggleClass}" ${toggleOnclick}>
+      <span class="sub-toggle-label">
+        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="4.9" y1="4.9" x2="19.1" y2="19.1"/></svg>
+        Désactiver tous les sous-titres
+      </span>
+      <span class="sub-toggle-badge">${toggleBadge}</span>
+    </div>`;
+
+  const groupKeys = sortedLangKeys();
+
+  let langFieldHTML;
+  if (subFetchedForKey === null && subFetchPromise) {
+    langFieldHTML = `<div class="sub-lang-field"><label>Choisir la langue</label><div class="sub-lang-empty" style="background:rgba(255,255,255,0.04);border-radius:12px;">Recherche des sous-titres…</div></div>`;
+  } else if (!groupKeys.length) {
+    langFieldHTML = `<div class="sub-lang-field"><label>Choisir la langue</label><div class="sub-lang-empty" style="background:rgba(255,255,255,0.04);border-radius:12px;">Aucun sous-titre trouvé pour ce contenu sur OpenSubtitles.</div></div>`;
+  } else {
+    const currentGroup = activeLangGroupKey ? subLangGroups[activeLangGroupKey] : null;
+    const currentHTML = (currentGroup && activeFileId)
+      ? `${flagImgHTML(currentGroup.cc)}<span>${escapeHTML(currentGroup.label)}</span>`
+      : `<span class="placeholder">Choisir la langue</span>`;
+
+    const optionsHTML = groupKeys.map(k => {
+      const g = subLangGroups[k];
+      const isOpen = k === activeLangGroupKey;
+      const filesHTML = isOpen ? `
+        <div class="sub-file-list">
+          ${g.items.map((it, idx) => `
+            <div class="sub-file-row ${String(it.file_id) === String(activeFileId) ? 'active' : ''}" onclick="event.stopPropagation(); selectSubtitleFile('${k}', '${it.file_id}')">
+              <span class="sub-file-name" title="${escapeHTML(it.release)}">Sous-titre ${idx + 1}</span>
+              <span class="sub-file-dl">⬇ ${it.download_count.toLocaleString('fr-FR')}</span>
+              ${idx === 0 ? '<span class="sub-file-top">Le plus téléchargé</span>' : ''}
+            </div>`).join('')}
+        </div>` : '';
+
+      return `<div class="sub-lang-option-wrap">
+        <div class="sub-lang-option ${isOpen ? 'active' : ''}" onclick="event.stopPropagation(); selectSubtitleLangGroup('${k}')">
+          ${flagImgHTML(g.cc)}
+          <span>${escapeHTML(g.label)}</span>
+          <span class="sub-lang-count">${g.items.length}</span>
+        </div>
+        ${filesHTML}
+      </div>`;
+    }).join('');
+
+    langFieldHTML = `
+      <div class="sub-lang-field">
+        <label>Choisir la langue</label>
+        <div class="sub-lang-select ${subFileLoading ? 'is-loading' : ''}" id="sub-lang-select" onclick="toggleSubLangDropdown()">
+          <span class="sub-lang-current">${subFileLoading ? '<span class="placeholder">Chargement…</span>' : currentHTML}</span>
+          <svg class="sub-chevron" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+        <div class="sub-lang-dropdown" id="sub-lang-dropdown">${optionsHTML}</div>
+      </div>`;
+  }
+
+  pane.innerHTML = toggleRowHTML + langFieldHTML;
+
+  if (subLangDropdownOpen) {
+    const select = document.getElementById('sub-lang-select');
+    const dropdown = document.getElementById('sub-lang-dropdown');
+    if (select) select.classList.add('open');
+    if (dropdown) dropdown.classList.add('open');
+  }
+}
+
+
+function renderSubSettingsPane() {
+  const pane = document.getElementById('pane-sub-settings');
+  if (!pane) return;
+
+  if (!isNetfloxSourceActive()) {
+    pane.innerHTML = `<div class="sub-unavailable">Réglages disponibles une fois un sous-titre chargé via le lecteur NETFLOX.</div>`;
+    return;
+  }
+
+  const offsetSign = subtitleStyle.offset > 0 ? '+' : '';
+
+  const offsetHTML = `
+    <div class="sub-offset-box">
+      <div class="sub-offset-head">
+        <span>Décalage temporel</span>
+        <span class="sub-offset-value">${offsetSign}${subtitleStyle.offset.toFixed(1)}s</span>
+      </div>
+      <div class="sub-offset-buttons">
+        <button class="sub-offset-btn big" onclick="setSubOffset(-1)">−1s</button>
+        <button class="sub-offset-btn" onclick="setSubOffset(-0.1)">−0.1s</button>
+        <button class="sub-offset-btn" onclick="setSubOffset(0.1)">+0.1s</button>
+        <button class="sub-offset-btn big" onclick="setSubOffset(1)">+1s</button>
+      </div>
+      <button class="sub-offset-reset" onclick="resetSubOffset()">Réinitialiser le décalage</button>
+      <p class="sub-offset-hint">Si les sous-titres apparaissent trop tôt, augmentez le décalage (+). S'ils sont en retard, diminuez-le (−). Ce réglage décale les sous-titres le long de la timeline sans changer la vidéo.</p>
+    </div>`;
+
+  const sizeHTML = `
+    <div class="sub-style-group">
+      <div class="sub-style-label">Taille du texte</div>
+      <div class="sub-swatch-row">
+        ${['sm','md','lg','xl'].map(s => `<div class="sub-swatch ${subtitleStyle.size===s?'active':''}" onclick="setSubSize('${s}')">${{sm:'Petit',md:'Moyen',lg:'Grand',xl:'Très grand'}[s]}</div>`).join('')}
+      </div>
+    </div>`;
+
+  const colorHTML = `
+    <div class="sub-style-group">
+      <div class="sub-style-label">Couleur du texte</div>
+      <div class="sub-swatch-row">
+        ${SUB_COLORS.map(c => `<div class="sub-swatch ${subtitleStyle.color===c?'active':''}" onclick="setSubColor('${c}')"><div class="sub-color-dot" style="background:${c}"></div></div>`).join('')}
+      </div>
+    </div>`;
+
+  const bgHTML = `
+    <div class="sub-style-group">
+      <div class="sub-style-label">Fond des sous-titres</div>
+      <div class="sub-swatch-row">
+        ${[['none','Aucun'],['semi','Semi-transparent'],['opaque','Opaque']].map(([v,l]) => `<div class="sub-swatch ${subtitleStyle.bg===v?'active':''}" onclick="setSubBg('${v}')">${l}</div>`).join('')}
+      </div>
+    </div>`;
+
+  const edgeHTML = `
+    <div class="sub-style-group">
+      <div class="sub-style-label">Contour du texte</div>
+      <div class="sub-swatch-row">
+        ${[['none','Aucun'],['shadow','Ombre portée'],['outline','Contour']].map(([v,l]) => `<div class="sub-swatch ${subtitleStyle.edge===v?'active':''}" onclick="setSubEdge('${v}')">${l}</div>`).join('')}
+      </div>
+    </div>`;
+
+  const posHTML = `
+    <div class="sub-style-group">
+      <div class="sub-style-label">Position verticale</div>
+      <div class="sub-swatch-row">
+        ${[[5,'Basse'],[9,'Moyenne'],[16,'Haute'],[24,'Très haute']].map(([v,l]) => `<div class="sub-swatch ${subtitleStyle.position===v?'active':''}" onclick="setSubPosition(${v})">${l}</div>`).join('')}
+      </div>
+    </div>`;
+
+  const previewHTML = `
+    <div class="sub-preview-box">
+      <span style="font-family:'Outfit',sans-serif;font-weight:600;border-radius:6px;
+        font-size:${SUB_SIZES[subtitleStyle.size]};color:${subtitleStyle.color};
+        background:${SUB_BGS[subtitleStyle.bg]};padding:3px 12px;text-shadow:${SUB_EDGES[subtitleStyle.edge]};">
+        Aperçu des sous-titres
+      </span>
+    </div>`;
+
+  pane.innerHTML = `<div class="sub-section-title" style="padding-top:14px;">Timing</div>${offsetHTML}<div class="sub-section-title">Apparence</div>${previewHTML}${sizeHTML}${colorHTML}${bgHTML}${edgeHTML}${posHTML}`;
+}
+
+
 function toggleDownloadPanel() {
   const panel = document.getElementById('download-panel');
   const scrim = document.getElementById('download-scrim');
