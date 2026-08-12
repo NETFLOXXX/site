@@ -2511,9 +2511,13 @@ function showCastToast(msg) {
 
 let castContext = null;
 let castApiReady = false;
+const pageLoadTime = Date.now();
 
 function initCastApi(isAvailable) {
-  if (!isAvailable || typeof cast === 'undefined' || typeof chrome === 'undefined' || !chrome.cast) return;
+  if (!isAvailable || typeof cast === 'undefined' || typeof chrome === 'undefined' || !chrome.cast) {
+    console.warn('Google Cast SDK indisponible (bloqué, non supporté, ou extension Cast absente) — isAvailable:', isAvailable);
+    return;
+  }
   try {
     castContext = cast.framework.CastContext.getInstance();
     castContext.setOptions({
@@ -2623,7 +2627,11 @@ async function castVideo() {
   // Le SDK Google Cast se charge en asynchrone (script "async" en tête de page) : si l'appareil
   // est sur le réseau mais que le script n'a pas fini de s'initialiser au moment du clic, on
   // le dit clairement plutôt que de tomber directement sur "non pris en charge".
-  if (typeof window.chrome !== 'undefined' && navigator.userAgent.includes('Chrome') && !castApiReady) {
+  // Le SDK Google Cast se charge en asynchrone (script "async" en tête de page) : on laisse
+  // une courte fenêtre de grâce au tout début si le SDK n'a pas encore fini de s'initialiser.
+  // Passé ce délai (ou si l'extension Cast n'est pas dispo, ou bloquée par un bloqueur de pubs),
+  // on NE bloque plus dessus indéfiniment — on tombe sur la solution native ci-dessous.
+  if (typeof window.chrome !== 'undefined' && navigator.userAgent.includes('Chrome') && !castApiReady && (Date.now() - pageLoadTime) < 4000) {
     showCastToast('Le module de diffusion se charge encore, réessayez dans un instant.');
     return;
   }
