@@ -1,17 +1,17 @@
 {
   "key1": {
-    "remaining": 4900,
+    "remaining": 4995,
     "reset_day": 12,
-    "last_reset": "2026-08-01"
+    "last_reset": "2026-08-13"
   },
   "key2": {
     "remaining": 5000,
     "reset_day": 13,
-    "last_reset": "2026-08-01"
+    "last_reset": "2026-08-13"
   },
   "key3": {
     "remaining": 5000,
     "reset_day": 13,
-    "last_reset": "2026-08-01"
+    "last_reset": "2026-08-13"
   }
 }
