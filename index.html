@@ -6,16 +6,6 @@
 <title>Movix Player</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/hls.js/1.4.12/hls.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-<script>
-  // Pont robuste : le SDK Google Cast (chargé en async) peut appeler ce callback
-  // avant que le script principal (en bas de page) ne soit exécuté. On mémorise
-  // le résultat et on le relaie dès que le script principal s'enregistre.
-  window.__onGCastApiAvailable = function (isAvailable) {
-    window.__gCastAvailableFlag = isAvailable;
-    if (typeof window.__gCastReadyCallback === 'function') window.__gCastReadyCallback(isAvailable);
-  };
-</script>
-<script src="https://www.gstatic.com/cv/js/sender/v1/cast_sender.js" async></script>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
   * { margin:0; padding:0; box-sizing:border-box; }
@@ -79,17 +69,17 @@
 
   /* BACK BTN — keyframe bounce scale on hover */
   #back-btn {
-    position:absolute; top:16px; left:16px; z-index:60;
-    display:flex; align-items:center; gap:9px; padding:11px 20px;
+    position:absolute; top:20px; left:16px; z-index:60;
+    display:flex; align-items:center; gap:9px; padding:14px 24px;
     background:var(--glass); border:none; outline:none; border-radius:12px;
-    color:#fff; cursor:pointer; font-family:'Outfit',sans-serif; font-size:1rem; font-weight:600;
+    color:#fff; cursor:pointer; font-family:'Outfit',sans-serif; font-size:1.05rem; font-weight:600;
     opacity:0; transform:translateY(-4px);
     transition:opacity 0.3s, transform 0.25s, background 0.2s;
     backdrop-filter:blur(8px);
   }
-  #back-btn svg { width:20px; height:20px; }
+  #back-btn svg { width:22px; height:22px; }
   #back-btn:hover {
-    background:rgba(15,15,15,0.95);
+    background:rgba(15,15,15,0.95); color:var(--red-h);
     animation:back-pop 0.35s cubic-bezier(0.34,1.56,0.64,1) forwards;
   }
   @keyframes back-pop {
@@ -101,21 +91,21 @@
 
   /* SOURCES BTN — même look que back-btn, mais en haut à droite */
   #sources-btn {
-    position:absolute; top:16px; right:16px; z-index:60;
-    display:flex; align-items:center; gap:9px; padding:11px 20px;
+    position:absolute; top:20px; right:16px; z-index:60;
+    display:flex; align-items:center; gap:9px; padding:14px 24px;
     background:var(--glass); border:none; outline:none; border-radius:12px;
-    color:#fff; cursor:pointer; font-family:'Outfit',sans-serif; font-size:1rem; font-weight:600;
+    color:#fff; cursor:pointer; font-family:'Outfit',sans-serif; font-size:1.05rem; font-weight:600;
     opacity:0; transform:translateY(-4px);
     transition:opacity 0.3s, transform 0.25s, background 0.2s;
     backdrop-filter:blur(8px);
   }
   #player-wrap.cv #sources-btn { opacity:1; transform:translateY(0); }
   #sources-btn:hover {
-    background:rgba(15,15,15,0.95);
+    background:rgba(15,15,15,0.95); color:var(--red-h);
     animation:back-pop 0.35s cubic-bezier(0.34,1.56,0.64,1) forwards;
   }
   #sources-btn.open { color:var(--red-h); }
-  #sources-btn svg { width:20px; height:20px; }
+  #sources-btn svg { width:22px; height:22px; }
 
   /* NAV GROUP — Précédent / Épisodes-Films / Suivant, en haut au centre */
   /* Grille à 3 colonnes symétriques (1fr / auto / 1fr) sur toute la largeur du lecteur :
@@ -123,22 +113,27 @@
      quelle que soit la largeur des boutons Précédent / Suivant (qui viennent se coller
      de part et d'autre, collés au bouton central via justify-self). */
   #nav-group {
-    position:absolute; top:34px; left:16px; right:16px; z-index:60;
-    display:none; grid-template-columns:1fr auto 1fr; align-items:center; gap:8px;
+    position:absolute; top:20px; left:16px; right:16px; z-index:60;
+    display:none; grid-template-columns:1fr auto 1fr; align-items:center; gap:20px;
     opacity:0; transition:opacity 0.3s, transform 0.25s;
     pointer-events:none;
   }
-  #player-wrap.cv #nav-group { opacity:1; pointer-events:all; }
+  #player-wrap.cv #nav-group { opacity:1; }
+  #nav-group .nav-btn { pointer-events:all; }
   .nav-btn {
-    display:flex; align-items:center; gap:8px; padding:11px 18px;
+    display:flex; align-items:center; gap:8px; padding:14px 22px;
     background:var(--glass); border:none; outline:none; border-radius:12px;
-    color:#fff; cursor:pointer; font-family:'Outfit',sans-serif; font-size:0.94rem; font-weight:600;
+    color:#fff; cursor:pointer; font-family:'Outfit',sans-serif; font-size:1rem; font-weight:600;
     backdrop-filter:blur(8px); transition:background 0.2s, transform 0.2s;
     white-space:nowrap;
   }
-  .nav-btn:hover { background:rgba(15,15,15,0.95); transform:translateY(-1px); }
+  .nav-btn:hover { background:rgba(15,15,15,0.95); color:var(--red-h); transform:translateY(-1px); }
   .nav-btn:active { transform:scale(0.95); }
   .nav-btn.nav-mid.open { color:var(--red-h); }
+  #nav-prev:hover, #nav-next:hover, .nav-btn.nav-mid:hover {
+    background:rgba(15,15,15,0.95); color:var(--red-h);
+    animation:back-pop 0.35s cubic-bezier(0.34,1.56,0.64,1) forwards;
+  }
   #nav-prev { grid-column:1; justify-self:end; }
   #nav-mid  { grid-column:2; justify-self:center; }
   #nav-next { grid-column:3; justify-self:start; }
@@ -203,7 +198,7 @@
 
   /* title */
   #title-info {
-    position:absolute; top:78px; left:22px; z-index:40;
+    position:absolute; top:80px; left:22px; z-index:40;
     display:flex; align-items:center; gap:12px;
     opacity:0; transform:translateY(-4px); transition:opacity 0.3s, transform 0.3s;
   }
@@ -241,8 +236,8 @@
     background:rgba(0,0,0,0.55);
     backdrop-filter:blur(8px);
   }
-  .cc-btn.rewind:hover { transform:scale(1.14) rotate(-14deg); background:rgba(0,0,0,0.8); }
-  .cc-btn.forward:hover { transform:scale(1.14) rotate(14deg); background:rgba(0,0,0,0.8); }
+  .cc-btn.rewind:hover { transform:scale(1.22) rotate(-14deg); background:rgba(0,0,0,0.8); }
+  .cc-btn.forward:hover { transform:scale(1.22) rotate(14deg); background:rgba(0,0,0,0.8); }
 
   /* BIG center button */
   .cc-btn.lg {
@@ -252,7 +247,7 @@
     box-shadow:0 4px 24px rgba(0,0,0,0.5);
   }
   .cc-btn.lg:hover {
-    transform:scale(1.12);
+    transform:scale(1.22);
     background:rgba(0,0,0,0.72);
   }
 
@@ -463,17 +458,40 @@
   #episode-fields input::placeholder { color:rgba(255,255,255,.35); }
 
   /* ── LISTE DES SOURCES : Français / Anglais dépliables, lecteurs groupés ── */
+  .lang-pref-row {
+    display:flex; align-items:center; justify-content:space-between; gap:10px;
+    padding:14px 20px; margin:0 0 4px; border-bottom:1px solid rgba(255,255,255,0.08);
+  }
+  .lang-pref-label { font-size:0.78rem; color:rgba(255,255,255,0.4); font-weight:500; }
+  .lang-pref-toggle {
+    display:flex; background:rgba(255,255,255,0.06); border-radius:9px; padding:3px; gap:2px;
+  }
+  .lang-pref-btn {
+    border:none; background:none; color:rgba(255,255,255,0.5); font-family:'Outfit',sans-serif;
+    font-size:0.78rem; font-weight:600; padding:6px 12px; border-radius:7px; cursor:pointer;
+    transition:background .15s, color .15s;
+  }
+  .lang-pref-btn.active { background:var(--red); color:#fff; }
+  .lang-pref-btn:not(.active):hover { color:#fff; }
+
+  .load-lang-row {
+    display:flex; align-items:center; justify-content:center; gap:10px;
+    margin:22px 0 4px;
+  }
+  .load-lang-label { font-size:0.78rem; color:rgba(255,255,255,0.4); font-weight:500; }
+  #load-lang-toggle { background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.1); }
+
   .lang-section { margin:2px 0; }
   .lang-header {
     display:flex; align-items:center; justify-content:space-between;
     padding:13px 20px; margin:3px 12px; cursor:pointer;
-    font-size:0.8rem; font-weight:700; text-transform:uppercase; letter-spacing:.06em;
-    color:rgba(255,255,255,0.55); border-radius:10px; transition:background .15s;
+    font-size:0.85rem; font-weight:800; text-transform:uppercase; letter-spacing:.06em;
+    color:#fff; border-radius:10px; transition:background .15s, color .15s;
   }
-  .lang-header:hover { background:rgba(255,255,255,0.05); }
+  .lang-header:hover { background:rgba(255,255,255,0.08); }
   .lang-triangle {
     width:0; height:0; border-left:5px solid transparent; border-right:5px solid transparent;
-    border-top:6px solid rgba(255,255,255,0.5); transition:transform .2s; flex-shrink:0;
+    border-top:6px solid #fff; transition:transform .2s; flex-shrink:0;
   }
   .lang-section.collapsed .lang-triangle { transform:rotate(-90deg); }
   .lang-body { overflow:hidden; }
@@ -515,6 +533,10 @@
     font-size:0.62rem; color:rgba(255,255,255,0.4);
     margin-left:8px; text-transform:uppercase; letter-spacing:.04em;
   }
+  .src-kind-sep {
+    font-size:0.62rem; color:rgba(255,255,255,0.3);
+    margin-left:8px;
+  }
 
   /* ── SOUS-ONGLETS DE SOURCES (Lecteur NETFLOX / Autres lecteurs) — style repris des .settings-tabs ── */
   .src-subtabs {
@@ -549,17 +571,6 @@
     text-shadow: var(--sub-shadow, 0 2px 6px rgba(0,0,0,0.9));
   }
   #subtitle-overlay.hidden, #subtitle-overlay:empty { display:none; }
-
-  /* ── toast cast (retour utilisateur pour la diffusion) ── */
-  .cast-toast {
-    position:absolute; left:50%; bottom:78px; transform:translateX(-50%);
-    z-index:60; background:rgba(20,20,20,0.95); color:#fff; font-size:0.85rem; font-weight:500;
-    padding:10px 18px; border-radius:30px; border:1px solid rgba(255,255,255,0.12);
-    box-shadow:0 8px 24px rgba(0,0,0,0.5); display:flex; align-items:center; gap:8px;
-    opacity:1; transition:opacity .25s, transform .25s; pointer-events:none; white-space:nowrap;
-  }
-  .cast-toast.hidden { opacity:0; transform:translateX(-50%) translateY(8px); pointer-events:none; }
-  #cast-btn.is-casting { color:var(--red-h); }
 
   /* ── ligne de bascule "danger" (désactiver tous les sous-titres) ── */
   /* Rouge = sous-titres désactivés (état par défaut). Gris = sous-titres actifs. .is-locked = non cliquable (aucun sous-titre chargé). */
@@ -700,7 +711,7 @@
 
   /* ── PANNEAU ÉPISODES / FILMS ── */
   .ep-panel-label {
-    padding:16px 20px 6px; color:rgba(255,255,255,0.4);
+    padding:16px 20px 6px; color:#fff;
     font-size:0.78rem; font-weight:700; text-transform:uppercase; letter-spacing:.06em;
   }
   .ep-season-select {
@@ -827,18 +838,18 @@
     .input-row button { flex:1; }
 
     #player-wrap { border-radius:10px; }
-    #back-btn { padding:9px 16px; font-size:0.88rem; top:10px; left:10px; }
-    #back-btn svg { width:17px; height:17px; }
-    #sources-btn { padding:9px 16px; font-size:0.88rem; top:10px; right:10px; }
-    #sources-btn svg { width:17px; height:17px; }
-    #title-info { top:56px; left:10px; }
+    #back-btn { padding:11px 18px; font-size:0.94rem; top:14px; left:10px; }
+    #back-btn svg { width:19px; height:19px; }
+    #sources-btn { padding:11px 18px; font-size:0.94rem; top:14px; right:10px; }
+    #sources-btn svg { width:19px; height:19px; }
+    #title-info { top:60px; left:10px; }
     #title-poster { width:56px; height:78px; }
     #title-text h3 { font-size:1.05rem; }
     #title-text p { font-size:0.78rem; }
 
-    #nav-group { top:26px; left:8px; right:8px; gap:5px; }
-    .nav-btn { padding:9px 12px; font-size:0.82rem; gap:5px; }
-    .nav-btn.nav-mid { padding:9px 14px; }
+    #nav-group { top:14px; left:8px; right:8px; gap:10px; }
+    .nav-btn { padding:11px 14px; font-size:0.88rem; gap:5px; }
+    .nav-btn.nav-mid { padding:11px 16px; }
     .nav-btn-label { display:none; }
 
     #up-next-card { right:10px; bottom:10px; left:10px; width:auto; padding:10px; gap:10px; }
@@ -906,6 +917,117 @@
   }
 
   svg { flex-shrink:0; }
+
+  /* ── POPUP AVERTISSEMENT "AUTRES LECTEURS" (pubs) ── */
+  #ab-overlay {
+    position:fixed; inset:0; z-index:2000;
+    background:rgba(0,0,0,0.78); backdrop-filter:blur(10px);
+    display:none; align-items:center; justify-content:center; padding:20px;
+  }
+  #ab-overlay.open { display:flex; }
+  #ab-modal {
+    width:100%; max-width:400px; background:linear-gradient(180deg, #1c1c1c, #131313);
+    border:1px solid rgba(255,255,255,0.1); border-radius:20px;
+    padding:28px 26px 22px; box-shadow:0 30px 70px rgba(0,0,0,0.7);
+    animation:ab-pop 0.3s cubic-bezier(0.34,1.56,0.64,1);
+    font-family:'Outfit',sans-serif; text-align:center;
+  }
+  @keyframes ab-pop { from{ opacity:0; transform:scale(0.94) translateY(8px);} to{ opacity:1; transform:scale(1) translateY(0);} }
+  #ab-modal .ab-icon {
+    width:52px; height:52px; border-radius:50%;
+    background:radial-gradient(circle at 30% 30%, var(--red-h), var(--red));
+    display:flex; align-items:center; justify-content:center;
+    margin:0 auto 16px; box-shadow:0 8px 20px rgba(220,38,38,0.35);
+  }
+  #ab-modal .ab-icon svg { width:26px; height:26px; color:#fff; }
+  #ab-modal h3 { font-size:1.15rem; font-weight:700; margin-bottom:12px; letter-spacing:-0.01em; color:#fff; }
+  #ab-modal p { font-size:0.87rem; line-height:1.55; color:rgba(255,255,255,0.6); margin-bottom:12px; }
+  #ab-modal p strong { color:rgba(255,255,255,0.9); font-weight:600; }
+  #ab-modal .ab-note {
+    font-size:0.78rem; line-height:1.5; color:rgba(255,255,255,0.42);
+    background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.07);
+    border-radius:12px; padding:11px 14px; margin:14px 0 6px;
+  }
+  #ab-modal .ab-btns { display:flex; flex-direction:column; gap:9px; margin-top:16px; }
+  #ab-modal button.ab-action {
+    width:100%; border:none; border-radius:12px; padding:13px 16px;
+    font-family:'Outfit',sans-serif; font-weight:600; font-size:0.88rem;
+    cursor:pointer; transition:background 0.2s, transform 0.15s; text-align:center;
+  }
+  #ab-modal button.ab-action:active { transform:scale(0.98); }
+  #ab-modal button.ab-primary { background:var(--red); color:#fff; }
+  #ab-modal button.ab-primary:hover { background:var(--red-h); }
+  #ab-modal button.ab-ghost {
+    background:none; color:rgba(255,255,255,0.4); padding:10px; font-size:0.82rem;
+    border-top:1px solid rgba(255,255,255,0.07); border-radius:0; margin-top:4px; padding-top:14px;
+  }
+  #ab-modal button.ab-ghost:hover { color:rgba(255,255,255,0.7); }
+
+  /* ── POPUP "AUCUN LECTEUR DANS LA LANGUE CHOISIE" ── */
+  #nolang-overlay {
+    position:fixed; inset:0; z-index:2000;
+    background:rgba(0,0,0,0.78); backdrop-filter:blur(10px);
+    display:none; align-items:center; justify-content:center; padding:20px;
+  }
+  #nolang-overlay.open { display:flex; }
+  #nolang-modal {
+    width:100%; max-width:400px; background:linear-gradient(180deg, #1c1c1c, #131313);
+    border:1px solid rgba(255,255,255,0.1); border-radius:20px;
+    padding:28px 26px 22px; box-shadow:0 30px 70px rgba(0,0,0,0.7);
+    animation:ab-pop 0.3s cubic-bezier(0.34,1.56,0.64,1);
+    font-family:'Outfit',sans-serif; text-align:center;
+  }
+  #nolang-modal .ab-icon {
+    width:52px; height:52px; border-radius:50%;
+    background:radial-gradient(circle at 30% 30%, var(--red-h), var(--red));
+    display:flex; align-items:center; justify-content:center;
+    margin:0 auto 16px; box-shadow:0 8px 20px rgba(220,38,38,0.35);
+  }
+  #nolang-modal .ab-icon svg { width:26px; height:26px; color:#fff; }
+  #nolang-modal h3 { font-size:1.15rem; font-weight:700; margin-bottom:12px; letter-spacing:-0.01em; color:#fff; }
+  #nolang-modal p { font-size:0.87rem; line-height:1.55; color:rgba(255,255,255,0.6); margin-bottom:4px; }
+  #nolang-modal .ab-btns { display:flex; flex-direction:column; gap:9px; margin-top:16px; }
+  #nolang-modal button.ab-action {
+    width:100%; border:none; border-radius:12px; padding:13px 16px;
+    font-family:'Outfit',sans-serif; font-weight:600; font-size:0.88rem;
+    cursor:pointer; transition:background 0.2s, transform 0.15s; text-align:center;
+  }
+  #nolang-modal button.ab-action:active { transform:scale(0.98); }
+  #nolang-modal button.ab-primary { background:var(--red); color:#fff; }
+  #nolang-modal button.ab-primary:hover { background:var(--red-h); }
+
+  /* ── POPUP "FILM RÉCENT" (qualité potentiellement mauvaise) ── */
+  #recent-overlay {
+    position:fixed; inset:0; z-index:2000;
+    background:rgba(0,0,0,0.78); backdrop-filter:blur(10px);
+    display:none; align-items:center; justify-content:center; padding:20px;
+  }
+  #recent-overlay.open { display:flex; }
+  #recent-modal {
+    width:100%; max-width:400px; background:linear-gradient(180deg, #1c1c1c, #131313);
+    border:1px solid rgba(255,255,255,0.1); border-radius:20px;
+    padding:28px 26px 22px; box-shadow:0 30px 70px rgba(0,0,0,0.7);
+    animation:ab-pop 0.3s cubic-bezier(0.34,1.56,0.64,1);
+    font-family:'Outfit',sans-serif; text-align:center;
+  }
+  #recent-modal .ab-icon {
+    width:52px; height:52px; border-radius:50%;
+    background:radial-gradient(circle at 30% 30%, var(--red-h), var(--red));
+    display:flex; align-items:center; justify-content:center;
+    margin:0 auto 16px; box-shadow:0 8px 20px rgba(220,38,38,0.35);
+  }
+  #recent-modal .ab-icon svg { width:26px; height:26px; color:#fff; }
+  #recent-modal h3 { font-size:1.15rem; font-weight:700; margin-bottom:12px; letter-spacing:-0.01em; color:#fff; }
+  #recent-modal p { font-size:0.87rem; line-height:1.55; color:rgba(255,255,255,0.6); margin-bottom:4px; }
+  #recent-modal .ab-btns { display:flex; flex-direction:column; gap:9px; margin-top:16px; }
+  #recent-modal button.ab-action {
+    width:100%; border:none; border-radius:12px; padding:13px 16px;
+    font-family:'Outfit',sans-serif; font-weight:600; font-size:0.88rem;
+    cursor:pointer; transition:background 0.2s, transform 0.15s; text-align:center;
+  }
+  #recent-modal button.ab-action:active { transform:scale(0.98); }
+  #recent-modal button.ab-primary { background:var(--red); color:#fff; }
+  #recent-modal button.ab-primary:hover { background:var(--red-h); }
 </style>
 </head>
 <body>
@@ -913,21 +1035,30 @@
 <!-- LOAD SCREEN -->
 <div id="load-screen">
   <h1>Movix <span>Player</span></h1>
-  <p>Lecteur vidéo universel — HLS, M3U8, MP4, WebM et plus</p>
+  <p data-i18n="load_subtitle">Lecteur vidéo universel — HLS, M3U8, MP4, WebM et plus</p>
+
+  <div class="load-lang-row">
+    <span class="load-lang-label" data-i18n="load_lang_label">Langue par défaut</span>
+    <div class="lang-pref-toggle" id="load-lang-toggle">
+      <button class="lang-pref-btn" data-lang="fr" data-i18n="lang_fr">Français</button>
+      <button class="lang-pref-btn" data-lang="en" data-i18n="lang_en">Anglais</button>
+    </div>
+  </div>
+
   <div class="input-row">
-    <input type="text" id="movie-input" placeholder="ID TMDB du film (ex. 424)" inputmode="numeric" />
-    <button onclick="loadMovieByTMDB()">▶ Film</button>
+    <input type="text" id="movie-input" data-i18n-placeholder="movie_input_ph" placeholder="ID TMDB du film (ex. 424)" inputmode="numeric" />
+    <button onclick="loadMovieByTMDB()" data-i18n="btn_movie">▶ Film</button>
   </div>
 
   <div class="input-row" style="margin-top:10px;flex-wrap:wrap;">
-    <input type="text" id="series-input" placeholder="ID TMDB de la série (ex. 1399)" inputmode="numeric" />
+    <input type="text" id="series-input" data-i18n-placeholder="series_input_ph" placeholder="ID TMDB de la série (ex. 1399)" inputmode="numeric" />
     <div id="episode-fields" style="display:flex;gap:10px;flex:1;min-width:100%;">
-      <input id="season-input" type="number" min="1" placeholder="Saison"
+      <input id="season-input" type="number" min="1" placeholder="Saison" data-i18n-placeholder="season_ph"
         style="flex:1;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:10px;padding:11px 12px;color:#fff;font-family:'Outfit',sans-serif;outline:none;">
-      <input id="episode-input" type="number" min="1" placeholder="Épisode"
+      <input id="episode-input" type="number" min="1" placeholder="Épisode" data-i18n-placeholder="episode_ph"
         style="flex:1;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:10px;padding:11px 12px;color:#fff;font-family:'Outfit',sans-serif;outline:none;">
     </div>
-    <button onclick="loadSeriesByTMDB()">▶ Série</button>
+    <button onclick="loadSeriesByTMDB()" data-i18n="btn_series">▶ Série</button>
   </div>
 
   <p id="api-status" style="display:none;margin-top:14px;color:rgba(255,255,255,0.5);font-size:0.82rem;"></p>
@@ -940,7 +1071,6 @@
   <div class="overlay-gradient"></div>
   <div class="overlay-top"></div>
   <div id="subtitle-overlay" class="hidden"></div>
-  <div id="cast-toast" class="cast-toast hidden"></div>
 
   <div id="seek-flash">
     <div class="seek-label" id="flash-rw">−10s</div>
@@ -949,31 +1079,31 @@
 
   <div id="error-msg">
     <svg width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-    <p id="error-text">Impossible de lire ce flux.</p>
+    <p id="error-text" data-i18n="err_cant_play">Impossible de lire ce flux.</p>
   </div>
 
   <button id="back-btn" onclick="goBack()">
     <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M10 19l-7-7 7-7M3 12h18"/></svg>
-    Retour
+    <span data-i18n="btn_back">Retour</span>
   </button>
 
-  <button id="sources-btn" onclick="toggleSourcesPanel()" title="Changer de source (VF / VO)">
+  <button id="sources-btn" onclick="toggleSourcesPanel()" title="Changer de source (VF / VO)" data-i18n-title="sources_btn_title">
     <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
-    Sources
+    <span data-i18n="sources_btn_label">Sources</span>
   </button>
 
   <!-- NAV GROUP — épisode précédent / liste (Épisodes ou Films) / épisode suivant -->
   <div id="nav-group">
-    <button id="nav-prev" class="nav-btn" onclick="navPrev()" title="Précédent">
+    <button id="nav-prev" class="nav-btn" onclick="navPrev()" title="Précédent" data-i18n-title="nav_prev_title">
       <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
-      <span class="nav-btn-label">Précédent</span>
+      <span class="nav-btn-label" data-i18n="nav_prev_label">Précédent</span>
     </button>
     <button id="nav-mid" class="nav-btn nav-mid" onclick="toggleEpisodesPanel()">
       <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
       <span id="nav-mid-label">Épisodes</span>
     </button>
-    <button id="nav-next" class="nav-btn" onclick="navNext()" title="Suivant">
-      <span class="nav-btn-label">Suivant</span>
+    <button id="nav-next" class="nav-btn" onclick="navNext()" title="Suivant" data-i18n-title="nav_next_title">
+      <span class="nav-btn-label" data-i18n="nav_next_label">Suivant</span>
       <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
     </button>
   </div>
@@ -983,9 +1113,9 @@
       <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20" rx="2"/><path d="M7 2v20M17 2v20M2 12h20"/></svg>
     </div>
     <div id="title-text">
-      <h3 id="media-title">Flux vidéo</h3>
+      <h3 id="media-title" data-i18n="default_media_title">Flux vidéo</h3>
       <p id="media-episode"></p>
-      <p id="media-duration">Durée : --</p>
+      <p id="media-duration" data-i18n="duration_unknown">Durée : --</p>
     </div>
   </div>
 
@@ -1040,7 +1170,7 @@
           <input type="range" id="vol-slider" min="0" max="1" step="0.01" value="1" oninput="setVolume(this.value)" />
         </div>
 
-        <span id="time-display" onclick="toggleTimeMode()" title="Cliquer pour le temps restant">0:00 / --:--</span>
+        <span id="time-display" onclick="toggleTimeMode()" title="Cliquer pour le temps restant" data-i18n-title="time_display_title">0:00 / --:--</span>
       </div>
 
       <div class="right-ctrls">
@@ -1064,16 +1194,6 @@
           <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M8 4.5v5H3m-1-6 6 6m13 0v-3c0-1.16-.84-2-2-2h-7m-9 9v2c0 1.05.95 2 2 2h3"/><rect width="10" height="7" x="12" y="13.5" ry="2"/></svg>
         </button>
 
-        <!-- cast (Chromecast / AirPlay / TV connectée) -->
-        <button class="ctrl-btn" id="cast-btn" onclick="handleCtrlClick(this, castVideo)">
-          <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
-            <path d="M2 8V6a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-7"/>
-            <path d="M2 12a9 9 0 0 1 8 8"/>
-            <path d="M2 16a5 5 0 0 1 4 4"/>
-            <circle cx="2.5" cy="20" r="1" fill="currentColor" stroke="none"/>
-          </svg>
-        </button>
-
         <!-- fullscreen -->
         <button class="ctrl-btn" onclick="handleCtrlClick(this, toggleFullscreen)">
           <svg id="fs-exp" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M21 8V5a2 2 0 0 0-2-2h-3"/><path d="M3 16v3a2 2 0 0 0 2 2h3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/></svg>
@@ -1087,62 +1207,62 @@
   <div class="settings-scrim" id="settings-scrim" onclick="toggleSettings()"></div>
   <div class="settings-panel" id="settings-panel">
     <div class="settings-header">
-      <span>Paramètres</span>
+      <span data-i18n="settings_title">Paramètres</span>
       <button class="settings-close" onclick="toggleSettings()">
         <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
       </button>
     </div>
 
     <div class="settings-tabs">
-      <button class="settings-tab active" data-tab="sources-gear" onclick="switchSettingsTab('sources-gear')">Sources</button>
-      <button class="settings-tab" data-tab="format" onclick="switchSettingsTab('format')">Format</button>
-      <button class="settings-tab" data-tab="vitesse" onclick="switchSettingsTab('vitesse')">Vitesse</button>
+      <button class="settings-tab active" data-tab="sources-gear" onclick="switchSettingsTab('sources-gear')" data-i18n="tab_sources">Sources</button>
+      <button class="settings-tab" data-tab="format" onclick="switchSettingsTab('format')" data-i18n="tab_format">Format</button>
+      <button class="settings-tab" data-tab="vitesse" onclick="switchSettingsTab('vitesse')" data-i18n="tab_speed">Vitesse</button>
     </div>
 
     <div class="settings-content">
       <div class="settings-pane active" id="pane-sources-gear">
-        <p style="padding:16px 20px;color:rgba(255,255,255,0.4);font-size:0.85rem;">Aucune source chargée.</p>
+        <p style="padding:16px 20px;color:rgba(255,255,255,0.4);font-size:0.85rem;" data-i18n="no_source_loaded">Aucune source chargée.</p>
       </div>
 
       <div class="settings-pane" id="pane-format">
         <div class="set-row active" data-fit="contain" onclick="setFormat(this,'contain')">
-          <span class="set-row-label"><span class="set-dot"></span>Ajusté</span>
-          <span class="set-badge">Actif</span>
+          <span class="set-row-label"><span class="set-dot"></span><span data-i18n="fmt_fit">Ajusté</span></span>
+          <span class="set-badge" data-i18n="badge_active">Actif</span>
         </div>
         <div class="set-row" data-fit="cover" onclick="setFormat(this,'cover')">
-          <span class="set-row-label"><span class="set-dot"></span>Remplir</span>
-          <span class="set-badge">Actif</span>
+          <span class="set-row-label"><span class="set-dot"></span><span data-i18n="fmt_fill">Remplir</span></span>
+          <span class="set-badge" data-i18n="badge_active">Actif</span>
         </div>
         <div class="set-row" data-fit="fill" onclick="setFormat(this,'fill')">
-          <span class="set-row-label"><span class="set-dot"></span>Étirer 16:9</span>
-          <span class="set-badge">Actif</span>
+          <span class="set-row-label"><span class="set-dot"></span><span data-i18n="fmt_stretch">Étirer 16:9</span></span>
+          <span class="set-badge" data-i18n="badge_active">Actif</span>
         </div>
       </div>
 
       <div class="settings-pane" id="pane-vitesse">
         <div class="set-row" data-speed="0.5" onclick="setSpeed(this,0.5)">
           <span class="set-row-label"><span class="set-dot"></span>0.5×</span>
-          <span class="set-badge">Actif</span>
+          <span class="set-badge" data-i18n="badge_active">Actif</span>
         </div>
         <div class="set-row" data-speed="0.75" onclick="setSpeed(this,0.75)">
           <span class="set-row-label"><span class="set-dot"></span>0.75×</span>
-          <span class="set-badge">Actif</span>
+          <span class="set-badge" data-i18n="badge_active">Actif</span>
         </div>
         <div class="set-row active" data-speed="1" onclick="setSpeed(this,1)">
-          <span class="set-row-label"><span class="set-dot"></span>1× (normal)</span>
-          <span class="set-badge">Actif</span>
+          <span class="set-row-label"><span class="set-dot"></span>1× <span data-i18n="speed_normal">(normal)</span></span>
+          <span class="set-badge" data-i18n="badge_active">Actif</span>
         </div>
         <div class="set-row" data-speed="1.25" onclick="setSpeed(this,1.25)">
           <span class="set-row-label"><span class="set-dot"></span>1.25×</span>
-          <span class="set-badge">Actif</span>
+          <span class="set-badge" data-i18n="badge_active">Actif</span>
         </div>
         <div class="set-row" data-speed="1.5" onclick="setSpeed(this,1.5)">
           <span class="set-row-label"><span class="set-dot"></span>1.5×</span>
-          <span class="set-badge">Actif</span>
+          <span class="set-badge" data-i18n="badge_active">Actif</span>
         </div>
         <div class="set-row" data-speed="2" onclick="setSpeed(this,2)">
           <span class="set-row-label"><span class="set-dot"></span>2×</span>
-          <span class="set-badge">Actif</span>
+          <span class="set-badge" data-i18n="badge_active">Actif</span>
         </div>
       </div>
     </div>
@@ -1152,7 +1272,7 @@
   <div class="settings-scrim" id="sources-scrim" onclick="toggleSourcesPanel()"></div>
   <div class="settings-panel" id="sources-panel">
     <div class="settings-header">
-      <span>Sources</span>
+      <span data-i18n="tab_sources">Sources</span>
       <button class="settings-close" onclick="toggleSourcesPanel()">
         <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
       </button>
@@ -1160,7 +1280,7 @@
 
     <div class="settings-content">
       <div class="settings-pane active" id="pane-sources">
-        <p style="padding:16px 20px;color:rgba(255,255,255,0.4);font-size:0.85rem;">Aucune source chargée.</p>
+        <p style="padding:16px 20px;color:rgba(255,255,255,0.4);font-size:0.85rem;" data-i18n="no_source_loaded">Aucune source chargée.</p>
       </div>
     </div>
   </div>
@@ -1169,13 +1289,13 @@
   <div class="settings-scrim" id="episodes-scrim" onclick="toggleEpisodesPanel()"></div>
   <div class="settings-panel" id="episodes-panel">
     <div class="settings-header">
-      <span id="episodes-panel-title">Épisodes</span>
+      <span id="episodes-panel-title" data-i18n="episodes_default">Épisodes</span>
       <button class="settings-close" onclick="toggleEpisodesPanel()">
         <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
       </button>
     </div>
     <div class="settings-content" id="episodes-panel-content">
-      <p style="padding:16px 20px;color:rgba(255,255,255,0.4);font-size:0.85rem;">Rien à afficher.</p>
+      <p style="padding:16px 20px;color:rgba(255,255,255,0.4);font-size:0.85rem;" data-i18n="nothing_to_show">Rien à afficher.</p>
     </div>
   </div>
 
@@ -1183,14 +1303,14 @@
   <div class="settings-scrim" id="subtitles-scrim" onclick="toggleSubtitlesPanel()"></div>
   <div class="settings-panel" id="subtitles-panel">
     <div class="settings-header">
-      <span>Sous-titres</span>
+      <span data-i18n="subtitles_title">Sous-titres</span>
       <button class="settings-close" onclick="toggleSubtitlesPanel()">
         <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
       </button>
     </div>
     <div class="settings-tabs">
-      <button class="settings-tab active" data-tab="sub-choice" onclick="switchSubtitlesTab('sub-choice')">Choix des sous-titres</button>
-      <button class="settings-tab" data-tab="sub-settings" onclick="switchSubtitlesTab('sub-settings')">Réglages</button>
+      <button class="settings-tab active" data-tab="sub-choice" onclick="switchSubtitlesTab('sub-choice')" data-i18n="tab_sub_choice">Choix des sous-titres</button>
+      <button class="settings-tab" data-tab="sub-settings" onclick="switchSubtitlesTab('sub-settings')" data-i18n="tab_sub_settings">Réglages</button>
     </div>
     <div class="settings-content" id="subtitles-panel-content">
       <div class="settings-pane active" id="pane-sub-choice"></div>
@@ -1202,38 +1322,85 @@
   <div class="settings-scrim" id="download-scrim" onclick="toggleDownloadPanel()"></div>
   <div class="settings-panel" id="download-panel">
     <div class="settings-header">
-      <span>Téléchargement</span>
+      <span data-i18n="download_title">Téléchargement</span>
       <button class="settings-close" onclick="toggleDownloadPanel()">
         <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
       </button>
     </div>
     <div class="settings-content" id="download-panel-content">
-      <p style="padding:16px 20px;color:rgba(255,255,255,0.4);font-size:0.85rem;">Aucune option de téléchargement disponible.</p>
+      <p style="padding:16px 20px;color:rgba(255,255,255,0.4);font-size:0.85rem;" data-i18n="no_download_option">Aucune option de téléchargement disponible.</p>
     </div>
   </div>
 
   <!-- UP NEXT — épisode/film suivant, affiché automatiquement à 95% de la lecture -->
   <div id="up-next-card">
-    <button class="up-next-close" onclick="dismissUpNext()" title="Fermer">
+    <button class="up-next-close" onclick="dismissUpNext()" title="Fermer" data-i18n-title="close_title">
       <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.4" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
     </button>
     <div class="up-next-poster" id="up-next-poster">
       <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20" rx="2"/><path d="M7 2v20M17 2v20M2 12h20"/></svg>
     </div>
     <div class="up-next-body">
-      <div class="up-next-label" id="up-next-label">À suivre :</div>
+      <div class="up-next-label" id="up-next-label" data-i18n="up_next_label">À suivre :</div>
       <div class="up-next-title" id="up-next-title"></div>
       <p class="up-next-desc" id="up-next-desc"></p>
-      <button class="up-next-more" id="up-next-more-btn" onclick="toggleUpNextDesc()">Plus</button>
+      <button class="up-next-more" id="up-next-more-btn" onclick="toggleUpNextDesc()" data-i18n="btn_more">Plus</button>
       <div class="up-next-actions">
-        <button class="up-next-play" onclick="playUpNext()">Lecture</button>
-        <button class="up-next-later" onclick="dismissUpNext()">Plus tard</button>
+        <button class="up-next-play" onclick="playUpNext()" data-i18n="btn_play">Lecture</button>
+        <button class="up-next-later" onclick="dismissUpNext()" data-i18n="btn_later">Plus tard</button>
       </div>
     </div>
   </div>
 </div>
 
-<button id="open-url-btn" onclick="goBack()">⊕ Ouvrir une autre URL</button>
+<button id="open-url-btn" onclick="goBack()" data-i18n="btn_open_other_url">⊕ Ouvrir une autre URL</button>
+
+<!-- POPUP AVERTISSEMENT "AUTRES LECTEURS" -->
+<div id="ab-overlay">
+  <div id="ab-modal">
+    <div class="ab-icon">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v4m0 4h.01M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"/></svg>
+    </div>
+    <h3 data-i18n="ab_title">Attention aux publicités</h3>
+    <p data-i18n="ab_p1">Les lecteurs de l'onglet <strong>« Autres lecteurs »</strong> sont fournis par des sites tiers et peuvent afficher des publicités (pop-up, nouvel onglet, redirection). NETFLOX n'est pas responsable de leur contenu.</p>
+    <p data-i18n="ab_p2">Si une pub s'ouvre : <strong>ne cliquez sur rien</strong>, fermez simplement l'onglet ou la fenêtre et revenez sur le site.</p>
+
+    <div class="ab-note" data-i18n="ab_note">Un adblocker est conseillé pour limiter les pubs, mais il ne les supprimera pas toutes à 100%. Pour les connaisseurs, je conseille aussi de mettre son DNS sur dns.adguard.com, qui bloque une bonne partie des pubs directement au niveau du réseau.</div>
+
+    <div class="ab-btns">
+      <button class="ab-action ab-primary" onclick="window.open('https://getadblock.com/fr/','_blank','noopener,noreferrer')" data-i18n="ab_btn_install">Installer un adblocker</button>
+      <button class="ab-action ab-ghost" onclick="confirmAdblockAndProceed()" data-i18n="ab_btn_proceed">Continuer quand même</button>
+    </div>
+  </div>
+</div>
+
+<!-- POPUP "AUCUN LECTEUR DANS LA LANGUE CHOISIE" -->
+<div id="nolang-overlay">
+  <div id="nolang-modal">
+    <div class="ab-icon">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v4m0 4h.01M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"/></svg>
+    </div>
+    <h3 id="nolang-title">Langue non disponible</h3>
+    <p id="nolang-text"></p>
+    <div class="ab-btns">
+      <button class="ab-action ab-primary" onclick="closeNoLangPopup()" data-i18n="btn_understood">Compris</button>
+    </div>
+  </div>
+</div>
+
+<!-- POPUP "FILM RÉCENT" -->
+<div id="recent-overlay">
+  <div id="recent-modal">
+    <div class="ab-icon">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v4m0 4h.01M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"/></svg>
+    </div>
+    <h3 id="recent-title">Film récemment sorti</h3>
+    <p id="recent-text"></p>
+    <div class="ab-btns">
+      <button class="ab-action ab-primary" onclick="closeRecentMoviePopup()" data-i18n="btn_understood">Compris</button>
+    </div>
+  </div>
+</div>
 
 <script>
 const video = document.getElementById('video');
@@ -1244,7 +1411,7 @@ const timeDsp = document.getElementById('time-display');
 const volSlider = document.getElementById('vol-slider');
 
 let hls = null, hideTimer = null, scrubbing = false;
-let currentStreamUrl = null;    // URL brute du flux en lecture (pour Google Cast, non-blob)
+let currentStreamUrl = null;    // URL brute du flux en lecture (source directe, non-blob)
 let currentStreamIsHLS = false;
 let currentStreamTitle = '';
 let showRemaining = false;
@@ -1271,8 +1438,6 @@ const KNOWN_HOSTS = [
   ['vidzy.cc','Vidzy'],
   ['uqload.is','Uqload'],
   ['uqload.cx','Uqload'],
-  ['coflix.upn.one','Coflix'],
-  ['fembed.com','F-embed'],
   ['lecteurvideo.com','Lecteur vidéo'],
   ['doodstream','Doodstream'],
   ['dood.','Doodstream'],
@@ -1280,17 +1445,14 @@ const KNOWN_HOSTS = [
   ['vidmoly.me','Vidmoly'],
   ['lulustream.com','Lulustream'],
   ['luluvid.com','Luluvid'],
-  ['vidara.to','Vidara'],
   ['vidsonic.net','Vidsonic'],
   ['fsvid.lol','Fsvideo'],
   ['savefiles.com','Savefiles'],
-  ['wishonly.site','Wishonly'],
   ['veev.to','Veev'],
   ['emmmmbed.com','Lecteur vidéo'],
   ['kakaflix.lol','Kakaflix'],
   ['playmogo.com','Playmogo'],
   ['flemmix.upns.pro','Flemmix'],
-  ['waaw.to','Waaw'],
   ['marcus.p2pstream.vip','Marcus'],
   ['blinkflux.lol','Blinkflux'],
   ['hanerix.com','Hanerix'],
@@ -1299,6 +1461,11 @@ const KNOWN_HOSTS = [
   ['smoothpre.com','Smoothpre'],
   ['sandratableother.com','Sandratableother'],
   ['jessicayeahcatch.com','Jessicayeahcatch'],
+  ['1embed.cc','1embed'],
+  ['vidking.net','Vidking'],
+  ['viduki.net','Viduki'],
+  ['videasy.to','Videasy'],
+  ['filmu.in','Filmu'],
 ];
 
 let currentSources = [];      // liste à plat, index === id
@@ -1306,6 +1473,163 @@ let currentSourceIndex = -1;
 let currentTMDB = null;
 let currentMediaType = null;
 const collapsedLangs = new Set();   // langues repliées (fr / en)
+
+// ── LANGUE PRÉFÉRÉE (Français par défaut, mémorisée) ──
+let preferredLang = (() => {
+  try {
+    const saved = localStorage.getItem('netflox_lang_pref');
+    return saved === 'en' ? 'en' : 'fr';
+  } catch (err) { return 'fr'; }
+})();
+
+// ── TRADUCTION DE L'INTERFACE (FR / EN) ──
+// Dictionnaire centralisé pour tout le texte statique (menus, boutons, panneaux,
+// popups). Les éléments HTML marqués data-i18n="clé" reçoivent leur textContent
+// (ou data-i18n-placeholder / data-i18n-title pour les attributs) selon la
+// langue choisie sur l'écran d'accueil (preferredLang). Le contenu généré
+// dynamiquement en JS (panneaux sources/épisodes/sous-titres, statuts, etc.)
+// consulte directement `preferredLang` via des ternaires au moment du rendu.
+const I18N = {
+  load_subtitle: { fr: 'Lecteur vidéo universel — HLS, M3U8, MP4, WebM et plus', en: 'Universal video player — HLS, M3U8, MP4, WebM and more' },
+  load_lang_label: { fr: 'Langue par défaut', en: 'Default language' },
+  lang_fr: { fr: 'Français', en: 'French' },
+  lang_en: { fr: 'Anglais', en: 'English' },
+  movie_input_ph: { fr: 'ID TMDB du film (ex. 424)', en: 'Movie TMDB ID (e.g. 424)' },
+  series_input_ph: { fr: 'ID TMDB de la série (ex. 1399)', en: 'Series TMDB ID (e.g. 1399)' },
+  season_ph: { fr: 'Saison', en: 'Season' },
+  episode_ph: { fr: 'Épisode', en: 'Episode' },
+  btn_movie: { fr: '▶ Film', en: '▶ Movie' },
+  btn_series: { fr: '▶ Série', en: '▶ Series' },
+  err_cant_play: { fr: 'Impossible de lire ce flux.', en: 'Unable to play this stream.' },
+  btn_back: { fr: 'Retour', en: 'Back' },
+  sources_btn_title: { fr: 'Changer de source (VF / VO)', en: 'Change source (dubbed / subtitled)' },
+  sources_btn_label: { fr: 'Sources', en: 'Sources' },
+  nav_prev_title: { fr: 'Précédent', en: 'Previous' },
+  nav_prev_label: { fr: 'Précédent', en: 'Previous' },
+  nav_next_title: { fr: 'Suivant', en: 'Next' },
+  nav_next_label: { fr: 'Suivant', en: 'Next' },
+  default_media_title: { fr: 'Flux vidéo', en: 'Video stream' },
+  duration_unknown: { fr: 'Durée : --', en: 'Duration: --' },
+  time_display_title: { fr: 'Cliquer pour le temps restant', en: 'Click for remaining time' },
+  settings_title: { fr: 'Paramètres', en: 'Settings' },
+  tab_sources: { fr: 'Sources', en: 'Sources' },
+  tab_format: { fr: 'Format', en: 'Format' },
+  tab_speed: { fr: 'Vitesse', en: 'Speed' },
+  no_source_loaded: { fr: 'Aucune source chargée.', en: 'No source loaded.' },
+  fmt_fit: { fr: 'Ajusté', en: 'Fit' },
+  fmt_fill: { fr: 'Remplir', en: 'Fill' },
+  fmt_stretch: { fr: 'Étirer 16:9', en: 'Stretch 16:9' },
+  badge_active: { fr: 'Actif', en: 'Active' },
+  speed_normal: { fr: '(normal)', en: '(normal)' },
+  episodes_default: { fr: 'Épisodes', en: 'Episodes' },
+  nothing_to_show: { fr: 'Rien à afficher.', en: 'Nothing to show.' },
+  subtitles_title: { fr: 'Sous-titres', en: 'Subtitles' },
+  tab_sub_choice: { fr: 'Choix des sous-titres', en: 'Choose subtitles' },
+  tab_sub_settings: { fr: 'Réglages', en: 'Settings' },
+  download_title: { fr: 'Téléchargement', en: 'Download' },
+  no_download_option: { fr: 'Aucune option de téléchargement disponible.', en: 'No download option available.' },
+  close_title: { fr: 'Fermer', en: 'Close' },
+  up_next_label: { fr: 'À suivre :', en: 'Up next:' },
+  btn_more: { fr: 'Plus', en: 'More' },
+  btn_less: { fr: 'Moins', en: 'Less' },
+  btn_play: { fr: 'Lecture', en: 'Play' },
+  btn_later: { fr: 'Plus tard', en: 'Later' },
+  btn_open_other_url: { fr: '⊕ Ouvrir une autre URL', en: '⊕ Open another URL' },
+  btn_understood: { fr: 'Compris', en: 'Got it' },
+  ab_title: { fr: 'Attention aux publicités', en: 'Beware of ads' },
+  ab_p1: { fr: 'Les lecteurs de l\'onglet <strong>« Autres lecteurs »</strong> sont fournis par des sites tiers et peuvent afficher des publicités (pop-up, nouvel onglet, redirection). NETFLOX n\'est pas responsable de leur contenu.', en: 'Players in the <strong>"Other players"</strong> tab are provided by third-party sites and may show ads (pop-up, new tab, redirect). NETFLOX is not responsible for their content.' },
+  ab_p2: { fr: 'Si une pub s\'ouvre : <strong>ne cliquez sur rien</strong>, fermez simplement l\'onglet ou la fenêtre et revenez sur le site.', en: 'If an ad opens: <strong>don\'t click on anything</strong>, just close the tab or window and come back to the site.' },
+  ab_note: { fr: 'Un adblocker est conseillé pour limiter les pubs, mais il ne les supprimera pas toutes à 100%. Pour les connaisseurs, je conseille aussi de mettre son DNS sur dns.adguard.com, qui bloque une bonne partie des pubs directement au niveau du réseau.', en: 'An adblocker is recommended to cut down on ads, though it won\'t block 100% of them. For advanced users, I\'d also suggest setting your DNS to dns.adguard.com, which blocks a good share of ads at the network level.' },
+  ab_btn_install: { fr: 'Installer un adblocker', en: 'Install an adblocker' },
+  ab_btn_proceed: { fr: 'Continuer quand même', en: 'Continue anyway' },
+  sub_only_netflox: { fr: 'Les sous-titres externes (OpenSubtitles) sont disponibles uniquement pour le lecteur NETFLOX.', en: 'External subtitles (OpenSubtitles) are only available for the NETFLOX player.' },
+  sub_change_source_hint: { fr: 'Changez de source depuis le panneau « Sources » pour y accéder.', en: 'Switch source from the "Sources" panel to access them.' },
+  sub_settings_unavailable: { fr: 'Réglages disponibles une fois un sous-titre chargé via le lecteur NETFLOX.', en: 'Settings become available once a subtitle is loaded via the NETFLOX player.' },
+  sub_searching: { fr: 'Recherche des sous-titres…', en: 'Searching for subtitles…' },
+  sub_disable_all: { fr: 'Désactiver tous les sous-titres', en: 'Disable all subtitles' },
+  sub_active: { fr: 'Actif', en: 'Active' },
+  sub_inactive: { fr: 'Inactif', en: 'Inactive' },
+  sub_choose_lang: { fr: 'Choisir la langue', en: 'Choose language' },
+  sub_none_found: { fr: 'Aucun sous-titre trouvé pour ce contenu sur OpenSubtitles.', en: 'No subtitles found for this content on OpenSubtitles.' },
+  sub_loading: { fr: 'Chargement…', en: 'Loading…' },
+  sub_file_prefix: { fr: 'Sous-titre', en: 'Subtitle' },
+  sub_most_downloaded: { fr: 'Le plus téléchargé', en: 'Most downloaded' },
+  sub_time_offset: { fr: 'Décalage temporel', en: 'Time offset' },
+  sub_reset_offset: { fr: 'Réinitialiser le décalage', en: 'Reset offset' },
+  sub_offset_hint: { fr: 'Si les sous-titres apparaissent trop tôt, augmentez le décalage (+). S\'ils sont en retard, diminuez-le (−). Ce réglage décale les sous-titres le long de la timeline sans changer la vidéo.', en: 'If subtitles appear too early, increase the offset (+). If they\'re late, decrease it (−). This shifts subtitles along the timeline without changing the video.' },
+  sub_text_size: { fr: 'Taille du texte', en: 'Text size' },
+  sub_size_sm: { fr: 'Petit', en: 'Small' },
+  sub_size_md: { fr: 'Moyen', en: 'Medium' },
+  sub_size_lg: { fr: 'Grand', en: 'Large' },
+  sub_size_xl: { fr: 'Très grand', en: 'Extra large' },
+  sub_text_color: { fr: 'Couleur du texte', en: 'Text color' },
+  sub_bg: { fr: 'Fond des sous-titres', en: 'Subtitle background' },
+  sub_bg_none: { fr: 'Aucun', en: 'None' },
+  sub_bg_semi: { fr: 'Semi-transparent', en: 'Semi-transparent' },
+  sub_bg_opaque: { fr: 'Opaque', en: 'Opaque' },
+  sub_edge: { fr: 'Contour du texte', en: 'Text outline' },
+  sub_edge_none: { fr: 'Aucun', en: 'None' },
+  sub_edge_shadow: { fr: 'Ombre portée', en: 'Drop shadow' },
+  sub_edge_outline: { fr: 'Contour', en: 'Outline' },
+  sub_position: { fr: 'Position verticale', en: 'Vertical position' },
+  sub_pos_low: { fr: 'Basse', en: 'Low' },
+  sub_pos_mid: { fr: 'Moyenne', en: 'Medium' },
+  sub_pos_high: { fr: 'Haute', en: 'High' },
+  sub_pos_vhigh: { fr: 'Très haute', en: 'Very high' },
+  sub_preview: { fr: 'Aperçu des sous-titres', en: 'Subtitle preview' },
+  sub_timing: { fr: 'Timing', en: 'Timing' },
+  sub_appearance: { fr: 'Apparence', en: 'Appearance' },
+};
+
+function tr(key) {
+  const entry = I18N[key];
+  if (!entry) return '';
+  return entry[preferredLang] || entry.fr || '';
+}
+
+function applyStaticI18N() {
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    const val = tr(key);
+    if (val) el.innerHTML = val;
+  });
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+    const key = el.getAttribute('data-i18n-placeholder');
+    const val = tr(key);
+    if (val) el.setAttribute('placeholder', val);
+  });
+  document.querySelectorAll('[data-i18n-title]').forEach(el => {
+    const key = el.getAttribute('data-i18n-title');
+    const val = tr(key);
+    if (val) el.setAttribute('title', val);
+  });
+}
+
+function setPreferredLang(lang) {
+  preferredLang = (lang === 'en') ? 'en' : 'fr';
+  try { localStorage.setItem('netflox_lang_pref', preferredLang); } catch (err) {}
+  document.querySelectorAll('#load-lang-toggle .lang-pref-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.lang === preferredLang);
+  });
+  if (currentSources.length) {
+    currentSources.sort((a, b) => {
+      if (a.lang !== b.lang) return a.lang === preferredLang ? -1 : 1;
+      return sortRank(a) - sortRank(b);
+    });
+  }
+  applyStaticI18N();
+  // Re-rend tout le contenu dynamique déjà affiché (panneaux ouverts, titre en
+  // cours, bouton précédent/suivant…) pour qu'il bascule aussi de langue.
+  renderCloudflareSources();
+  if (document.getElementById('episodes-panel')?.classList.contains('open')) renderEpisodesPanel();
+  updateNavUI();
+  if (document.getElementById('media-title') && currentTMDB === null) {
+    document.getElementById('media-title').textContent = tr('default_media_title');
+  }
+  if (document.getElementById('media-duration') && currentTMDB === null) {
+    document.getElementById('media-duration').textContent = tr('duration_unknown');
+  }
+}
 const expandedGroups = new Set();   // groupes de lecteurs identiques dépliés
 const sourceSubTab = { fr: 'netflox', en: 'netflox' }; // sous-onglet actif par langue: 'netflox' ou 'autres'
 
@@ -1343,7 +1667,8 @@ async function fetchTMDBInfo(id, typeHint) {
           title: m.title || m.original_title || `TMDB ${id}`,
           posterPath: m.poster_path || null,
           runtime: m.runtime || null,
-          belongsToCollection: m.belongs_to_collection || null
+          belongsToCollection: m.belongs_to_collection || null,
+          releaseDate: m.release_date || null
         };
       }
     } catch (e) {}
@@ -1373,6 +1698,7 @@ async function fetchTMDBInfo(id, typeHint) {
         title: t.name || t.original_name || `TMDB ${id}`,
         posterPath,
         runtime,
+        firstAirDate: t.first_air_date || null,
         seasons: (t.seasons || []).filter(s => s.season_number > 0)
       };
     }
@@ -1459,22 +1785,82 @@ function applyTMDBInfo(info, id, season=null, episode=null) {
       : DEFAULT_POSTER_HTML;
 
     episodeEl.textContent = info.type === 'tv' && season && episode
-      ? `Saison ${season} · Episode ${episode}`
+      ? (preferredLang === 'fr' ? `Saison ${season} · Épisode ${episode}` : `Season ${season} · Episode ${episode}`)
       : '';
 
-    durationEl.textContent = `Durée : ${formatRuntime(info.runtime)}`;
+    durationEl.textContent = (preferredLang === 'fr' ? 'Durée : ' : 'Duration: ') + formatRuntime(info.runtime);
   } else {
     titleEl.textContent = `TMDB ${id}`;
     posterEl.innerHTML = DEFAULT_POSTER_HTML;
     episodeEl.textContent = '';
-    durationEl.textContent = 'Durée : --';
+    durationEl.textContent = tr('duration_unknown');
+  }
+}
+
+// ── POPUP "FILM / SÉRIE RÉCENT(E)" (sorti il y a moins de 5 mois) ──
+// La qualité des sources peut être mauvaise (cam/ts) et certains lecteurs
+// peuvent ne pas encore avoir la bonne vidéo pour un contenu aussi récent.
+// IMPORTANT : cette fonction est maintenant "bloquante" (elle renvoie une
+// Promise) pour que le chargement des sources — et donc la lecture vidéo —
+// n'ait pas lieu tant que l'utilisateur n'a pas fermé le popup. Avant ce
+// correctif, la vidéo commençait à charger/jouer derrière le popup pendant
+// qu'il était encore affiché, ce qui montrait le mauvais contenu à l'écran.
+let recentPopupResolve = null;
+
+function checkRecentMoviePopup(info) {
+  if (!info) return Promise.resolve();
+  const isMovie = info.type === 'movie';
+  const isTV = info.type === 'tv';
+  if (!isMovie && !isTV) return Promise.resolve();
+
+  const dateStr = isMovie ? info.releaseDate : info.firstAirDate;
+  if (!dateStr) return Promise.resolve();
+  const release = new Date(dateStr);
+  if (isNaN(release.getTime())) return Promise.resolve();
+
+  const now = new Date();
+  const monthsSinceRelease =
+    (now.getFullYear() - release.getFullYear()) * 12 +
+    (now.getMonth() - release.getMonth()) -
+    (now.getDate() < release.getDate() ? 1 : 0);
+
+  if (monthsSinceRelease < 5) {
+    return showRecentMoviePopup(info.title, isTV ? 'tv' : 'movie');
+  }
+  return Promise.resolve();
+}
+
+function showRecentMoviePopup(title, type='movie') {
+  const isTV = type === 'tv';
+  const lang = preferredLang;
+  const text = lang === 'fr'
+    ? (isTV
+        ? `« ${title} » est une série dont la diffusion a commencé il y a moins de 5 mois. La qualité vidéo peut être médiocre (cam/écran, son ou image de mauvaise qualité), et certaines sources peuvent ne pas encore avoir les bons épisodes. Essayez plusieurs lecteurs si besoin.`
+        : `« ${title} » est sorti il y a moins de 5 mois. La qualité vidéo peut être médiocre (cam/écran, son ou image de mauvaise qualité), et certaines sources peuvent ne pas encore avoir la bonne vidéo. Essayez plusieurs lecteurs si besoin.`)
+    : (isTV
+        ? `"${title}" is a series that started airing less than 5 months ago. Video quality may be poor (cam/screen recording, bad picture or sound), and some sources may not have the correct episodes yet. Try several players if needed.`
+        : `"${title}" was released less than 5 months ago. Video quality may be poor (cam/screen recording, bad picture or sound), and some sources may not have the correct video yet. Try several players if needed.`);
+  document.getElementById('recent-title').textContent = lang === 'fr'
+    ? (isTV ? 'Série récemment sortie' : 'Film récemment sorti')
+    : (isTV ? 'Recently released series' : 'Recently released movie');
+  document.getElementById('recent-text').textContent = text;
+  document.getElementById('recent-overlay').classList.add('open');
+  return new Promise(resolve => { recentPopupResolve = resolve; });
+}
+
+function closeRecentMoviePopup() {
+  document.getElementById('recent-overlay').classList.remove('open');
+  if (typeof recentPopupResolve === 'function') {
+    const resolve = recentPopupResolve;
+    recentPopupResolve = null;
+    resolve();
   }
 }
 
 async function loadMovieByTMDB() {
   const id = document.getElementById('movie-input').value.trim();
   if (!/^\d+$/.test(id)) {
-    setStatus('Entre un ID TMDB numérique pour le film.');
+    setStatus(preferredLang === 'fr' ? 'Entre un ID TMDB numérique pour le film.' : 'Enter a numeric TMDB ID for the movie.');
     return;
   }
 
@@ -1482,14 +1868,16 @@ async function loadMovieByTMDB() {
   document.getElementById('season-input').value = '';
   document.getElementById('episode-input').value = '';
 
-  setStatus('Recherche du film…');
+  setStatus(preferredLang === 'fr' ? 'Recherche du film…' : 'Searching for the movie…');
   const info = await fetchTMDBInfo(id, 'movie');
   applyTMDBInfo(info, id);
 
   if (!info) {
-    setStatus('Film introuvable sur TMDB.');
+    setStatus(preferredLang === 'fr' ? 'Film introuvable sur TMDB.' : 'Movie not found on TMDB.');
     return;
   }
+
+  await checkRecentMoviePopup(info);
 
   seriesMeta = null;
   currentSeason = null;
@@ -1507,24 +1895,26 @@ async function loadSeriesByTMDB() {
   const episode = document.getElementById('episode-input').value.trim();
 
   if (!/^\d+$/.test(id)) {
-    setStatus('Entre un ID TMDB numérique pour la série.');
+    setStatus(preferredLang === 'fr' ? 'Entre un ID TMDB numérique pour la série.' : 'Enter a numeric TMDB ID for the series.');
     return;
   }
   if (!/^\d+$/.test(season) || !/^\d+$/.test(episode)) {
-    setStatus('Pour une série, indique la saison et l’épisode.');
+    setStatus(preferredLang === 'fr' ? 'Pour une série, indique la saison et l’épisode.' : 'For a series, enter the season and episode.');
     return;
   }
 
   document.getElementById('movie-input').value = '';
 
-  setStatus('Recherche de la série…');
+  setStatus(preferredLang === 'fr' ? 'Recherche de la série…' : 'Searching for the series…');
   const info = await fetchTMDBInfo(id, 'tv');
   applyTMDBInfo(info, id, season, episode);
 
   if (!info) {
-    setStatus('Série introuvable sur TMDB.');
+    setStatus(preferredLang === 'fr' ? 'Série introuvable sur TMDB.' : 'Series not found on TMDB.');
     return;
   }
+
+  await checkRecentMoviePopup(info);
 
   movieCollection = null;
   currentSeason = parseInt(season, 10);
@@ -1538,7 +1928,7 @@ async function loadSeriesByTMDB() {
     );
     if (epRes.ok) {
       const ep = await epRes.json();
-      if (ep.runtime) document.getElementById('media-duration').textContent = `Durée : ${formatRuntime(ep.runtime)}`;
+      if (ep.runtime) document.getElementById('media-duration').textContent = (preferredLang === 'fr' ? 'Durée : ' : 'Duration: ') + formatRuntime(ep.runtime);
     }
   } catch (e) {}
 
@@ -1564,7 +1954,7 @@ async function fetchTMDBSources(id, type, season, episode, allowSeriesFallback=f
     ? `${API_BASE}/api/tv/${encodeURIComponent(id)}/${encodeURIComponent(season)}/${encodeURIComponent(episode)}`
     : `${API_BASE}/api/movies/${encodeURIComponent(id)}`;
 
-  setStatus('Recherche des sources…');
+  setStatus(preferredLang === 'fr' ? 'Recherche des sources…' : 'Searching for sources…');
   showEpisodeFields(true);
 
   try {
@@ -1577,7 +1967,7 @@ async function fetchTMDBSources(id, type, season, episode, allowSeriesFallback=f
     if (!response.ok) {
       if (allowSeriesFallback) {
         showEpisodeFields(true);
-        setStatus('Cet ID ne renvoie pas de film. Si c’est une série, indique la saison et l’épisode.');
+        setStatus(preferredLang === 'fr' ? 'Cet ID ne renvoie pas de film. Si c’est une série, indique la saison et l’épisode.' : 'This ID doesn’t return a movie. If it’s a series, enter the season and episode.');
         return;
       }
       throw new Error(`HTTP ${response.status}`);
@@ -1592,15 +1982,136 @@ async function fetchTMDBSources(id, type, season, episode, allowSeriesFallback=f
     if (!entries.length) {
       if (allowSeriesFallback) {
         showEpisodeFields(true);
-        setStatus('Aucun lien vidéo trouvé sur /movies/. Si c’est une série, indique la saison et l’épisode.');
+        setStatus(preferredLang === 'fr' ? 'Aucun lien vidéo trouvé sur /movies/. Si c’est une série, indique la saison et l’épisode.' : 'No video link found on /movies/. If it’s a series, enter the season and episode.');
         return;
       }
-      throw new Error('Aucun lien vidéo exploitable trouvé.');
+      throw new Error(preferredLang === 'fr' ? 'Aucun lien vidéo exploitable trouvé.' : 'No usable video link found.');
     }
 
     const processed = entries.map(buildSourceMeta);
+
+    // Nouvelle source VO (1embed) ajoutée manuellement dans l'onglet Anglais / Autres lecteurs.
+    const oneEmbedUrl = type === 'tv'
+      ? `https://1embed.cc/embed/tv/${encodeURIComponent(id)}/${encodeURIComponent(season)}/${encodeURIComponent(episode)}`
+      : `https://1embed.cc/embed/movie/${encodeURIComponent(id)}`;
+    processed.push({
+      url: oneEmbedUrl,
+      lang: 'en',
+      isDirect: false,
+      hostname: '1embed.cc',
+      known: matchKnownHost('1embed.cc')
+    });
+
+    // Nouvelle source VO (Vidking) ajoutée manuellement dans l'onglet Anglais / Autres lecteurs.
+    const vidkingUrl = type === 'tv'
+      ? `https://www.vidking.net/embed/tv/${encodeURIComponent(id)}/${encodeURIComponent(season)}/${encodeURIComponent(episode)}?autoPlay=true&nextEpisode=true&episodeSelector=true`
+      : `https://www.vidking.net/embed/movie/${encodeURIComponent(id)}?autoPlay=true&nextEpisode=true&episodeSelector=true`;
+    processed.push({
+      url: vidkingUrl,
+      lang: 'en',
+      isDirect: false,
+      hostname: 'vidking.net',
+      known: matchKnownHost('vidking.net')
+    });
+
+    // Nouvelle source VO (Videasy) ajoutée manuellement dans l'onglet Anglais / Autres lecteurs.
+    const videasyUrl = type === 'tv'
+      ? `https://player.videasy.to/tv/${encodeURIComponent(id)}/${encodeURIComponent(season)}/${encodeURIComponent(episode)}`
+      : `https://player.videasy.to/movie/${encodeURIComponent(id)}`;
+    processed.push({
+      url: videasyUrl,
+      lang: 'en',
+      isDirect: false,
+      hostname: 'videasy.to',
+      known: matchKnownHost('videasy.to')
+    });
+
+    // Nouvelle source VO (Filmu) ajoutée manuellement dans l'onglet Anglais / Autres lecteurs.
+    const filmuUrl = type === 'tv'
+      ? `https://embed.filmu.in/tv/${encodeURIComponent(id)}/${encodeURIComponent(season)}/${encodeURIComponent(episode)}`
+      : `https://embed.filmu.in/movie/${encodeURIComponent(id)}`;
+    processed.push({
+      url: filmuUrl,
+      lang: 'en',
+      isDirect: false,
+      hostname: 'filmu.in',
+      known: matchKnownHost('filmu.in')
+    });
+
+    // Nouvelle source VO (Viduki) — 4 serveurs — ajoutée manuellement dans l'onglet Anglais / Autres lecteurs.
+    // Les 4 entrées partageant le même nom connu ("Viduki") sont automatiquement regroupées
+    // sous un même menu déroulant par buildOtherGroups (comme pour les lecteurs dupliqués).
+    for (let srv = 1; srv <= 4; srv++) {
+      const vidukiUrl = type === 'tv'
+        ? `https://www.viduki.net/${srv}/tv/${encodeURIComponent(id)}/${encodeURIComponent(season)}/${encodeURIComponent(episode)}?color=e01621`
+        : `https://www.viduki.net/${srv}/movie/${encodeURIComponent(id)}?color=e01621`;
+      processed.push({
+        url: vidukiUrl,
+        lang: 'en',
+        isDirect: false,
+        hostname: 'viduki.net',
+        known: matchKnownHost('viduki.net')
+      });
+    }
+
+    // Certains flux m3u8 (ex: free.finepulfe.xyz) embarquent plusieurs pistes audio
+    // (FR + EN) dans un seul flux, la piste FR étant sélectionnée par défaut.
+    // On duplique ces sources direct FR dans l'onglet Anglais : au chargement, la
+    // piste audio anglaise est automatiquement sélectionnée via hls.audioTrack.
+    const dualAudioExtras = [];
+    processed.forEach(s => {
+      if (s.isDirect && s.lang === 'fr' && isDualAudioSource(s.url)) {
+        dualAudioExtras.push({ ...s, lang: 'en', audioLangOverride: 'en' });
+      }
+    });
+    processed.push(...dualAudioExtras);
+
+    // Nouvelle source directe VO (1embed.cc, token + proxy_m3u8) ajoutée manuellement
+    // dans l'onglet Anglais / Lecteur NETFLOX (flux direct, comme les autres lecteurs directs).
+    // Positionnée ici (juste après finepulfe) pour toujours apparaître juste après lui dans la liste.
+    try {
+      const oneEmbedM3u8 = await fetchOneEmbedDirectStream(id, type, season, episode);
+      if (oneEmbedM3u8) {
+        processed.push({
+          url: oneEmbedM3u8,
+          lang: 'en',
+          isDirect: true,
+          hostname: '1embed.cc',
+          known: null
+        });
+      }
+    } catch (e) {
+      console.error('Source directe 1embed indisponible:', e);
+    }
+
+    // Si aucun lecteur du tout n'a été trouvé, dans aucune langue, pour ce contenu :
+    // popup dans le même style que les autres (nolang-overlay), pas de bascule possible.
+    if (processed.length === 0) {
+      showNoPlayerPopup();
+    }
+
+    // ── Bascule automatique de langue si AUCUN lecteur (ni NETFLOX ni Autres) ──
+    // n'existe dans la langue choisie au départ, mais qu'il y en a dans l'autre
+    // langue : on bascule sur l'autre langue, et on prévient l'utilisateur par
+    // un popup (même style que celui du « Aucun lecteur NETFLOX »).
+    let langSwitchedFrom = null;
+    {
+      const otherLangCheck = preferredLang === 'fr' ? 'en' : 'fr';
+      const hasPreferred = processed.some(s => s.lang === preferredLang);
+      const hasOther = processed.some(s => s.lang === otherLangCheck);
+      if (!hasPreferred && hasOther) {
+        langSwitchedFrom = preferredLang;
+        preferredLang = otherLangCheck;
+        try { localStorage.setItem('netflox_lang_pref', preferredLang); } catch (err) {}
+        document.querySelectorAll('#load-lang-toggle .lang-pref-btn').forEach(btn => {
+          btn.classList.toggle('active', btn.dataset.lang === preferredLang);
+        });
+        showNoSourceInLangPopup(langSwitchedFrom, preferredLang);
+      }
+    }
+
     processed.sort((a,b) => {
-      if (a.lang !== b.lang) return a.lang === 'fr' ? -1 : 1;
+      if (a.lang !== b.lang) return a.lang === preferredLang ? -1 : 1;
       return sortRank(a) - sortRank(b);
     });
     assignDisplayNames(processed);
@@ -1613,21 +2124,49 @@ async function fetchTMDBSources(id, type, season, episode, allowSeriesFallback=f
     expandedGroups.clear();
     resetActiveSubtitle();
 
+    // Si la langue choisie a des lecteurs, mais aucun lecteur NETFLOX (flux direct),
+    // on prévient l'utilisateur par un popup, on bascule sur l'onglet « Autres lecteurs »
+    // (on reste sur la même langue, on NE change PAS de langue), puis on affiche
+    // aussi le popup adblocker vu qu'on utilise des lecteurs tiers.
+    {
+      const hasNetfloxPreferred = processed.some(s => s.lang === preferredLang && s.isDirect);
+      const hasOthersPreferred = processed.some(s => s.lang === preferredLang && !s.isDirect);
+      if (!hasNetfloxPreferred && hasOthersPreferred) {
+        sourceSubTab[preferredLang] = 'autres';
+        showNoNetfloxPopup(preferredLang, () => {
+          openAdblockPopup(() => {});
+        });
+      }
+    }
+
     loadScreen.style.display = 'none';
     pw.style.display = 'block';
     openBtn.style.display = 'inline-block';
     showCtrls();
 
-    const firstDirect = processed.findIndex(s => s.isDirect);
-    selectCloudflareSource(firstDirect >= 0 ? firstDirect : 0);
+    // Choix de la source initiale : d'abord un lecteur NETFLOX (direct) dans la
+    // langue choisie ; sinon, PAS de bascule vers le lecteur direct de l'autre
+    // langue — on reste sur la langue choisie et on prend le lecteur de repli
+    // dans « Autres lecteurs » : Frembed en français, 1embed en anglais
+    // (ou, à défaut, le premier autre lecteur disponible dans cette langue).
+    let sourceToSelect = processed.findIndex(s => s.lang === preferredLang && s.isDirect);
+    if (sourceToSelect < 0) {
+      const fallbackHost = preferredLang === 'fr' ? 'frembed.casa' : '1embed.cc';
+      sourceToSelect = processed.findIndex(s => s.lang === preferredLang && !s.isDirect && s.hostname === fallbackHost);
+    }
+    if (sourceToSelect < 0) {
+      sourceToSelect = processed.findIndex(s => s.lang === preferredLang && !s.isDirect);
+    }
+    if (sourceToSelect < 0) sourceToSelect = 0;
+    selectCloudflareSource(sourceToSelect);
     setStatus('', false);
   } catch (err) {
     console.error(err);
     if (allowSeriesFallback) {
       showEpisodeFields(true);
-      setStatus('Impossible de récupérer ce film. S’il s’agit d’une série, indique la saison et l’épisode.');
+      setStatus(preferredLang === 'fr' ? 'Impossible de récupérer ce film. S’il s’agit d’une série, indique la saison et l’épisode.' : 'Unable to retrieve this movie. If it’s a series, enter the season and episode.');
     } else {
-      setStatus(`Erreur : ${err.message || 'requête impossible'}`);
+      setStatus((preferredLang === 'fr' ? 'Erreur : ' : 'Error: ') + (err.message || (preferredLang === 'fr' ? 'requête impossible' : 'request failed')));
     }
   }
 }
@@ -1636,6 +2175,52 @@ function isDirectPlayable(url) {
   return /\.m3u8(\?|#|$)/i.test(url) ||
          /\.(mp4|webm|ogg|mov)(\?|#|$)/i.test(url) ||
          /m3u8/i.test(url);
+}
+
+// Domaines connus pour proposer plusieurs pistes audio dans un même flux m3u8.
+const DUAL_AUDIO_HOSTS = ['finepulfe.xyz'];
+function isDualAudioSource(url) {
+  try {
+    const h = new URL(url).hostname.toLowerCase();
+    return DUAL_AUDIO_HOSTS.some(d => h.includes(d));
+  } catch (e) { return false; }
+}
+
+// ── Nouvelle source directe VO (1embed.cc : token + proxy_m3u8) ──
+// Reprend la logique de index_net_modifie_v2.html : récupère un token,
+// puis appelle le proxy vidsrc pour obtenir un lien .m3u8 direct.
+// Le résultat est ajouté comme flux direct (isDirect:true, lang:'en'),
+// il apparaît donc dans l'onglet "Lecteur NETFLOX" côté Anglais.
+const ONEEMBED_TOKEN_API = 'https://1embed.cc/api/token';
+const ONEEMBED_PROXY_API = 'https://1embed.cc/server/vidsrc';
+
+async function fetchOneEmbedDirectStream(id, type, season, episode) {
+  try {
+    const tokenRes = await fetch(ONEEMBED_TOKEN_API);
+    if (!tokenRes.ok) return null;
+    const tokenData = await tokenRes.json();
+    const token = tokenData.token;
+    if (!token) return null;
+
+    let proxyUrl;
+    if (type === 'movies' || type === 'movie') {
+      proxyUrl = `${ONEEMBED_PROXY_API}/id=${encodeURIComponent(id)}?type=movie&_st=${encodeURIComponent(token)}`;
+    } else {
+      if (!season || !episode) return null;
+      proxyUrl =
+        `${ONEEMBED_PROXY_API}/id=${encodeURIComponent(id)}` +
+        `?type=tv&season=${encodeURIComponent(season)}&episode=${encodeURIComponent(episode)}` +
+        `&_st=${encodeURIComponent(token)}`;
+    }
+
+    const proxyRes = await fetch(proxyUrl);
+    if (!proxyRes.ok) return null;
+    const proxyData = await proxyRes.json();
+    return proxyData.streams?.proxy_m3u8 || null;
+  } catch (e) {
+    console.error('fetchOneEmbedDirectStream error:', e);
+    return null;
+  }
 }
 
 function matchKnownHost(hostname) {
@@ -1758,11 +2343,19 @@ function renderCloudflareSources() {
     pane.innerHTML = '';
 
     if (!currentSources.length) {
-      pane.innerHTML = '<p style="padding:16px 20px;color:rgba(255,255,255,0.4);font-size:0.85rem;">Aucune source chargée.</p>';
+      pane.innerHTML = `<p style="padding:16px 20px;color:rgba(255,255,255,0.4);font-size:0.85rem;">${tr('no_source_loaded')}</p>`;
       return;
     }
 
-    [['fr','Français'], ['en','Anglais']].forEach(([langKey, langLabel]) => {
+    // Les deux langues restent affichées dans le menu (comme avant) : seule la
+    // langue choisie sur l'écran de chargement passe en premier.
+    const langLabelFr = preferredLang === 'fr' ? 'Français' : 'French';
+    const langLabelEn = preferredLang === 'fr' ? 'Anglais' : 'English';
+    const langOrder = preferredLang === 'en'
+      ? [['en', langLabelEn], ['fr', langLabelFr]]
+      : [['fr', langLabelFr], ['en', langLabelEn]];
+
+    langOrder.forEach(([langKey, langLabel]) => {
       const directSources = getDirectSources(langKey);
       const otherGroups = buildOtherGroups(langKey);
 
@@ -1786,7 +2379,7 @@ function renderCloudflareSources() {
       if (!directSources.length && !otherGroups.length) {
         const empty = document.createElement('p');
         empty.style.cssText = 'padding:6px 20px 12px 30px;color:rgba(255,255,255,0.35);font-size:0.8rem;';
-        empty.textContent = 'Aucune source.';
+        empty.textContent = preferredLang === 'fr' ? 'Aucune source.' : 'No source.';
         body.appendChild(empty);
       } else {
         // Détermine le sous-onglet actif (on ne reste pas coincé sur un onglet vide).
@@ -1799,7 +2392,7 @@ function renderCloudflareSources() {
 
         const tabNetflox = document.createElement('button');
         tabNetflox.className = 'settings-tab' + (activeTab === 'netflox' ? ' active' : '');
-        tabNetflox.textContent = 'Lecteur NETFLOX';
+        tabNetflox.textContent = preferredLang === 'fr' ? 'Lecteur NETFLOX' : 'NETFLOX player';
         tabNetflox.disabled = !directSources.length;
         tabNetflox.onclick = (e) => {
           e.preventDefault(); e.stopPropagation();
@@ -1809,12 +2402,18 @@ function renderCloudflareSources() {
 
         const tabAutres = document.createElement('button');
         tabAutres.className = 'settings-tab' + (activeTab === 'autres' ? ' active' : '');
-        tabAutres.textContent = 'Autres lecteurs';
+        tabAutres.textContent = preferredLang === 'fr' ? 'Autres lecteurs' : 'Other players';
         tabAutres.disabled = !otherGroups.length;
         tabAutres.onclick = (e) => {
           e.preventDefault(); e.stopPropagation();
-          sourceSubTab[langKey] = 'autres';
-          renderCloudflareSources();
+          if (activeTab === 'autres') {
+            // déjà sur l'onglet, pas besoin de repasser par le popup
+            return;
+          }
+          openAdblockPopup(() => {
+            sourceSubTab[langKey] = 'autres';
+            renderCloudflareSources();
+          });
         };
 
         subtabs.appendChild(tabNetflox);
@@ -1828,7 +2427,7 @@ function renderCloudflareSources() {
           if (!directSources.length) {
             const empty = document.createElement('p');
             empty.style.cssText = 'padding:10px 20px 12px 30px;color:rgba(255,255,255,0.35);font-size:0.8rem;';
-            empty.textContent = 'Aucun lecteur NETFLOX.';
+            empty.textContent = preferredLang === 'fr' ? 'Aucun lecteur NETFLOX.' : 'No NETFLOX player.';
             subContent.appendChild(empty);
           } else {
             directSources.forEach(s => subContent.appendChild(renderFlatRow(s)));
@@ -1837,7 +2436,7 @@ function renderCloudflareSources() {
           if (!otherGroups.length) {
             const empty = document.createElement('p');
             empty.style.cssText = 'padding:10px 20px 12px 30px;color:rgba(255,255,255,0.35);font-size:0.8rem;';
-            empty.textContent = 'Aucun autre lecteur.';
+            empty.textContent = preferredLang === 'fr' ? 'Aucun autre lecteur.' : 'No other player.';
             subContent.appendChild(empty);
           } else {
             otherGroups.forEach(g => subContent.appendChild(g.type === 'flat' ? renderFlatRow(g.item) : renderGroup(g, langKey)));
@@ -1857,8 +2456,12 @@ function renderFlatRow(s) {
   const row = document.createElement('div');
   row.className = 'src-row' + (s.id === currentSourceIndex ? ' active' : '');
   const kind = s.isDirect ? (/m3u8/i.test(s.url) ? 'M3U8' : 'DIRECT') : 'EMBED';
+  const is1080 = (s.isDirect && isDualAudioSource(s.url)) || (!s.isDirect && /1embed\.cc|vidking\.net|filmu\.in|videasy\.to/i.test(s.hostname || ''));
+  const kindHTML = is1080
+    ? `<span class="src-kind-tag">1080p</span><span class="src-kind-sep">·</span><span class="src-kind-tag">${kind}</span>`
+    : `<span class="src-kind-tag">${kind}</span>`;
   const icon = s.isDirect ? NETFLOX_ICON_HTML : TV_ICON_HTML;
-  row.innerHTML = `<span class="src-row-label">${icon}${escapeHTML(s.displayName)}</span><span class="src-kind-tag">${kind}</span>`;
+  row.innerHTML = `<span class="src-row-label">${icon}${escapeHTML(s.displayName)}</span><span>${kindHTML}</span>`;
   row.onclick = (e) => { e.stopPropagation(); selectCloudflareSource(s.id); };
   return row;
 }
@@ -1901,7 +2504,7 @@ function selectCloudflareSource(id) {
   currentSourceIndex = id;
 
   if (source.isDirect) {
-    loadMedia(source.url, source.displayName);
+    loadMedia(source.url, source.displayName, source.audioLangOverride);
   } else {
     showEmbedPlayer(source.url);
   }
@@ -1921,14 +2524,14 @@ function updateNavUI() {
   const midLabel = document.getElementById('nav-mid-label');
 
   if (currentMediaType === 'tv' && seriesMeta && seriesMeta.seasons?.length) {
-    midLabel.textContent = 'Épisodes';
+    midLabel.textContent = preferredLang === 'fr' ? 'Épisodes' : 'Episodes';
     const t = tvNextTarget();
     const p = tvPrevTarget();
     prevBtn.style.display = p ? 'flex' : 'none';
     nextBtn.style.display = t ? 'flex' : 'none';
     group.style.display = 'grid';
   } else if (currentMediaType === 'movie' && movieCollection && movieCollection.parts.length > 1) {
-    midLabel.textContent = 'Films';
+    midLabel.textContent = preferredLang === 'fr' ? 'Films' : 'Movies';
     const idx = movieCollection.parts.findIndex(p => String(p.id) === String(currentTMDB));
     prevBtn.style.display = idx > 0 ? 'flex' : 'none';
     nextBtn.style.display = (idx >= 0 && idx < movieCollection.parts.length - 1) ? 'flex' : 'none';
@@ -2085,14 +2688,14 @@ async function playEpisode(season, episode) {
   currentSeason = season;
   currentEpisode = episode;
   resetActiveSubtitle();
-  setStatus('Chargement de l’épisode…');
+  setStatus(preferredLang === 'fr' ? 'Chargement de l’épisode…' : 'Loading episode…');
   const info = await fetchTMDBInfo(currentTMDB, 'tv');
   applyTMDBInfo(info, currentTMDB, season, episode);
   try {
     const epRes = await fetch(`${TMDB_BASE}/tv/${currentTMDB}/season/${season}/episode/${episode}?api_key=${TMDB_KEY}&language=fr-FR`);
     if (epRes.ok) {
       const ep = await epRes.json();
-      if (ep.runtime) document.getElementById('media-duration').textContent = `Durée : ${formatRuntime(ep.runtime)}`;
+      if (ep.runtime) document.getElementById('media-duration').textContent = (preferredLang === 'fr' ? 'Durée : ' : 'Duration: ') + formatRuntime(ep.runtime);
     }
   } catch (e) {}
   await fetchTMDBSources(currentTMDB, 'tv', season, episode);
@@ -2103,7 +2706,7 @@ async function playCollectionMovie(movieId) {
   closeEpisodesPanel();
   hideUpNextCard();
   resetActiveSubtitle();
-  setStatus('Chargement du film…');
+  setStatus(preferredLang === 'fr' ? 'Chargement du film…' : 'Loading movie…');
   const info = await fetchTMDBInfo(movieId, 'movie');
   applyTMDBInfo(info, movieId);
   await fetchTMDBSources(movieId, 'movies', null, null);
@@ -2138,16 +2741,16 @@ async function renderEpisodesPanel() {
   const content = document.getElementById('episodes-panel-content');
 
   if (currentMediaType === 'tv' && seriesMeta) {
-    titleEl.textContent = seriesMeta.name || 'Épisodes';
+    titleEl.textContent = seriesMeta.name || tr('episodes_default');
     selectedPanelSeason = currentSeason;
-    content.innerHTML = '<p style="padding:16px 20px;color:rgba(255,255,255,0.4);font-size:0.85rem;">Chargement…</p>';
+    content.innerHTML = `<p style="padding:16px 20px;color:rgba(255,255,255,0.4);font-size:0.85rem;">${preferredLang === 'fr' ? 'Chargement…' : 'Loading…'}</p>`;
     await renderTVPanel();
   } else if (currentMediaType === 'movie' && movieCollection) {
-    titleEl.textContent = movieCollection.name || 'Films';
+    titleEl.textContent = movieCollection.name || (preferredLang === 'fr' ? 'Films' : 'Movies');
     renderMoviePanel();
   } else {
-    titleEl.textContent = 'Épisodes';
-    content.innerHTML = '<p style="padding:16px 20px;color:rgba(255,255,255,0.4);font-size:0.85rem;">Rien à afficher.</p>';
+    titleEl.textContent = tr('episodes_default');
+    content.innerHTML = `<p style="padding:16px 20px;color:rgba(255,255,255,0.4);font-size:0.85rem;">${tr('nothing_to_show')}</p>`;
   }
 }
 
@@ -2156,8 +2759,9 @@ async function renderTVPanel() {
   const seasons = seriesMeta.seasons;
   const episodes = await ensureSeasonEpisodes(currentTMDB, selectedPanelSeason);
 
+  const seasonWord = preferredLang === 'fr' ? 'Saison' : 'Season';
   content.innerHTML = `
-    <div class="ep-panel-label">Saison</div>
+    <div class="ep-panel-label">${seasonWord}</div>
     <div class="ep-season-select" id="ep-season-select">
       <span id="ep-season-current"></span>
       <span class="ep-season-chevron">▾</span>
@@ -2167,7 +2771,7 @@ async function renderTVPanel() {
   `;
 
   const curSeasonMeta = seasons.find(s => s.season_number === selectedPanelSeason);
-  document.getElementById('ep-season-current').textContent = curSeasonMeta ? (curSeasonMeta.name || `Saison ${selectedPanelSeason}`) : `Saison ${selectedPanelSeason}`;
+  document.getElementById('ep-season-current').textContent = curSeasonMeta ? (curSeasonMeta.name || `${seasonWord} ${selectedPanelSeason}`) : `${seasonWord} ${selectedPanelSeason}`;
 
   const select = document.getElementById('ep-season-select');
   const dropdown = document.getElementById('ep-season-dropdown');
@@ -2182,15 +2786,18 @@ async function renderTVPanel() {
   seasons.forEach(s => {
     const row = document.createElement('div');
     row.className = 'ep-season-option' + (s.season_number === selectedPanelSeason ? ' active' : '');
-    row.textContent = `${s.name || 'Saison ' + s.season_number} (${s.episode_count || 0} épisode${(s.episode_count || 0) > 1 ? 's' : ''})`;
+    const epWord = preferredLang === 'fr'
+      ? `épisode${(s.episode_count || 0) > 1 ? 's' : ''}`
+      : `episode${(s.episode_count || 0) > 1 ? 's' : ''}`;
+    row.textContent = `${s.name || seasonWord + ' ' + s.season_number} (${s.episode_count || 0} ${epWord})`;
     row.onclick = async (e) => {
       e.stopPropagation();
       selectedPanelSeason = s.season_number;
       select.classList.remove('open');
       dropdown.classList.remove('open');
-      document.getElementById('ep-season-current').textContent = s.name || `Saison ${s.season_number}`;
+      document.getElementById('ep-season-current').textContent = s.name || `${seasonWord} ${s.season_number}`;
       const listEl = document.getElementById('ep-list');
-      listEl.innerHTML = '<p style="padding:16px 20px;color:rgba(255,255,255,0.4);font-size:0.85rem;">Chargement…</p>';
+      listEl.innerHTML = `<p style="padding:16px 20px;color:rgba(255,255,255,0.4);font-size:0.85rem;">${preferredLang === 'fr' ? 'Chargement…' : 'Loading…'}</p>`;
       const eps = await ensureSeasonEpisodes(currentTMDB, selectedPanelSeason);
       renderEpisodeList(eps);
     };
@@ -2205,7 +2812,7 @@ function toggleOverview(btn) {
   if (!overview) return;
   overview.classList.toggle('expanded');
   btn.classList.toggle('open');
-  btn.firstChild.textContent = overview.classList.contains('expanded') ? 'Moins' : 'Plus';
+  btn.firstChild.textContent = overview.classList.contains('expanded') ? tr('btn_less') : tr('btn_more');
 }
 
 function renderEpisodeList(episodes) {
@@ -2213,7 +2820,7 @@ function renderEpisodeList(episodes) {
   if (!listEl) return;
   listEl.innerHTML = '';
   if (!episodes.length) {
-    listEl.innerHTML = '<p style="padding:16px 20px;color:rgba(255,255,255,0.4);font-size:0.85rem;">Aucun épisode trouvé.</p>';
+    listEl.innerHTML = `<p style="padding:16px 20px;color:rgba(255,255,255,0.4);font-size:0.85rem;">${preferredLang === 'fr' ? 'Aucun épisode trouvé.' : 'No episode found.'}</p>`;
     return;
   }
   episodes.forEach(ep => {
@@ -2221,12 +2828,14 @@ function renderEpisodeList(episodes) {
     const row = document.createElement('div');
     row.className = 'ep-row' + (isActive ? ' active' : '');
     const thumb = ep.still_path ? `${TMDB_STILL}${ep.still_path}` : '';
+    const inProgressLabel = preferredLang === 'fr' ? ' • En cours' : ' • Now playing';
+    const moreLabel = tr('btn_more');
     row.innerHTML = `
       <div class="ep-thumb">${thumb ? `<img src="${thumb}" alt="">` : DEFAULT_POSTER_HTML}</div>
       <div class="ep-info">
-        <div class="ep-meta">S${selectedPanelSeason} E${ep.episode_number}${isActive ? ' • En cours' : ''}</div>
+        <div class="ep-meta">S${selectedPanelSeason} E${ep.episode_number}${isActive ? inProgressLabel : ''}</div>
         <div class="ep-title">${ep.episode_number}. ${escapeHTML(ep.name || '')}</div>
-        ${ep.overview ? `<div class="ep-overview">${escapeHTML(ep.overview)}</div><button class="ep-overview-toggle" onclick="event.stopPropagation(); toggleOverview(this);">Plus<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg></button>` : ''}
+        ${ep.overview ? `<div class="ep-overview">${escapeHTML(ep.overview)}</div><button class="ep-overview-toggle" onclick="event.stopPropagation(); toggleOverview(this);">${moreLabel}<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg></button>` : ''}
       </div>
     `;
     row.onclick = () => playEpisode(selectedPanelSeason, ep.episode_number);
@@ -2244,12 +2853,14 @@ function renderMoviePanel() {
     row.className = 'ep-row' + (isActive ? ' active' : '');
     const thumb = p.poster_path ? `${TMDB_IMG}${p.poster_path}` : '';
     const year = p.release_date ? p.release_date.slice(0, 4) : '';
+    const inProgressLabel = preferredLang === 'fr' ? ' • En cours' : ' • Now playing';
+    const moreLabel = tr('btn_more');
     row.innerHTML = `
       <div class="ep-thumb film-thumb">${thumb ? `<img src="${thumb}" alt="">` : DEFAULT_POSTER_HTML}</div>
       <div class="ep-info">
-        <div class="ep-meta">${year}${isActive ? ' • En cours' : ''}</div>
+        <div class="ep-meta">${year}${isActive ? inProgressLabel : ''}</div>
         <div class="ep-title">${escapeHTML(p.title || '')}</div>
-        ${p.overview ? `<div class="ep-overview">${escapeHTML(p.overview)}</div><button class="ep-overview-toggle" onclick="event.stopPropagation(); toggleOverview(this);">Plus<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg></button>` : ''}
+        ${p.overview ? `<div class="ep-overview">${escapeHTML(p.overview)}</div><button class="ep-overview-toggle" onclick="event.stopPropagation(); toggleOverview(this);">${moreLabel}<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg></button>` : ''}
       </div>
     `;
     row.onclick = () => playCollectionMovie(p.id);
@@ -2290,7 +2901,7 @@ function showEmbedPlayer(url) {
   showCtrls();
 }
 
-function loadMedia(url, title) {
+function loadMedia(url, title, audioLangOverride) {
   showVideoPlayer();
   hideUpNextCard();
   clearHLS(); hideError(); showSpinner();
@@ -2308,20 +2919,29 @@ function loadMedia(url, title) {
     hls.on(Hls.Events.MANIFEST_PARSED, (e,d) => {
       hideSpinner();
       populateSources(hls.audioTracks);
+      if (audioLangOverride) selectHLSAudioTrackByLang(hls, audioLangOverride);
       video.play().catch(()=>{});
     });
+    hls.on(Hls.Events.AUDIO_TRACKS_UPDATED, () => {
+      if (audioLangOverride) selectHLSAudioTrackByLang(hls, audioLangOverride);
+    });
     hls.on(Hls.Events.ERROR, (e,d) => {
-      if(d.fatal){ hideSpinner(); showError('Erreur HLS: '+d.details); }
+      if(d.fatal){ hideSpinner(); showError((preferredLang === 'fr' ? 'Erreur HLS : ' : 'HLS error: ')+d.details); }
     });
   } else if (video.canPlayType('application/vnd.apple.mpegurl') && isHLS) {
     video.src = url; video.play().catch(()=>{});
+    if (audioLangOverride) {
+      const applyNative = () => { selectNativeAudioTrackByLang(video, audioLangOverride); };
+      video.addEventListener('loadedmetadata', applyNative, { once:true });
+      if (video.audioTracks) video.audioTracks.addEventListener('addtrack', applyNative);
+    }
   } else {
     video.src = url; video.play().catch(()=>{});
   }
   video.onerror = () => {
     if (pw.classList.contains('embed-mode')) return;
     hideSpinner();
-    showError('Impossible de charger ce média.');
+    showError(preferredLang === 'fr' ? 'Impossible de charger ce média.' : 'Unable to load this media.');
   };
   loadPreviewSource(url, isHLS);
 }
@@ -2380,9 +3000,9 @@ function goBack() {
   document.getElementById('season-input').value = '';
   document.getElementById('episode-input').value = '';
   document.getElementById('title-poster').innerHTML = DEFAULT_POSTER_HTML;
-  document.getElementById('media-title').textContent = 'Flux vidéo';
+  document.getElementById('media-title').textContent = tr('default_media_title');
   document.getElementById('media-episode').textContent = '';
-  document.getElementById('media-duration').textContent = 'Durée : --';
+  document.getElementById('media-duration').textContent = tr('duration_unknown');
   showEpisodeFields(true);
   setStatus('', false);
   currentSources = [];
@@ -2405,6 +3025,31 @@ function populateSources(tracks) {
   // La liste des sources reste la liste principale des lecteurs.
   // Les pistes audio HLS continuent d'être gérées par hls.audioTrack.
   if (!tracks || tracks.length < 2) return;
+}
+
+// Sélectionne, parmi les pistes audio d'un flux HLS.js, celle qui correspond
+// à la langue demandée ('en' ou 'fr'), en se basant sur le nom / code langue.
+function selectHLSAudioTrackByLang(hlsInstance, langCode) {
+  const tracks = hlsInstance.audioTracks || [];
+  if (tracks.length < 2) return;
+  const re = langCode === 'en'
+    ? /\b(en|eng|english|anglais|vo|vostfr)\b/i
+    : /\b(fr|fre|fra|french|français|francais|vf)\b/i;
+  const idx = tracks.findIndex(t => re.test(`${t.name || ''} ${t.lang || ''}`));
+  if (idx >= 0 && hlsInstance.audioTrack !== idx) hlsInstance.audioTrack = idx;
+}
+
+// Équivalent pour la lecture HLS native (Safari / iOS) via l'API AudioTrackList.
+function selectNativeAudioTrackByLang(videoEl, langCode) {
+  const tracks = videoEl.audioTracks;
+  if (!tracks || tracks.length < 2) return;
+  const re = langCode === 'en'
+    ? /\b(en|eng|english|anglais|vo|vostfr)\b/i
+    : /\b(fr|fre|fra|french|français|francais|vf)\b/i;
+  for (let i = 0; i < tracks.length; i++) {
+    const t = tracks[i];
+    t.enabled = re.test(`${t.label || ''} ${t.language || ''}`);
+  }
 }
 
 // ── PLAYBACK ──
@@ -2497,172 +3142,6 @@ function togglePiP() {
   if (document.pictureInPictureElement) document.exitPictureInPicture();
   else video.requestPictureInPicture?.();
 }
-
-// ── CAST (Google Cast SDK pour Chromecast / TV connectées, + AirPlay natif pour Safari) ──
-let castToastTimer = null;
-function showCastToast(msg) {
-  const el = document.getElementById('cast-toast');
-  if (!el) return;
-  el.textContent = msg;
-  el.classList.remove('hidden');
-  clearTimeout(castToastTimer);
-  castToastTimer = setTimeout(() => el.classList.add('hidden'), 3200);
-}
-
-let castContext = null;
-let castApiReady = false;
-const pageLoadTime = Date.now();
-
-function initCastApi(isAvailable) {
-  if (!isAvailable || typeof cast === 'undefined' || typeof chrome === 'undefined' || !chrome.cast) {
-    console.warn('Google Cast SDK indisponible (bloqué, non supporté, ou extension Cast absente) — isAvailable:', isAvailable);
-    return;
-  }
-  try {
-    castContext = cast.framework.CastContext.getInstance();
-    castContext.setOptions({
-      receiverApplicationId: chrome.cast.media.DEFAULT_MEDIA_RECEIVER_APP_ID,
-      autoJoinPolicy: chrome.cast.AutoJoinPolicy.ORIGIN_SCOPED
-    });
-    castApiReady = true;
-
-    castContext.addEventListener(cast.framework.CastContextEventType.SESSION_STATE_CHANGED, (e) => {
-      const btn = document.getElementById('cast-btn');
-      const connected = e.sessionState === cast.framework.SessionState.SESSION_STARTED
-        || e.sessionState === cast.framework.SessionState.SESSION_RESUMED;
-      if (btn) btn.classList.toggle('is-casting', connected);
-      if (connected) {
-        const session = castContext.getCurrentSession();
-        const deviceName = session && session.getCastDevice ? session.getCastDevice().friendlyName : null;
-        showCastToast('Diffusion en cours' + (deviceName ? ' sur ' + deviceName : '') + '.');
-        castCurrentStreamToSession(session);
-      } else if (e.sessionState === cast.framework.SessionState.SESSION_ENDED) {
-        showCastToast('Diffusion arrêtée.');
-      }
-    });
-  } catch (err) {
-    console.error('Erreur d’initialisation Google Cast:', err);
-  }
-}
-
-// Le SDK a peut-être déjà appelé le callback avant que ce script ne s'exécute (script async côté <head>).
-if (typeof window.__gCastAvailableFlag !== 'undefined') {
-  initCastApi(window.__gCastAvailableFlag);
-} else {
-  window.__gCastReadyCallback = initCastApi;
-}
-
-// Envoie le flux actuellement chargé (URL directe, pas blob) vers la session Cast active.
-async function castCurrentStreamToSession(session) {
-  if (!session || !currentStreamUrl) return;
-  try {
-    const contentType = currentStreamIsHLS ? 'application/x-mpegurl' : 'video/mp4';
-    const mediaInfo = new chrome.cast.media.MediaInfo(currentStreamUrl, contentType);
-    mediaInfo.streamType = chrome.cast.media.StreamType.BUFFERED;
-    mediaInfo.metadata = new chrome.cast.media.GenericMediaMetadata();
-    mediaInfo.metadata.title = currentStreamTitle || document.getElementById('media-title')?.textContent || 'Movix';
-
-    const request = new chrome.cast.media.LoadRequest(mediaInfo);
-    request.currentTime = video.currentTime || 0;
-    request.autoplay = !video.paused;
-
-    await session.loadMedia(request);
-    video.pause(); // évite la double lecture (locale + diffusée)
-  } catch (err) {
-    console.error('Erreur de chargement du média sur le Cast:', err);
-    showCastToast('Connecté, mais impossible de lancer la lecture sur l’appareil.');
-  }
-}
-
-async function castVideo() {
-  // Source intégrée (iframe tierce : Frembed, Uqload, Doodstream, etc.) → il n'existe
-  // aucune API permettant de caster le flux d'un iframe cross-origin. On le dit clairement
-  // plutôt que de laisser le sélecteur s'ouvrir sur "rien" ou échouer silencieusement.
-  if (pw.classList.contains('embed-mode')) {
-    showCastToast('Cette source (lecteur intégré) ne peut pas être diffusée. Choisissez une source directe si disponible.');
-    return;
-  }
-
-  // Cast/AirPlay exigent un contexte sécurisé (HTTPS, ou localhost).
-  if (location.protocol !== 'https:' && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
-    showCastToast('La diffusion nécessite une connexion sécurisée (HTTPS).');
-    return;
-  }
-
-  // Safari / iOS / macOS / Apple TV → AirPlay natif
-  if (typeof video.webkitShowPlaybackTargetPicker === 'function') {
-    try {
-      video.webkitShowPlaybackTargetPicker();
-      return;
-    } catch (err) {
-      console.error('Erreur AirPlay:', err);
-      showCastToast('Impossible d\u2019ouvrir le sélecteur AirPlay.');
-      return;
-    }
-  }
-
-  // Chrome / Edge → SDK Google Cast : ouvre le même sélecteur natif que le menu ⋮ > « Caster »
-  if (castApiReady && castContext) {
-    if (!currentStreamUrl) {
-      showCastToast('Aucun flux castable actuellement.');
-      return;
-    }
-    try {
-      await castContext.requestSession();
-      // le chargement effectif du média est géré par le listener SESSION_STATE_CHANGED
-      return;
-    } catch (err) {
-      // 'cancel' est renvoyé quand l'utilisateur ferme le sélecteur sans choisir d'appareil
-      if (err === 'cancel' || (err && err.code === 'cancel')) return;
-      if (err === 'no_devices_available' || (err && err.code === 'no_devices_available')) {
-        showCastToast('Aucun appareil de diffusion trouvé sur le réseau.');
-        return;
-      }
-      console.error('Erreur Google Cast:', err);
-      showCastToast('Diffusion impossible pour le moment.');
-      return;
-    }
-  }
-
-  // Le SDK Google Cast se charge en asynchrone (script "async" en tête de page) : si l'appareil
-  // est sur le réseau mais que le script n'a pas fini de s'initialiser au moment du clic, on
-  // le dit clairement plutôt que de tomber directement sur "non pris en charge".
-  // Le SDK Google Cast se charge en asynchrone (script "async" en tête de page) : on laisse
-  // une courte fenêtre de grâce au tout début si le SDK n'a pas encore fini de s'initialiser.
-  // Passé ce délai (ou si l'extension Cast n'est pas dispo, ou bloquée par un bloqueur de pubs),
-  // on NE bloque plus dessus indéfiniment — on tombe sur la solution native ci-dessous.
-  if (typeof window.chrome !== 'undefined' && navigator.userAgent.includes('Chrome') && !castApiReady && (Date.now() - pageLoadTime) < 4000) {
-    showCastToast('Le module de diffusion se charge encore, réessayez dans un instant.');
-    return;
-  }
-
-  // Repli générique : Remote Playback API (fonctionne uniquement pour les sources directes, pas blob)
-  if (video.remote && typeof video.remote.prompt === 'function') {
-    const src = video.currentSrc || video.src || '';
-    if (!src.startsWith('blob:')) {
-      try {
-        await video.remote.prompt();
-        return;
-      } catch (err) {
-        console.error('Erreur de diffusion:', err);
-        if (err && err.name === 'NotFoundError') showCastToast('Aucun appareil de diffusion trouvé sur le réseau.');
-        else if (err && err.name !== 'NotAllowedError') showCastToast('Diffusion impossible : ' + (err && err.message ? err.message : 'erreur inconnue') + '.');
-        return;
-      }
-    }
-  }
-
-  showCastToast('La diffusion (Cast/AirPlay) n\u2019est pas prise en charge par ce navigateur.');
-}
-
-video.addEventListener('webkitplaybacktargetavailabilitychanged', () => {
-  // disponibilité AirPlay détectée : rien à faire visuellement, le bouton reste toujours actionnable
-});
-video.addEventListener('webkitcurrentplaybacktargetiswirelesschanged', () => {
-  const btn = document.getElementById('cast-btn');
-  if (!btn) return;
-  btn.classList.toggle('is-casting', !!video.webkitCurrentPlaybackTargetIsWireless);
-});
 
 function toggleFullscreen() {
   if (!document.fullscreenElement) pw.requestFullscreen?.();
@@ -2869,6 +3348,8 @@ document.addEventListener('click', e => {
   if (e.target.closest('#episodes-panel')) return;
   if (e.target.closest('#subtitles-panel')) return;
   if (e.target.closest('#download-panel')) return;
+  if (e.target.closest('#ab-overlay')) return;
+  if (e.target.closest('#nolang-overlay')) return;
   if (!e.target.closest('.ctrl-btn') && !e.target.closest('.nav-btn') && !e.target.closest('.menu-popup') && !e.target.closest('.settings-panel') && !e.target.closest('#sources-panel') && !e.target.closest('#sources-btn') && !e.target.closest('#episodes-panel') && !e.target.closest('#subtitles-panel') && !e.target.closest('#subtitles-btn') && !e.target.closest('#download-panel') && !e.target.closest('#download-btn')) closeMenus();
 });
 
@@ -3332,12 +3813,12 @@ function renderSubtitlesPanel() {
   if (!choicePane || !settingsPane) return;
 
   if (!isNetfloxSourceActive()) {
-    choicePane.innerHTML = `<div class="sub-unavailable">Les sous-titres externes (OpenSubtitles) sont disponibles uniquement pour le lecteur NETFLOX.<br>Changez de source depuis le panneau « Sources » pour y accéder.</div>`;
-    settingsPane.innerHTML = `<div class="sub-unavailable">Réglages disponibles une fois un sous-titre chargé via le lecteur NETFLOX.</div>`;
+    choicePane.innerHTML = `<div class="sub-unavailable">${tr('sub_only_netflox')}<br>${tr('sub_change_source_hint')}</div>`;
+    settingsPane.innerHTML = `<div class="sub-unavailable">${tr('sub_settings_unavailable')}</div>`;
     return;
   }
 
-  choicePane.innerHTML = `<div class="sub-lang-empty" style="padding:24px 20px;">Recherche des sous-titres…</div>`;
+  choicePane.innerHTML = `<div class="sub-lang-empty" style="padding:24px 20px;">${tr('sub_searching')}</div>`;
   ensureSubsFetched().then(renderSubChoicePane);
   renderSubSettingsPane();
 }
@@ -3360,7 +3841,7 @@ function sortedLangKeys() {
 
 function buildSubChoiceHTML(pane) {
   if (!isNetfloxSourceActive()) {
-    pane.innerHTML = `<div class="sub-unavailable">Les sous-titres externes (OpenSubtitles) sont disponibles uniquement pour le lecteur NETFLOX.</div>`;
+    pane.innerHTML = `<div class="sub-unavailable">${tr('sub_only_netflox')}</div>`;
     return;
   }
 
@@ -3370,13 +3851,13 @@ function buildSubChoiceHTML(pane) {
   if (subtitlesDisabled) toggleClass += ' is-active-red';
   if (!hasActive) toggleClass += ' is-locked'; // non cliquable tant qu'aucun sous-titre n'est chargé
   const toggleOnclick = hasActive ? `onclick="toggleAllSubtitles()"` : '';
-  const toggleBadge = subtitlesDisabled ? 'Actif' : 'Inactif';
+  const toggleBadge = subtitlesDisabled ? tr('sub_active') : tr('sub_inactive');
 
   const toggleRowHTML = `
     <div class="${toggleClass}" ${toggleOnclick}>
       <span class="sub-toggle-label">
         <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="4.9" y1="4.9" x2="19.1" y2="19.1"/></svg>
-        Désactiver tous les sous-titres
+        ${tr('sub_disable_all')}
       </span>
       <span class="sub-toggle-badge">${toggleBadge}</span>
     </div>`;
@@ -3385,14 +3866,14 @@ function buildSubChoiceHTML(pane) {
 
   let langFieldHTML;
   if (subFetchedForKey === null && subFetchPromise) {
-    langFieldHTML = `<div class="sub-lang-field"><label>Choisir la langue</label><div class="sub-lang-empty" style="background:rgba(255,255,255,0.04);border-radius:12px;">Recherche des sous-titres…</div></div>`;
+    langFieldHTML = `<div class="sub-lang-field"><label>${tr('sub_choose_lang')}</label><div class="sub-lang-empty" style="background:rgba(255,255,255,0.04);border-radius:12px;">${tr('sub_searching')}</div></div>`;
   } else if (!groupKeys.length) {
-    langFieldHTML = `<div class="sub-lang-field"><label>Choisir la langue</label><div class="sub-lang-empty" style="background:rgba(255,255,255,0.04);border-radius:12px;">Aucun sous-titre trouvé pour ce contenu sur OpenSubtitles.</div></div>`;
+    langFieldHTML = `<div class="sub-lang-field"><label>${tr('sub_choose_lang')}</label><div class="sub-lang-empty" style="background:rgba(255,255,255,0.04);border-radius:12px;">${tr('sub_none_found')}</div></div>`;
   } else {
     const currentGroup = activeLangGroupKey ? subLangGroups[activeLangGroupKey] : null;
     const currentHTML = (currentGroup && activeFileId)
       ? `${flagImgHTML(currentGroup.cc)}<span>${escapeHTML(currentGroup.label)}</span>`
-      : `<span class="placeholder">Choisir la langue</span>`;
+      : `<span class="placeholder">${tr('sub_choose_lang')}</span>`;
 
     const optionsHTML = groupKeys.map(k => {
       const g = subLangGroups[k];
@@ -3401,9 +3882,9 @@ function buildSubChoiceHTML(pane) {
         <div class="sub-file-list">
           ${g.items.map((it, idx) => `
             <div class="sub-file-row ${String(it.file_id) === String(activeFileId) ? 'active' : ''}" onclick="event.stopPropagation(); selectSubtitleFile('${k}', '${it.file_id}')">
-              <span class="sub-file-name" title="${escapeHTML(it.release)}">Sous-titre ${idx + 1}</span>
-              <span class="sub-file-dl">⬇ ${it.download_count.toLocaleString('fr-FR')}</span>
-              ${idx === 0 ? '<span class="sub-file-top">Le plus téléchargé</span>' : ''}
+              <span class="sub-file-name" title="${escapeHTML(it.release)}">${tr('sub_file_prefix')} ${idx + 1}</span>
+              <span class="sub-file-dl">⬇ ${it.download_count.toLocaleString(preferredLang === 'fr' ? 'fr-FR' : 'en-US')}</span>
+              ${idx === 0 ? `<span class="sub-file-top">${tr('sub_most_downloaded')}</span>` : ''}
             </div>`).join('')}
         </div>` : '';
 
@@ -3419,9 +3900,9 @@ function buildSubChoiceHTML(pane) {
 
     langFieldHTML = `
       <div class="sub-lang-field">
-        <label>Choisir la langue</label>
+        <label>${tr('sub_choose_lang')}</label>
         <div class="sub-lang-select ${subFileLoading ? 'is-loading' : ''}" id="sub-lang-select" onclick="toggleSubLangDropdown()">
-          <span class="sub-lang-current">${subFileLoading ? '<span class="placeholder">Chargement…</span>' : currentHTML}</span>
+          <span class="sub-lang-current">${subFileLoading ? `<span class="placeholder">${tr('sub_loading')}</span>` : currentHTML}</span>
           <svg class="sub-chevron" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
         </div>
         <div class="sub-lang-dropdown" id="sub-lang-dropdown">${optionsHTML}</div>
@@ -3444,7 +3925,7 @@ function renderSubSettingsPane() {
   if (!pane) return;
 
   if (!isNetfloxSourceActive()) {
-    pane.innerHTML = `<div class="sub-unavailable">Réglages disponibles une fois un sous-titre chargé via le lecteur NETFLOX.</div>`;
+    pane.innerHTML = `<div class="sub-unavailable">${tr('sub_settings_unavailable')}</div>`;
     return;
   }
 
@@ -3453,7 +3934,7 @@ function renderSubSettingsPane() {
   const offsetHTML = `
     <div class="sub-offset-box">
       <div class="sub-offset-head">
-        <span>Décalage temporel</span>
+        <span>${tr('sub_time_offset')}</span>
         <span class="sub-offset-value">${offsetSign}${subtitleStyle.offset.toFixed(1)}s</span>
       </div>
       <div class="sub-offset-buttons">
@@ -3462,47 +3943,60 @@ function renderSubSettingsPane() {
         <button class="sub-offset-btn" onclick="setSubOffset(0.1)">+0.1s</button>
         <button class="sub-offset-btn big" onclick="setSubOffset(1)">+1s</button>
       </div>
-      <button class="sub-offset-reset" onclick="resetSubOffset()">Réinitialiser le décalage</button>
-      <p class="sub-offset-hint">Si les sous-titres apparaissent trop tôt, augmentez le décalage (+). S'ils sont en retard, diminuez-le (−). Ce réglage décale les sous-titres le long de la timeline sans changer la vidéo.</p>
+      <button class="sub-offset-reset" onclick="resetSubOffset()">${tr('sub_reset_offset')}</button>
+      <p class="sub-offset-hint">${tr('sub_offset_hint')}</p>
     </div>`;
+
+  const sizeLabels = preferredLang === 'fr'
+    ? { sm:'Petit', md:'Moyen', lg:'Grand', xl:'Très grand' }
+    : { sm:'Small', md:'Medium', lg:'Large', xl:'Extra large' };
 
   const sizeHTML = `
     <div class="sub-style-group">
-      <div class="sub-style-label">Taille du texte</div>
+      <div class="sub-style-label">${tr('sub_text_size')}</div>
       <div class="sub-swatch-row">
-        ${['sm','md','lg','xl'].map(s => `<div class="sub-swatch ${subtitleStyle.size===s?'active':''}" onclick="setSubSize('${s}')">${{sm:'Petit',md:'Moyen',lg:'Grand',xl:'Très grand'}[s]}</div>`).join('')}
+        ${['sm','md','lg','xl'].map(s => `<div class="sub-swatch ${subtitleStyle.size===s?'active':''}" onclick="setSubSize('${s}')">${sizeLabels[s]}</div>`).join('')}
       </div>
     </div>`;
 
   const colorHTML = `
     <div class="sub-style-group">
-      <div class="sub-style-label">Couleur du texte</div>
+      <div class="sub-style-label">${tr('sub_text_color')}</div>
       <div class="sub-swatch-row">
         ${SUB_COLORS.map(c => `<div class="sub-swatch ${subtitleStyle.color===c?'active':''}" onclick="setSubColor('${c}')"><div class="sub-color-dot" style="background:${c}"></div></div>`).join('')}
       </div>
     </div>`;
 
+  const bgLabels = preferredLang === 'fr'
+    ? [['none','Aucun'],['semi','Semi-transparent'],['opaque','Opaque']]
+    : [['none','None'],['semi','Semi-transparent'],['opaque','Opaque']];
   const bgHTML = `
     <div class="sub-style-group">
-      <div class="sub-style-label">Fond des sous-titres</div>
+      <div class="sub-style-label">${tr('sub_bg')}</div>
       <div class="sub-swatch-row">
-        ${[['none','Aucun'],['semi','Semi-transparent'],['opaque','Opaque']].map(([v,l]) => `<div class="sub-swatch ${subtitleStyle.bg===v?'active':''}" onclick="setSubBg('${v}')">${l}</div>`).join('')}
+        ${bgLabels.map(([v,l]) => `<div class="sub-swatch ${subtitleStyle.bg===v?'active':''}" onclick="setSubBg('${v}')">${l}</div>`).join('')}
       </div>
     </div>`;
 
+  const edgeLabels = preferredLang === 'fr'
+    ? [['none','Aucun'],['shadow','Ombre portée'],['outline','Contour']]
+    : [['none','None'],['shadow','Drop shadow'],['outline','Outline']];
   const edgeHTML = `
     <div class="sub-style-group">
-      <div class="sub-style-label">Contour du texte</div>
+      <div class="sub-style-label">${tr('sub_edge')}</div>
       <div class="sub-swatch-row">
-        ${[['none','Aucun'],['shadow','Ombre portée'],['outline','Contour']].map(([v,l]) => `<div class="sub-swatch ${subtitleStyle.edge===v?'active':''}" onclick="setSubEdge('${v}')">${l}</div>`).join('')}
+        ${edgeLabels.map(([v,l]) => `<div class="sub-swatch ${subtitleStyle.edge===v?'active':''}" onclick="setSubEdge('${v}')">${l}</div>`).join('')}
       </div>
     </div>`;
 
+  const posLabels = preferredLang === 'fr'
+    ? [[5,'Basse'],[9,'Moyenne'],[16,'Haute'],[24,'Très haute']]
+    : [[5,'Low'],[9,'Medium'],[16,'High'],[24,'Very high']];
   const posHTML = `
     <div class="sub-style-group">
-      <div class="sub-style-label">Position verticale</div>
+      <div class="sub-style-label">${tr('sub_position')}</div>
       <div class="sub-swatch-row">
-        ${[[5,'Basse'],[9,'Moyenne'],[16,'Haute'],[24,'Très haute']].map(([v,l]) => `<div class="sub-swatch ${subtitleStyle.position===v?'active':''}" onclick="setSubPosition(${v})">${l}</div>`).join('')}
+        ${posLabels.map(([v,l]) => `<div class="sub-swatch ${subtitleStyle.position===v?'active':''}" onclick="setSubPosition(${v})">${l}</div>`).join('')}
       </div>
     </div>`;
 
@@ -3511,11 +4005,11 @@ function renderSubSettingsPane() {
       <span style="font-family:'Outfit',sans-serif;font-weight:600;border-radius:6px;
         font-size:${SUB_SIZES[subtitleStyle.size]};color:${subtitleStyle.color};
         background:${SUB_BGS[subtitleStyle.bg]};padding:3px 12px;text-shadow:${SUB_EDGES[subtitleStyle.edge]};">
-        Aperçu des sous-titres
+        ${tr('sub_preview')}
       </span>
     </div>`;
 
-  pane.innerHTML = `<div class="sub-section-title" style="padding-top:14px;">Timing</div>${offsetHTML}<div class="sub-section-title">Apparence</div>${previewHTML}${sizeHTML}${colorHTML}${bgHTML}${edgeHTML}${posHTML}`;
+  pane.innerHTML = `<div class="sub-section-title" style="padding-top:14px;">${tr('sub_timing')}</div>${offsetHTML}<div class="sub-section-title">${tr('sub_appearance')}</div>${previewHTML}${sizeHTML}${colorHTML}${bgHTML}${edgeHTML}${posHTML}`;
 }
 
 
@@ -3566,7 +4060,88 @@ function hideSpinner() { pw.classList.remove('buffering'); }
 function showError(msg) { document.getElementById('error-text').textContent=msg; document.getElementById('error-msg').style.display='flex'; }
 function hideError() { document.getElementById('error-msg').style.display='none'; }
 
+// ── POPUP AVERTISSEMENT "AUTRES LECTEURS" (pubs) ──
+let abProceedCallback = null;
+let abPopupAlreadyShown = false; // reste à false tant que la page n'est pas rechargée
+
+function openAdblockPopup(onProceed) {
+  if (abPopupAlreadyShown) { onProceed(); return; }
+  abProceedCallback = onProceed;
+  document.getElementById('ab-overlay').classList.add('open');
+}
+
+function confirmAdblockAndProceed() {
+  abPopupAlreadyShown = true;
+  document.getElementById('ab-overlay').classList.remove('open');
+  if (typeof abProceedCallback === 'function') {
+    abProceedCallback();
+    abProceedCallback = null;
+  }
+}
+
+// ── POPUP "AUCUN LECTEUR DU TOUT DISPONIBLE" (ni NETFLOX ni Autres, dans aucune langue) ──
+function showNoPlayerPopup() {
+  const lang = preferredLang;
+  const title = lang === 'fr' ? 'Aucun lecteur disponible' : 'No player available';
+  const text = lang === 'fr'
+    ? "Aucun lecteur (NETFLOX ou Autres) n'est disponible pour ce contenu, dans aucune langue. Réessayez plus tard ou avec un autre titre."
+    : "No player (NETFLOX or Other) is available for this content, in any language. Please try again later or with a different title.";
+  document.getElementById('nolang-title').textContent = title;
+  document.getElementById('nolang-text').textContent = text;
+  nolangProceedCallback = null;
+  document.getElementById('nolang-overlay').classList.add('open');
+}
+
+// ── POPUP "AUCUNE SOURCE DANS LA LANGUE SÉLECTIONNÉE" (bascule automatique) ──
+// Affiché quand la langue choisie n'a aucun lecteur du tout, mais que l'autre
+// langue en a : on bascule automatiquement dessus, et on prévient l'utilisateur.
+function showNoSourceInLangPopup(fromLang, toLang) {
+  const fromLabel = fromLang === 'fr' ? 'français' : 'anglais';
+  const toLabelFr = toLang === 'fr' ? 'français' : 'anglais';
+  const toLabelEn = toLang === 'fr' ? 'French' : 'English';
+  const text = fromLang === 'fr'
+    ? `Aucune source n'est disponible en français pour ce contenu. Vous allez être basculé en ${toLabelFr}.`
+    : `No source is available in English for this content. You will be switched to ${toLabelEn}.`;
+  const title = fromLang === 'fr' ? 'Langue non disponible' : 'Language not available';
+  document.getElementById('nolang-title').textContent = title;
+  document.getElementById('nolang-text').textContent = text;
+  nolangProceedCallback = null;
+  document.getElementById('nolang-overlay').classList.add('open');
+}
+
+// ── POPUP "AUCUN LECTEUR NETFLOX DANS LA LANGUE CHOISIE" ──
+// (le cas "aucun lecteur du tout" est géré en amont par une bascule de langue
+// automatique et silencieuse, voir plus haut dans le chargement des sources)
+let nolangProceedCallback = null;
+
+function showNoNetfloxPopup(lang, onClose) {
+  const text = lang === 'fr'
+    ? "Aucun lecteur NETFLOX n'est disponible en français pour ce contenu. Vous allez être basculé sur l'onglet « Autres lecteurs »."
+    : "No NETFLOX player is available in English for this content. You will be switched to the \"Other players\" tab.";
+  const title = lang === 'fr' ? 'Aucun lecteur NETFLOX en français' : 'No NETFLOX player in English';
+  document.getElementById('nolang-title').textContent = title;
+  document.getElementById('nolang-text').textContent = text;
+  nolangProceedCallback = (typeof onClose === 'function') ? onClose : null;
+  document.getElementById('nolang-overlay').classList.add('open');
+}
+
+function closeNoLangPopup() {
+  document.getElementById('nolang-overlay').classList.remove('open');
+  if (typeof nolangProceedCallback === 'function') {
+    const cb = nolangProceedCallback;
+    nolangProceedCallback = null;
+    cb();
+  }
+}
+
+// ── TOGGLE LANGUE (écran d'accueil) ──
+document.querySelectorAll('#load-lang-toggle .lang-pref-btn').forEach(btn => {
+  btn.classList.toggle('active', btn.dataset.lang === preferredLang);
+  btn.onclick = () => setPreferredLang(btn.dataset.lang);
+});
+
 // init
+applyStaticI18N();
 updateVolUI();
 </script>
 </body>
