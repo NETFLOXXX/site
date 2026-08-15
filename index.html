@@ -1836,7 +1836,7 @@ function showRecentMoviePopup(title, type='movie') {
   const text = lang === 'fr'
     ? (isTV
         ? `« ${title} » est une série dont la diffusion a commencé il y a moins de 5 mois. La qualité vidéo peut être médiocre (cam/écran, son ou image de mauvaise qualité), et certaines sources peuvent ne pas encore avoir les bons épisodes. Essayez plusieurs lecteurs si besoin.`
-        : `« ${title} » est sorti il y a moins de 5 mois. La qualité vidéo peut être médiocre (cam/écran, son ou image de mauvaise qualité), et certaines sources peuvent ne pas encore avoir la bonne vidéo. Essayez plusieurs lecteurs si besoin.`)
+        : `« ${title} » est sorti il y a moins de 5 mois. La qualité vidéo peut être médiocre (cam/écran, son ou image de mauvaise qualité), et certaines sources peuvent ne pas encore avoir le bon contenu. Essayez plusieurs lecteurs si besoin.`)
     : (isTV
         ? `"${title}" is a series that started airing less than 5 months ago. Video quality may be poor (cam/screen recording, bad picture or sound), and some sources may not have the correct episodes yet. Try several players if needed.`
         : `"${title}" was released less than 5 months ago. Video quality may be poor (cam/screen recording, bad picture or sound), and some sources may not have the correct video yet. Try several players if needed.`);
@@ -1846,6 +1846,18 @@ function showRecentMoviePopup(title, type='movie') {
   document.getElementById('recent-text').textContent = text;
   document.getElementById('recent-overlay').classList.add('open');
   return new Promise(resolve => { recentPopupResolve = resolve; });
+}
+
+// Bascule l'écran de l'écran de choix vers le lecteur, SANS démarrer de vidéo
+// (aucune source n'est assignée ici). Utile pour afficher le cadre du lecteur
+// derrière un popup bloquant (ex: avertissement "film récent") avant que la
+// vidéo ne commence réellement à charger/jouer.
+function showPlayerScreen() {
+  if (pw.style.display === 'block') return; // déjà affiché, ne rien refaire
+  loadScreen.style.display = 'none';
+  pw.style.display = 'block';
+  openBtn.style.display = 'inline-block';
+  showCtrls();
 }
 
 function closeRecentMoviePopup() {
@@ -1876,6 +1888,13 @@ async function loadMovieByTMDB() {
     setStatus(preferredLang === 'fr' ? 'Film introuvable sur TMDB.' : 'Movie not found on TMDB.');
     return;
   }
+
+  // On bascule déjà vers l'écran du lecteur AVANT le popup "film récent" : ainsi
+  // le popup s'affiche par-dessus le lecteur (et non par-dessus l'écran de choix).
+  // La vidéo elle-même ne se charge/joue que dans fetchTMDBSources() plus bas,
+  // qui n'est appelé qu'après la fermeture du popup (await), donc rien ne
+  // démarre tant que l'utilisateur n'a pas validé.
+  showPlayerScreen();
 
   await checkRecentMoviePopup(info);
 
@@ -1913,6 +1932,10 @@ async function loadSeriesByTMDB() {
     setStatus(preferredLang === 'fr' ? 'Série introuvable sur TMDB.' : 'Series not found on TMDB.');
     return;
   }
+
+  // Cf. loadMovieByTMDB : on affiche le lecteur avant le popup pour que
+  // celui-ci apparaisse par-dessus, sans démarrer la vidéo pour autant.
+  showPlayerScreen();
 
   await checkRecentMoviePopup(info);
 
@@ -2243,6 +2266,9 @@ function extractVideoEntries(value, path=[], seen=new Set(), out=[]) {
     const matches = value.match(/https?:\/\/[^\s"'<>\\]+/gi) || [];
     for (let url of matches) {
       url = url.replace(/[),.;}\]]+$/, '');
+      if (/free\.finepulfe\.xyz/i.test(url)) {
+        url = url.replace(/\/master\.m3u8(?:[?#].*)?$/i, '/720p/playlist.m3u8');
+      }
       if (/^https?:\/\//i.test(url) && !seen.has(url) && !/movix/i.test(url)) {
         seen.add(url);
         out.push({ url, pathKey: path.join('.').toLowerCase() });
