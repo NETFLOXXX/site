@@ -1,55 +1,288 @@
+
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-    <meta charset="UTF-8">
-    <title>Lecteur HLS Custom Anti-403</title>
-    <!-- Chargement de la librairie HLS.js -->
-    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lecteur M3U8 / HLS</title>
+<style>
+  :root {
+    --bg: #0f1115;
+    --panel: #171a21;
+    --accent: #5b8cff;
+    --accent-hover: #4a76e6;
+    --text: #e7e9ee;
+    --muted: #8b93a7;
+    --danger: #ff5b5b;
+    --ok: #4ade80;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
+    padding: 24px 16px 60px;
+  }
+  h1 {
+    font-size: 1.4rem;
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+  p.subtitle {
+    color: var(--muted);
+    font-size: 0.85rem;
+    margin-top: 0;
+    margin-bottom: 24px;
+  }
+  .container {
+    width: 100%;
+    max-width: 880px;
+    background: var(--panel);
+    border-radius: 14px;
+    padding: 20px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+  }
+  .input-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+  input[type="text"] {
+    flex: 1;
+    padding: 12px 14px;
+    border-radius: 8px;
+    border: 1px solid #2a2e38;
+    background: #10131a;
+    color: var(--text);
+    font-size: 0.95rem;
+    outline: none;
+  }
+  input[type="text"]:focus {
+    border-color: var(--accent);
+  }
+  button {
+    padding: 12px 18px;
+    border-radius: 8px;
+    border: none;
+    background: var(--accent);
+    color: white;
+    font-weight: 600;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: background 0.15s ease;
+    white-space: nowrap;
+  }
+  button:hover { background: var(--accent-hover); }
+  button:disabled { background: #333; cursor: not-allowed; }
+
+  .video-wrap {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16/9;
+    background: black;
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 14px;
+  }
+  video {
+    width: 100%;
+    height: 100%;
+    display: block;
+    background: black;
+  }
+
+  .status {
+    font-size: 0.82rem;
+    padding: 8px 12px;
+    border-radius: 6px;
+    margin-bottom: 12px;
+    display: none;
+  }
+  .status.show { display: block; }
+  .status.info { background: rgba(91,140,255,0.12); color: var(--accent); }
+  .status.error { background: rgba(255,91,91,0.12); color: var(--danger); }
+  .status.ok { background: rgba(74,222,128,0.12); color: var(--ok); }
+
+  details {
+    background: #10131a;
+    border-radius: 8px;
+    padding: 10px 14px;
+  }
+  summary {
+    cursor: pointer;
+    color: var(--muted);
+    font-size: 0.85rem;
+    user-select: none;
+  }
+  #log {
+    margin-top: 10px;
+    font-family: 'Consolas', monospace;
+    font-size: 0.75rem;
+    color: var(--muted);
+    max-height: 220px;
+    overflow-y: auto;
+    white-space: pre-wrap;
+    line-height: 1.5;
+  }
+  .log-line.seg { color: var(--ok); }
+  .log-line.err { color: var(--danger); }
+  .log-line.lvl { color: var(--accent); }
+
+  footer {
+    color: var(--muted);
+    font-size: 0.75rem;
+    margin-top: 24px;
+    text-align: center;
+    max-width: 600px;
+  }
+</style>
 </head>
 <body>
 
-    <video id="video" controls style="width: 100%; max-width: 800px;"></video>
+<h1>🎬 Lecteur M3U8 / HLS</h1>
+<p class="subtitle">Colle un lien .m3u8 et lis le flux directement dans le navigateur (aucun téléchargement)</p>
 
-    <script>
-        var video = document.getElementById('video');
-        
-        // Ton lien qui te donne un 403
-        var streamUrl = 'https://free.finepulfe.xyz/movies/11-vgupx/master.m3u8'; 
-        
-        // Proxy public pour contourner le CORS (corsproxy.io ou allorigins)
-        var proxyUrl = 'https://corsproxy.io/?';
+<div class="container">
+  <div class="input-row">
+    <input type="text" id="urlInput" placeholder="https://exemple.com/playlist.m3u8" />
+    <button id="loadBtn">Lire</button>
+  </div>
 
-        if (Hls.isSupported()) {
-            var hls = new Hls({
-                // Magie noire ici : On intercepte toutes les requêtes réseau du lecteur
-                xhrSetup: function(xhr, url) {
-                    // On redirige la requête vers le proxy
-                    xhr.open('GET', proxyUrl + encodeURIComponent(url), true);
-                }
-            });
+  <div id="status" class="status"></div>
 
-            hls.loadSource(streamUrl);
-            hls.attachMedia(video);
-            
-            hls.on(Hls.Events.MANIFEST_PARSED, function() {
-                video.play();
-            });
-            
-            // Gestion des erreurs
-            hls.on(Hls.Events.ERROR, function (event, data) {
-                if (data.fatal) {
-                    console.error("Erreur fatale HLS:", data);
-                }
-            });
-            
-        } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-            // Fallback pour Safari (qui lit le HLS nativement mais ne supporte pas xhrSetup facilement)
-            video.src = proxyUrl + encodeURIComponent(streamUrl);
-            video.addEventListener('loadedmetadata', function() {
-                video.play();
-            });
+  <div class="video-wrap">
+    <video id="video" controls playsinline></video>
+  </div>
+
+  <details>
+    <summary>Journal des segments / événements</summary>
+    <div id="log"></div>
+  </details>
+</div>
+
+<footer>
+  Fonctionne avec des flux HLS publics ou légitimes (ex. tests, streaming autorisé).
+  La lecture se fait entièrement côté navigateur via <code>hls.js</code>, sans enregistrer les segments sur disque.
+</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/hls.js/1.5.13/hls.min.js"></script>
+<script>
+  const video = document.getElementById('video');
+  const urlInput = document.getElementById('urlInput');
+  const loadBtn = document.getElementById('loadBtn');
+  const statusEl = document.getElementById('status');
+  const logEl = document.getElementById('log');
+
+  let hls = null;
+
+  function setStatus(msg, type) {
+    statusEl.textContent = msg;
+    statusEl.className = 'status show ' + type;
+  }
+
+  function log(msg, cls) {
+    const line = document.createElement('div');
+    line.className = 'log-line ' + (cls || '');
+    const time = new Date().toLocaleTimeString();
+    line.textContent = `[${time}] ${msg}`;
+    logEl.appendChild(line);
+    logEl.scrollTop = logEl.scrollHeight;
+  }
+
+  function loadStream(url) {
+    if (!url) {
+      setStatus('Merci de saisir une URL de flux .m3u8', 'error');
+      return;
+    }
+
+    logEl.innerHTML = '';
+    setStatus('Chargement du flux…', 'info');
+
+    // Nettoyage d'une éventuelle instance précédente
+    if (hls) {
+      hls.destroy();
+      hls = null;
+    }
+
+    if (Hls.isSupported()) {
+      hls = new Hls({
+        // Lecture en direct/mémoire uniquement, pas de persistance disque
+        enableWorker: true,
+      });
+
+      hls.loadSource(url);
+      hls.attachMedia(video);
+
+      hls.on(Hls.Events.MANIFEST_PARSED, (event, data) => {
+        setStatus('Manifeste chargé — ' + data.levels.length + ' qualité(s) disponible(s)', 'ok');
+        log('Manifeste M3U8 analysé (' + data.levels.length + ' niveaux)', 'lvl');
+        video.play().catch(() => {
+          log('Lecture auto bloquée par le navigateur — clique sur ▶️', 'err');
+        });
+      });
+
+      hls.on(Hls.Events.LEVEL_SWITCHED, (event, data) => {
+        const level = hls.levels[data.level];
+        if (level) {
+          log(`Changement de qualité → ${level.height}p (${Math.round(level.bitrate/1000)} kbps)`, 'lvl');
         }
-    </script>
+      });
+
+      hls.on(Hls.Events.FRAG_LOADED, (event, data) => {
+        const frag = data.frag;
+        log(`Segment chargé: ${frag.sn} (${frag.duration.toFixed(2)}s) — ${frag.url.split('/').pop()}`, 'seg');
+      });
+
+      hls.on(Hls.Events.ERROR, (event, data) => {
+        if (data.fatal) {
+          switch (data.type) {
+            case Hls.ErrorTypes.NETWORK_ERROR:
+              setStatus('Erreur réseau : impossible de charger le flux (CORS, lien invalide ou hors ligne)', 'error');
+              log('Erreur réseau fatale : ' + data.details, 'err');
+              break;
+            case Hls.ErrorTypes.MEDIA_ERROR:
+              setStatus('Erreur média — tentative de récupération…', 'error');
+              log('Erreur média fatale : ' + data.details, 'err');
+              hls.recoverMediaError();
+              break;
+            default:
+              setStatus('Erreur fatale : ' + data.details, 'error');
+              log('Erreur fatale : ' + data.details, 'err');
+              hls.destroy();
+              break;
+          }
+        } else {
+          log('Avertissement : ' + data.details, 'err');
+        }
+      });
+
+    } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+      // Safari / iOS : support natif du HLS
+      video.src = url;
+      video.addEventListener('loadedmetadata', () => {
+        setStatus('Flux chargé (lecture native HLS)', 'ok');
+        video.play().catch(() => {
+          log('Lecture auto bloquée — clique sur ▶️', 'err');
+        });
+      });
+      video.addEventListener('error', () => {
+        setStatus('Erreur lors du chargement du flux natif', 'error');
+      });
+    } else {
+      setStatus('Ton navigateur ne supporte pas la lecture HLS', 'error');
+    }
+  }
+
+  loadBtn.addEventListener('click', () => loadStream(urlInput.value.trim()));
+  urlInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') loadStream(urlInput.value.trim());
+  });
+</script>
 
 </body>
 </html>
