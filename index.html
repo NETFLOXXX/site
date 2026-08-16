@@ -1,288 +1,235 @@
-
+```html
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Lecteur M3U8 / HLS</title>
-<style>
-  :root {
-    --bg: #0f1115;
-    --panel: #171a21;
-    --accent: #5b8cff;
-    --accent-hover: #4a76e6;
-    --text: #e7e9ee;
-    --muted: #8b93a7;
-    --danger: #ff5b5b;
-    --ok: #4ade80;
-  }
-  * { box-sizing: border-box; }
-  body {
-    margin: 0;
-    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    min-height: 100vh;
-    padding: 24px 16px 60px;
-  }
-  h1 {
-    font-size: 1.4rem;
-    font-weight: 600;
-    margin-bottom: 4px;
-  }
-  p.subtitle {
-    color: var(--muted);
-    font-size: 0.85rem;
-    margin-top: 0;
-    margin-bottom: 24px;
-  }
-  .container {
-    width: 100%;
-    max-width: 880px;
-    background: var(--panel);
-    border-radius: 14px;
-    padding: 20px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.35);
-  }
-  .input-row {
-    display: flex;
-    gap: 8px;
-    margin-bottom: 14px;
-  }
-  input[type="text"] {
-    flex: 1;
-    padding: 12px 14px;
-    border-radius: 8px;
-    border: 1px solid #2a2e38;
-    background: #10131a;
-    color: var(--text);
-    font-size: 0.95rem;
-    outline: none;
-  }
-  input[type="text"]:focus {
-    border-color: var(--accent);
-  }
-  button {
-    padding: 12px 18px;
-    border-radius: 8px;
-    border: none;
-    background: var(--accent);
-    color: white;
-    font-weight: 600;
-    cursor: pointer;
-    font-size: 0.9rem;
-    transition: background 0.15s ease;
-    white-space: nowrap;
-  }
-  button:hover { background: var(--accent-hover); }
-  button:disabled { background: #333; cursor: not-allowed; }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lecteur vidéo HLS</title>
 
-  .video-wrap {
-    position: relative;
-    width: 100%;
-    aspect-ratio: 16/9;
-    background: black;
-    border-radius: 10px;
-    overflow: hidden;
-    margin-bottom: 14px;
-  }
-  video {
-    width: 100%;
-    height: 100%;
-    display: block;
-    background: black;
-  }
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 
-  .status {
-    font-size: 0.82rem;
-    padding: 8px 12px;
-    border-radius: 6px;
-    margin-bottom: 12px;
-    display: none;
-  }
-  .status.show { display: block; }
-  .status.info { background: rgba(91,140,255,0.12); color: var(--accent); }
-  .status.error { background: rgba(255,91,91,0.12); color: var(--danger); }
-  .status.ok { background: rgba(74,222,128,0.12); color: var(--ok); }
+  <style>
+    * {
+      box-sizing: border-box;
+    }
 
-  details {
-    background: #10131a;
-    border-radius: 8px;
-    padding: 10px 14px;
-  }
-  summary {
-    cursor: pointer;
-    color: var(--muted);
-    font-size: 0.85rem;
-    user-select: none;
-  }
-  #log {
-    margin-top: 10px;
-    font-family: 'Consolas', monospace;
-    font-size: 0.75rem;
-    color: var(--muted);
-    max-height: 220px;
-    overflow-y: auto;
-    white-space: pre-wrap;
-    line-height: 1.5;
-  }
-  .log-line.seg { color: var(--ok); }
-  .log-line.err { color: var(--danger); }
-  .log-line.lvl { color: var(--accent); }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #111;
+      font-family: Arial, sans-serif;
+    }
 
-  footer {
-    color: var(--muted);
-    font-size: 0.75rem;
-    margin-top: 24px;
-    text-align: center;
-    max-width: 600px;
-  }
-</style>
+    .player {
+      width: min(100%, 900px);
+      background: #000;
+      overflow: hidden;
+    }
+
+    video {
+      display: block;
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      background: #000;
+    }
+
+    .controls {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px;
+      background: #222;
+    }
+
+    button {
+      border: 0;
+      border-radius: 5px;
+      padding: 8px 12px;
+      background: #444;
+      color: white;
+      cursor: pointer;
+      font-size: 15px;
+    }
+
+    button:hover {
+      background: #555;
+    }
+
+    input[type="range"] {
+      cursor: pointer;
+    }
+
+    #progress {
+      flex: 1;
+    }
+
+    #volume {
+      width: 100px;
+    }
+
+    #time {
+      color: white;
+      font-size: 13px;
+      white-space: nowrap;
+    }
+  </style>
 </head>
+
 <body>
 
-<h1>🎬 Lecteur M3U8 / HLS</h1>
-<p class="subtitle">Colle un lien .m3u8 et lis le flux directement dans le navigateur (aucun téléchargement)</p>
+  <div class="player">
+    <video id="video" playsinline></video>
 
-<div class="container">
-  <div class="input-row">
-    <input type="text" id="urlInput" placeholder="https://exemple.com/playlist.m3u8" />
-    <button id="loadBtn">Lire</button>
+    <div class="controls">
+      <button id="playPause">▶</button>
+
+      <input
+        id="progress"
+        type="range"
+        min="0"
+        max="100"
+        value="0"
+      >
+
+      <span id="time">00:00 / 00:00</span>
+
+      <button id="mute">🔊</button>
+
+      <input
+        id="volume"
+        type="range"
+        min="0"
+        max="1"
+        step="0.01"
+        value="1"
+      >
+
+      <button id="fullscreen">⛶</button>
+    </div>
   </div>
 
-  <div id="status" class="status"></div>
+  <script>
+    const video = document.getElementById("video");
+    const playPause = document.getElementById("playPause");
+    const progress = document.getElementById("progress");
+    const volume = document.getElementById("volume");
+    const mute = document.getElementById("mute");
+    const fullscreen = document.getElementById("fullscreen");
+    const time = document.getElementById("time");
 
-  <div class="video-wrap">
-    <video id="video" controls playsinline></video>
-  </div>
+    const videoURL =
+      "https://free.finepulfe.xyz/movies/11-vgupx/720p/playlist.m3u8";
 
-  <details>
-    <summary>Journal des segments / événements</summary>
-    <div id="log"></div>
-  </details>
-</div>
-
-<footer>
-  Fonctionne avec des flux HLS publics ou légitimes (ex. tests, streaming autorisé).
-  La lecture se fait entièrement côté navigateur via <code>hls.js</code>, sans enregistrer les segments sur disque.
-</footer>
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/hls.js/1.5.13/hls.min.js"></script>
-<script>
-  const video = document.getElementById('video');
-  const urlInput = document.getElementById('urlInput');
-  const loadBtn = document.getElementById('loadBtn');
-  const statusEl = document.getElementById('status');
-  const logEl = document.getElementById('log');
-
-  let hls = null;
-
-  function setStatus(msg, type) {
-    statusEl.textContent = msg;
-    statusEl.className = 'status show ' + type;
-  }
-
-  function log(msg, cls) {
-    const line = document.createElement('div');
-    line.className = 'log-line ' + (cls || '');
-    const time = new Date().toLocaleTimeString();
-    line.textContent = `[${time}] ${msg}`;
-    logEl.appendChild(line);
-    logEl.scrollTop = logEl.scrollHeight;
-  }
-
-  function loadStream(url) {
-    if (!url) {
-      setStatus('Merci de saisir une URL de flux .m3u8', 'error');
-      return;
-    }
-
-    logEl.innerHTML = '';
-    setStatus('Chargement du flux…', 'info');
-
-    // Nettoyage d'une éventuelle instance précédente
-    if (hls) {
-      hls.destroy();
-      hls = null;
-    }
-
+    // Chargement du flux HLS
     if (Hls.isSupported()) {
-      hls = new Hls({
-        // Lecture en direct/mémoire uniquement, pas de persistance disque
-        enableWorker: true,
-      });
+      const hls = new Hls();
 
-      hls.loadSource(url);
+      hls.loadSource(videoURL);
       hls.attachMedia(video);
 
-      hls.on(Hls.Events.MANIFEST_PARSED, (event, data) => {
-        setStatus('Manifeste chargé — ' + data.levels.length + ' qualité(s) disponible(s)', 'ok');
-        log('Manifeste M3U8 analysé (' + data.levels.length + ' niveaux)', 'lvl');
-        video.play().catch(() => {
-          log('Lecture auto bloquée par le navigateur — clique sur ▶️', 'err');
-        });
-      });
-
-      hls.on(Hls.Events.LEVEL_SWITCHED, (event, data) => {
-        const level = hls.levels[data.level];
-        if (level) {
-          log(`Changement de qualité → ${level.height}p (${Math.round(level.bitrate/1000)} kbps)`, 'lvl');
-        }
-      });
-
-      hls.on(Hls.Events.FRAG_LOADED, (event, data) => {
-        const frag = data.frag;
-        log(`Segment chargé: ${frag.sn} (${frag.duration.toFixed(2)}s) — ${frag.url.split('/').pop()}`, 'seg');
+      hls.on(Hls.Events.MANIFEST_PARSED, () => {
+        console.log("Flux HLS chargé.");
       });
 
       hls.on(Hls.Events.ERROR, (event, data) => {
-        if (data.fatal) {
-          switch (data.type) {
-            case Hls.ErrorTypes.NETWORK_ERROR:
-              setStatus('Erreur réseau : impossible de charger le flux (CORS, lien invalide ou hors ligne)', 'error');
-              log('Erreur réseau fatale : ' + data.details, 'err');
-              break;
-            case Hls.ErrorTypes.MEDIA_ERROR:
-              setStatus('Erreur média — tentative de récupération…', 'error');
-              log('Erreur média fatale : ' + data.details, 'err');
-              hls.recoverMediaError();
-              break;
-            default:
-              setStatus('Erreur fatale : ' + data.details, 'error');
-              log('Erreur fatale : ' + data.details, 'err');
-              hls.destroy();
-              break;
-          }
-        } else {
-          log('Avertissement : ' + data.details, 'err');
-        }
+        console.error("Erreur HLS :", data);
       });
 
-    } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-      // Safari / iOS : support natif du HLS
-      video.src = url;
-      video.addEventListener('loadedmetadata', () => {
-        setStatus('Flux chargé (lecture native HLS)', 'ok');
-        video.play().catch(() => {
-          log('Lecture auto bloquée — clique sur ▶️', 'err');
-        });
-      });
-      video.addEventListener('error', () => {
-        setStatus('Erreur lors du chargement du flux natif', 'error');
-      });
+    } else if (video.canPlayType("application/vnd.apple.mpegurl")) {
+      // Safari / iOS : HLS natif
+      video.src = videoURL;
+
     } else {
-      setStatus('Ton navigateur ne supporte pas la lecture HLS', 'error');
+      alert("Votre navigateur ne supporte pas la lecture HLS.");
     }
-  }
 
-  loadBtn.addEventListener('click', () => loadStream(urlInput.value.trim()));
-  urlInput.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') loadStream(urlInput.value.trim());
-  });
-</script>
+    // Play / Pause
+    playPause.addEventListener("click", () => {
+      if (video.paused) {
+        video.play();
+      } else {
+        video.pause();
+      }
+    });
+
+    video.addEventListener("play", () => {
+      playPause.textContent = "❚❚";
+    });
+
+    video.addEventListener("pause", () => {
+      playPause.textContent = "▶";
+    });
+
+    // Barre de progression
+    video.addEventListener("timeupdate", () => {
+      if (video.duration) {
+        progress.value =
+          (video.currentTime / video.duration) * 100;
+      }
+
+      time.textContent =
+        formatTime(video.currentTime) +
+        " / " +
+        formatTime(video.duration);
+    });
+
+    progress.addEventListener("input", () => {
+      if (video.duration) {
+        video.currentTime =
+          (progress.value / 100) * video.duration;
+      }
+    });
+
+    // Volume
+    volume.addEventListener("input", () => {
+      video.volume = volume.value;
+
+      if (video.volume === 0) {
+        mute.textContent = "🔇";
+      } else {
+        mute.textContent = "🔊";
+      }
+    });
+
+    // Mute
+    mute.addEventListener("click", () => {
+      video.muted = !video.muted;
+
+      mute.textContent =
+        video.muted ? "🔇" : "🔊";
+    });
+
+    // Plein écran
+    fullscreen.addEventListener("click", () => {
+      const player = document.querySelector(".player");
+
+      if (document.fullscreenElement) {
+        document.exitFullscreen();
+      } else {
+        player.requestFullscreen();
+      }
+    });
+
+    // Format mm:ss
+    function formatTime(seconds) {
+      if (!isFinite(seconds)) {
+        return "00:00";
+      }
+
+      const minutes = Math.floor(seconds / 60);
+      const secs = Math.floor(seconds % 60);
+
+      return (
+        String(minutes).padStart(2, "0") +
+        ":" +
+        String(secs).padStart(2, "0")
+      );
+    }
+  </script>
 
 </body>
 </html>
+```
