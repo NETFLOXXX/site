@@ -5,15 +5,18 @@ from datetime import datetime, timezone
 
 MOVIX_URL = "https://t.me/s/movix_site"
 STREAMFLIX_URL = "https://t.me/s/streamflixoff"
+KWEFLIX_CONFIG_URL = "https://kweflix.com/config.js?v=4"
 
 MOVIX_PATTERN = r'(https?://[^\s"\'<]*movix[^\s"\'<]*|\bmovix\.[a-z]{2,10}\b)'
 GENERIC_PATTERN = r'(https?://[^\s"\'<]+|\b[a-z0-9-]+\.[a-z]{2,10}\b)'
+
 
 def normalize_https(url):
     url = url.rstrip('/')
     if not url.startswith("http"):
         return "https://" + url
     return url.replace("http://", "https://")
+
 
 def get_movix_url():
     try:
@@ -27,6 +30,7 @@ def get_movix_url():
     except Exception as e:
         print(f"Erreur Movix: {e}")
     return None
+
 
 def get_streamflix_bio_url():
     try:
@@ -42,15 +46,49 @@ def get_streamflix_bio_url():
         print(f"Erreur Streamflix: {e}")
     return None
 
+
+def get_kweflix_url():
+    """
+    Kweflix affiche son domaine actif via un fichier de config JS
+    (config.js), chargé dynamiquement en JS sur la page d'accueil.
+    On va donc chercher directement dedans plutôt que de parser le HTML.
+    """
+    try:
+        resp = requests.get(KWEFLIX_CONFIG_URL, headers={"User-Agent": "Mozilla/5.0"}, timeout=10)
+        resp.raise_for_status()
+        text = resp.text
+
+        # Vérifie le statut du site (online / down)
+        status_match = re.search(r"STATUS\s*:\s*'([^']+)'", text)
+        status = status_match.group(1) if status_match else None
+        if status and status.lower() != "online":
+            print(f"Kweflix: statut = {status} (site hors ligne)")
+            return None
+
+        # Priorité à SITE_URL, sinon on retombe sur DOMAIN
+        site_url_match = re.search(r"SITE_URL\s*:\s*'([^']+)'", text)
+        if site_url_match:
+            return normalize_https(site_url_match.group(1))
+
+        domain_match = re.search(r"DOMAIN\s*:\s*'([^']+)'", text)
+        if domain_match:
+            return normalize_https(domain_match.group(1))
+
+    except Exception as e:
+        print(f"Erreur Kweflix: {e}")
+    return None
+
+
 def main():
     data = {
         "movix_url": get_movix_url(),
         "streamflix_url": get_streamflix_bio_url(),
+        "kweflix_url": get_kweflix_url(),
         "updated_at": datetime.now(timezone.utc).isoformat()
     }
     with open("latest.json", "w", encoding="utf-8") as f:
         json.dump(data, f, indent=2, ensure_ascii=False)
 
+
 if __name__ == "__main__":
     main()
-    
