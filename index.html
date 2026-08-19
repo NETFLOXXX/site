@@ -1423,7 +1423,7 @@ const flashT = {};
 function handleCtrlClick(btn, fn) { fn(); }
 
 // ── TMDB / CLOUDFLARE SOURCES ──
-const API_BASE = 'https://netfloxxx.blague-drole-67.workers.dev';
+const API_BASE = 'https://netfloxxx.code-exe-67.workers.dev';
 const TMDB_KEY = '9bb76e7829aacc0197000636ecf535b1';
 const TMDB_BASE = 'https://api.themoviedb.org/3';
 const TMDB_IMG = 'https://image.tmdb.org/t/p/w154';
@@ -1974,8 +1974,8 @@ function showEpisodeFields(show) {
 
 async function fetchTMDBSources(id, type, season, episode, allowSeriesFallback=false) {
   const endpoint = type === 'tv'
-    ? `${API_BASE}/api/tv/${encodeURIComponent(id)}/${encodeURIComponent(season)}/${encodeURIComponent(episode)}`
-    : `${API_BASE}/api/movies/${encodeURIComponent(id)}`;
+    ? `${API_BASE}/?id=${encodeURIComponent(id)}&type=tv&season=${encodeURIComponent(season)}&episode=${encodeURIComponent(episode)}`
+    : `${API_BASE}/?id=${encodeURIComponent(id)}&type=movie`;
 
   setStatus(preferredLang === 'fr' ? 'Recherche des sources…' : 'Searching for sources…');
   showEpisodeFields(true);
@@ -2077,21 +2077,10 @@ async function fetchTMDBSources(id, type, season, episode, allowSeriesFallback=f
       });
     }
 
-    // Certains flux m3u8 (ex: free.finepulfe.xyz) embarquent plusieurs pistes audio
-    // (FR + EN) dans un seul flux, la piste FR étant sélectionnée par défaut.
-    // On duplique ces sources direct FR dans l'onglet Anglais : au chargement, la
-    // piste audio anglaise est automatiquement sélectionnée via hls.audioTrack.
-    const dualAudioExtras = [];
-    processed.forEach(s => {
-      if (s.isDirect && s.lang === 'fr' && isDualAudioSource(s.url)) {
-        dualAudioExtras.push({ ...s, lang: 'en', audioLangOverride: 'en' });
-      }
-    });
-    processed.push(...dualAudioExtras);
-
     // Nouvelle source directe VO (1embed.cc, token + proxy_m3u8) ajoutée manuellement
     // dans l'onglet Anglais / Lecteur NETFLOX (flux direct, comme les autres lecteurs directs).
-    // Positionnée ici (juste après finepulfe) pour toujours apparaître juste après lui dans la liste.
+    // Positionnée après les liens directs (Vidzy/Uqload) extraits du cloudflare : le tri par
+    // sortRank() la place après eux automatiquement (voir DIRECT_HOST_PRIORITY).
     try {
       const oneEmbedM3u8 = await fetchOneEmbedDirectStream(id, type, season, episode);
       if (oneEmbedM3u8) {
@@ -2200,15 +2189,6 @@ function isDirectPlayable(url) {
          /m3u8/i.test(url);
 }
 
-// Domaines connus pour proposer plusieurs pistes audio dans un même flux m3u8.
-const DUAL_AUDIO_HOSTS = ['finepulfe.xyz'];
-function isDualAudioSource(url) {
-  try {
-    const h = new URL(url).hostname.toLowerCase();
-    return DUAL_AUDIO_HOSTS.some(d => h.includes(d));
-  } catch (e) { return false; }
-}
-
 // ── Nouvelle source directe VO (1embed.cc : token + proxy_m3u8) ──
 // Reprend la logique de index_net_modifie_v2.html : récupère un token,
 // puis appelle le proxy vidsrc pour obtenir un lien .m3u8 direct.
@@ -2295,8 +2275,19 @@ function buildSourceMeta(entry) {
   return { url, lang, isDirect, hostname, known };
 }
 
+// Priorité des lecteurs directs (m3u8) extraits de mon cloudflare : Vidzy en premier,
+// Uqload en second, tout autre hébergeur direct ensuite.
+const DIRECT_HOST_PRIORITY = ['vidzy', 'uqload'];
+function directHostRank(hostname) {
+  const h = (hostname || '').toLowerCase();
+  for (let i = 0; i < DIRECT_HOST_PRIORITY.length; i++) {
+    if (h.includes(DIRECT_HOST_PRIORITY[i])) return i;
+  }
+  return DIRECT_HOST_PRIORITY.length;
+}
+
 function sortRank(s) {
-  if (s.isDirect) return -1000;
+  if (s.isDirect) return -1000 + directHostRank(s.hostname);
   if (s.known) return s.known.index;
   return 999;
 }
@@ -2479,7 +2470,7 @@ function renderFlatRow(s) {
   const row = document.createElement('div');
   row.className = 'src-row' + (s.id === currentSourceIndex ? ' active' : '');
   const kind = s.isDirect ? (/m3u8/i.test(s.url) ? 'M3U8' : 'DIRECT') : 'EMBED';
-  const is1080 = (s.isDirect && isDualAudioSource(s.url)) || (!s.isDirect && /1embed\.cc|vidking\.net|filmu\.in|videasy\.to/i.test(s.hostname || ''));
+  const is1080 = (!s.isDirect && /1embed\.cc|vidking\.net|filmu\.in|videasy\.to/i.test(s.hostname || ''));
   const kindHTML = is1080
     ? `<span class="src-kind-tag">1080p</span><span class="src-kind-sep">·</span><span class="src-kind-tag">${kind}</span>`
     : `<span class="src-kind-tag">${kind}</span>`;
@@ -2933,26 +2924,12 @@ function loadMedia(url, title, audioLangOverride) {
   openBtn.style.display = 'inline-block';
   showCtrls();
   const isHLS = url.includes('.m3u8') || url.includes('hls');
-  const isFinepulfe = (() => {
-    try { return /(?:^|\.)finepulfe\.xyz$/i.test(new URL(url).hostname); }
-    catch (e) { return false; }
-  })();
   currentStreamUrl = url;
   currentStreamIsHLS = isHLS;
   currentStreamTitle = title || currentStreamTitle;
   if (isHLS && Hls.isSupported()) {
-    // Finepulfe : utiliser exactement le même mécanisme de requête HLS.js
-    // que le lecteur M3U8 de référence (mémoire uniquement, sans persistance).
-    if (isFinepulfe) {
-      hls = new Hls({
-        enableWorker: true,
-      });
-      hls.loadSource(url);
-      hls.attachMedia(video);
-    } else {
-      hls = new Hls({ enableWorker:true });
-      hls.loadSource(url); hls.attachMedia(video);
-    }
+    hls = new Hls({ enableWorker:true });
+    hls.loadSource(url); hls.attachMedia(video);
     hls.on(Hls.Events.MANIFEST_PARSED, (e,d) => {
       hideSpinner();
       populateSources(hls.audioTracks);
