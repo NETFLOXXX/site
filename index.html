@@ -996,6 +996,24 @@
   #nolang-modal button.ab-primary { background:var(--red); color:#fff; }
   #nolang-modal button.ab-primary:hover { background:var(--red-h); }
 
+  /* ── POPUP "PETIT PROBLÈME TECHNIQUE" (source en erreur -> changement auto) ── */
+  #src-error-overlay {
+    position:fixed; inset:0; z-index:2100;
+    background:rgba(0,0,0,0.78); backdrop-filter:blur(10px);
+    display:none; align-items:center; justify-content:center; padding:20px;
+  }
+  #src-error-overlay.open { display:flex; }
+  #src-error-modal {
+    width:100%; max-width:380px; background:linear-gradient(180deg, #1c1c1c, #131313);
+    border:1px solid rgba(255,255,255,0.1); border-radius:20px;
+    padding:28px 26px 24px; box-shadow:0 30px 70px rgba(0,0,0,0.7);
+    animation:ab-pop 0.3s cubic-bezier(0.34,1.56,0.64,1);
+    font-family:'Outfit',sans-serif; text-align:center;
+  }
+  #src-error-modal h3 { font-size:1.15rem; font-weight:700; margin-bottom:12px; letter-spacing:-0.01em; color:#fff; }
+  #src-error-modal p { font-size:0.87rem; line-height:1.55; color:rgba(255,255,255,0.6); margin-bottom:0; }
+  #src-error-modal #src-error-count { color:var(--red-h); font-weight:700; }
+
   /* ── POPUP "FILM RÉCENT" (qualité potentiellement mauvaise) ── */
   #recent-overlay {
     position:fixed; inset:0; z-index:2000;
@@ -1388,6 +1406,17 @@
   </div>
 </div>
 
+<!-- POPUP "PETIT PROBLÈME TECHNIQUE" (source en erreur -> changement auto) -->
+<div id="src-error-overlay">
+  <div id="src-error-modal">
+    <div class="ab-icon">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v4m0 4h.01M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"/></svg>
+    </div>
+    <h3 id="src-error-title">Oups, petit problème technique</h3>
+    <p id="src-error-text">Changement de source automatique dans <span id="src-error-count">5</span>...</p>
+  </div>
+</div>
+
 <!-- POPUP "FILM RÉCENT" -->
 <div id="recent-overlay">
   <div id="recent-modal">
@@ -1423,7 +1452,7 @@ const flashT = {};
 function handleCtrlClick(btn, fn) { fn(); }
 
 // ── TMDB / CLOUDFLARE SOURCES ──
-const API_BASE = 'https://netfloxxx.code-exe-67.workers.dev';
+const API_BASE = 'https://netfloxxx.blague-drole-67.workers.dev';
 const TMDB_KEY = '9bb76e7829aacc0197000636ecf535b1';
 const TMDB_BASE = 'https://api.themoviedb.org/3';
 const TMDB_IMG = 'https://image.tmdb.org/t/p/w154';
@@ -1974,8 +2003,8 @@ function showEpisodeFields(show) {
 
 async function fetchTMDBSources(id, type, season, episode, allowSeriesFallback=false) {
   const endpoint = type === 'tv'
-    ? `${API_BASE}/?id=${encodeURIComponent(id)}&type=tv&season=${encodeURIComponent(season)}&episode=${encodeURIComponent(episode)}`
-    : `${API_BASE}/?id=${encodeURIComponent(id)}&type=movie`;
+    ? `${API_BASE}/api/tv/${encodeURIComponent(id)}/${encodeURIComponent(season)}/${encodeURIComponent(episode)}`
+    : `${API_BASE}/api/movies/${encodeURIComponent(id)}`;
 
   setStatus(preferredLang === 'fr' ? 'Recherche des sources…' : 'Searching for sources…');
   showEpisodeFields(true);
@@ -2077,10 +2106,21 @@ async function fetchTMDBSources(id, type, season, episode, allowSeriesFallback=f
       });
     }
 
+    // Certains flux m3u8 (ex: free.finepulfe.xyz) embarquent plusieurs pistes audio
+    // (FR + EN) dans un seul flux, la piste FR étant sélectionnée par défaut.
+    // On duplique ces sources direct FR dans l'onglet Anglais : au chargement, la
+    // piste audio anglaise est automatiquement sélectionnée via hls.audioTrack.
+    const dualAudioExtras = [];
+    processed.forEach(s => {
+      if (s.isDirect && s.lang === 'fr' && isDualAudioSource(s.url)) {
+        dualAudioExtras.push({ ...s, lang: 'en', audioLangOverride: 'en' });
+      }
+    });
+    processed.push(...dualAudioExtras);
+
     // Nouvelle source directe VO (1embed.cc, token + proxy_m3u8) ajoutée manuellement
     // dans l'onglet Anglais / Lecteur NETFLOX (flux direct, comme les autres lecteurs directs).
-    // Positionnée après les liens directs (Vidzy/Uqload) extraits du cloudflare : le tri par
-    // sortRank() la place après eux automatiquement (voir DIRECT_HOST_PRIORITY).
+    // Positionnée ici (juste après finepulfe) pour toujours apparaître juste après lui dans la liste.
     try {
       const oneEmbedM3u8 = await fetchOneEmbedDirectStream(id, type, season, episode);
       if (oneEmbedM3u8) {
@@ -2189,6 +2229,15 @@ function isDirectPlayable(url) {
          /m3u8/i.test(url);
 }
 
+// Domaines connus pour proposer plusieurs pistes audio dans un même flux m3u8.
+const DUAL_AUDIO_HOSTS = ['finepulfe.xyz'];
+function isDualAudioSource(url) {
+  try {
+    const h = new URL(url).hostname.toLowerCase();
+    return DUAL_AUDIO_HOSTS.some(d => h.includes(d));
+  } catch (e) { return false; }
+}
+
 // ── Nouvelle source directe VO (1embed.cc : token + proxy_m3u8) ──
 // Reprend la logique de index_net_modifie_v2.html : récupère un token,
 // puis appelle le proxy vidsrc pour obtenir un lien .m3u8 direct.
@@ -2275,19 +2324,8 @@ function buildSourceMeta(entry) {
   return { url, lang, isDirect, hostname, known };
 }
 
-// Priorité des lecteurs directs (m3u8) extraits de mon cloudflare : Vidzy en premier,
-// Uqload en second, tout autre hébergeur direct ensuite.
-const DIRECT_HOST_PRIORITY = ['vidzy', 'uqload'];
-function directHostRank(hostname) {
-  const h = (hostname || '').toLowerCase();
-  for (let i = 0; i < DIRECT_HOST_PRIORITY.length; i++) {
-    if (h.includes(DIRECT_HOST_PRIORITY[i])) return i;
-  }
-  return DIRECT_HOST_PRIORITY.length;
-}
-
 function sortRank(s) {
-  if (s.isDirect) return -1000 + directHostRank(s.hostname);
+  if (s.isDirect) return -1000;
   if (s.known) return s.known.index;
   return 999;
 }
@@ -2470,7 +2508,7 @@ function renderFlatRow(s) {
   const row = document.createElement('div');
   row.className = 'src-row' + (s.id === currentSourceIndex ? ' active' : '');
   const kind = s.isDirect ? (/m3u8/i.test(s.url) ? 'M3U8' : 'DIRECT') : 'EMBED';
-  const is1080 = (!s.isDirect && /1embed\.cc|vidking\.net|filmu\.in|videasy\.to/i.test(s.hostname || ''));
+  const is1080 = (s.isDirect && isDualAudioSource(s.url)) || (!s.isDirect && /1embed\.cc|vidking\.net|filmu\.in|videasy\.to/i.test(s.hostname || ''));
   const kindHTML = is1080
     ? `<span class="src-kind-tag">1080p</span><span class="src-kind-sep">·</span><span class="src-kind-tag">${kind}</span>`
     : `<span class="src-kind-tag">${kind}</span>`;
@@ -2895,6 +2933,7 @@ function showVideoPlayer() {
 
 function showEmbedPlayer(url) {
   // Un embed ne doit jamais laisser le <video> / HLS actif derrière l'iframe.
+  hideSourceErrorPopup();
   hideUpNextCard();
   clearHLS();
   video.pause();
@@ -2917,6 +2956,7 @@ function showEmbedPlayer(url) {
 
 function loadMedia(url, title, audioLangOverride) {
   showVideoPlayer();
+  hideSourceErrorPopup();
   hideUpNextCard();
   clearHLS(); hideError(); showSpinner();
   loadScreen.style.display = 'none';
@@ -2924,12 +2964,26 @@ function loadMedia(url, title, audioLangOverride) {
   openBtn.style.display = 'inline-block';
   showCtrls();
   const isHLS = url.includes('.m3u8') || url.includes('hls');
+  const isFinepulfe = (() => {
+    try { return /(?:^|\.)finepulfe\.xyz$/i.test(new URL(url).hostname); }
+    catch (e) { return false; }
+  })();
   currentStreamUrl = url;
   currentStreamIsHLS = isHLS;
   currentStreamTitle = title || currentStreamTitle;
   if (isHLS && Hls.isSupported()) {
-    hls = new Hls({ enableWorker:true });
-    hls.loadSource(url); hls.attachMedia(video);
+    // Finepulfe : utiliser exactement le même mécanisme de requête HLS.js
+    // que le lecteur M3U8 de référence (mémoire uniquement, sans persistance).
+    if (isFinepulfe) {
+      hls = new Hls({
+        enableWorker: true,
+      });
+      hls.loadSource(url);
+      hls.attachMedia(video);
+    } else {
+      hls = new Hls({ enableWorker:true });
+      hls.loadSource(url); hls.attachMedia(video);
+    }
     hls.on(Hls.Events.MANIFEST_PARSED, (e,d) => {
       hideSpinner();
       populateSources(hls.audioTracks);
@@ -2940,7 +2994,7 @@ function loadMedia(url, title, audioLangOverride) {
       if (audioLangOverride) selectHLSAudioTrackByLang(hls, audioLangOverride);
     });
     hls.on(Hls.Events.ERROR, (e,d) => {
-      if(d.fatal){ hideSpinner(); showError((preferredLang === 'fr' ? 'Erreur HLS : ' : 'HLS error: ')+d.details); }
+      if(d.fatal){ hideSpinner(); handleSourceFailure(); }
     });
   } else if (video.canPlayType('application/vnd.apple.mpegurl') && isHLS) {
     video.src = url; video.play().catch(()=>{});
@@ -2955,7 +3009,7 @@ function loadMedia(url, title, audioLangOverride) {
   video.onerror = () => {
     if (pw.classList.contains('embed-mode')) return;
     hideSpinner();
-    showError(preferredLang === 'fr' ? 'Impossible de charger ce média.' : 'Unable to load this media.');
+    handleSourceFailure();
   };
   loadPreviewSource(url, isHLS);
 }
@@ -3002,6 +3056,7 @@ previewVideo.addEventListener('loadeddata', () => {
 });
 
 function goBack() {
+  hideSourceErrorPopup();
   video.pause(); clearHLS();
   const frame = document.getElementById('embed-frame');
   frame.src = 'about:blank'; frame.style.display = 'none';
@@ -4073,6 +4128,71 @@ function showSpinner() { pw.classList.add('buffering'); }
 function hideSpinner() { pw.classList.remove('buffering'); }
 function showError(msg) { document.getElementById('error-text').textContent=msg; document.getElementById('error-msg').style.display='flex'; }
 function hideError() { document.getElementById('error-msg').style.display='none'; }
+
+// ── POPUP "PETIT PROBLÈME TECHNIQUE" — quand une source plante (HLS fatal, video.onerror),
+// on affiche une popup avec un compte à rebours puis on bascule automatiquement sur la
+// source suivante dans la liste, plutôt que de laisser le lecteur planté sur un message brut.
+let srcErrorPending = false;
+let srcErrorCountdownInterval = null;
+
+function handleSourceFailure() {
+  if (pw.classList.contains('embed-mode')) return; // un embed gère ses propres erreurs
+  if (srcErrorPending) return; // déjà en train de gérer une bascule
+  srcErrorPending = true;
+  hideError();
+  showSourceErrorPopup();
+}
+
+function showSourceErrorPopup() {
+  const overlay = document.getElementById('src-error-overlay');
+  const title = document.getElementById('src-error-title');
+  const text = document.getElementById('src-error-text');
+  title.textContent = preferredLang === 'fr' ? 'Oups, petit problème technique' : 'Oops, small technical issue';
+
+  let n = 5;
+  const renderCountdown = () => {
+    text.innerHTML = preferredLang === 'fr'
+      ? `Changement de source automatique dans <span id="src-error-count">${n}</span>...`
+      : `Switching source automatically in <span id="src-error-count">${n}</span>...`;
+  };
+  renderCountdown();
+  overlay.classList.add('open');
+
+  clearInterval(srcErrorCountdownInterval);
+  srcErrorCountdownInterval = setInterval(() => {
+    n--;
+    if (n <= 0) {
+      clearInterval(srcErrorCountdownInterval);
+      srcErrorCountdownInterval = null;
+      overlay.classList.remove('open');
+      srcErrorPending = false;
+      goToNextSourceAfterError();
+    } else {
+      renderCountdown();
+    }
+  }, 1000);
+}
+
+function hideSourceErrorPopup() {
+  clearInterval(srcErrorCountdownInterval);
+  srcErrorCountdownInterval = null;
+  srcErrorPending = false;
+  document.getElementById('src-error-overlay').classList.remove('open');
+}
+
+function goToNextSourceAfterError() {
+  if (!currentSources || !currentSources.length) {
+    showError(preferredLang === 'fr' ? 'Impossible de lire ce flux.' : 'Unable to play this stream.');
+    return;
+  }
+  const nextId = currentSourceIndex + 1;
+  if (nextId < currentSources.length) {
+    selectCloudflareSource(nextId);
+  } else {
+    // Plus aucune source suivante disponible dans la liste.
+    showError(preferredLang === 'fr' ? 'Aucune autre source disponible.' : 'No other source available.');
+  }
+}
 
 // ── POPUP AVERTISSEMENT "AUTRES LECTEURS" (pubs) ──
 let abProceedCallback = null;
