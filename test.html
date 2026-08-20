@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="https://i.ibb.co/VYfvTC6F/untilted-1752571740-trimmy.png" type="image/png">
-    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Montserrat:wght@500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Montserrat:wght@500;600&family=Poppins:wght@600&display=swap" rel="stylesheet">
     <title>NETFLOX</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -832,7 +832,7 @@
             align-items: center;
             justify-content: flex-start;
             overflow-y: auto;
-            padding: 40px 24px 40px;
+            padding: 20px 24px 20px;
         }
         .roulette-inner { width: 100%; max-width: 1040px; margin: 0 auto; }
         .roulette-header-right { display: flex; align-items: center; gap: 12px; }
@@ -865,7 +865,7 @@
             justify-content: space-between;
             flex-wrap: wrap;
             gap: clamp(10px, 3vw, 16px);
-            margin-bottom: clamp(16px, 4vw, 28px);
+            margin-bottom: clamp(12px, 3vw, 16px);
         }
         .roulette-back, .roulette-relaunch {
             display: inline-flex;
@@ -909,7 +909,7 @@
             overflow: hidden;
             background: linear-gradient(180deg, #0a0a0a, #050505);
             border-radius: 18px;
-            padding: clamp(16px, 4vw, 30px) 0;
+            padding: clamp(12px, 2.4vw, 18px) 0;
             border: 1px solid #1c1c1c;
         }
         .roulette-wrap::before, .roulette-wrap::after {
@@ -927,8 +927,8 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            width: clamp(112px, 26vw, 184px);
-            height: clamp(168px, 39vw, 276px);
+            width: clamp(112px, 23vw, 158px);
+            height: clamp(168px, 34.5vw, 237px);
             border: 3px solid #e50914;
             border-radius: 14px;
             box-shadow: 0 0 0 2000px rgba(0,0,0,0.6), 0 0 36px rgba(229,9,20,0.55);
@@ -947,8 +947,8 @@
         .roulette-frame::after { bottom: -13px; border-bottom: 10px solid #e50914; }
         .roulette-track { display: flex; align-items: center; gap: clamp(8px, 2vw, 14px); padding: 0 clamp(14px, 4vw, 32px); will-change: transform; }
         .roulette-card {
-            min-width: clamp(108px, 26vw, 176px);
-            height: clamp(162px, 39vw, 264px);
+            min-width: clamp(108px, 23vw, 150px);
+            height: clamp(162px, 34.5vw, 225px);
             flex-shrink: 0;
             border-radius: 10px;
             background-color: #1a1a1a;
@@ -1004,21 +1004,54 @@
 
         .roulette-result {
             display: flex;
-            gap: clamp(16px, 4vw, 26px);
+            gap: clamp(14px, 3.5vw, 20px);
             background: #161616;
             border: 1px solid #262626;
             border-radius: 18px;
-            padding: clamp(18px, 4.5vw, 28px);
-            margin-top: clamp(16px, 4vw, 24px);
+            padding: clamp(14px, 3vw, 18px);
+            margin-top: clamp(12px, 2.6vw, 16px);
             text-align: left;
             opacity: 0;
             transform: translateY(10px);
             transition: opacity 0.45s ease, transform 0.45s ease;
         }
         .roulette-result.visible { opacity: 1; transform: translateY(0); }
+        .roulette-empty {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            padding: clamp(30px, 6vh, 60px) 20px;
+            gap: 6px;
+        }
+        .roulette-empty-icon {
+            width: clamp(52px, 9vh, 68px);
+            height: clamp(52px, 9vh, 68px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(229,9,20,0.1);
+            border: 1px solid rgba(229,9,20,0.3);
+            border-radius: 50%;
+            margin-bottom: 10px;
+        }
+        .roulette-empty-icon svg { width: 60%; height: 60%; }
+        .roulette-empty h3 {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: clamp(1.4rem, 4vw, 1.8rem);
+            letter-spacing: 0.5px;
+            color: #fff;
+        }
+        .roulette-empty p {
+            color: #999;
+            font-size: 0.9rem;
+            max-width: 380px;
+            line-height: 1.55;
+        }
         .result-poster {
-            width: clamp(120px, 24vw, 170px);
-            height: clamp(180px, 36vw, 255px);
+            width: clamp(118px, 21vw, 146px);
+            height: clamp(177px, 31.5vw, 219px);
             flex-shrink: 0;
             border-radius: 10px;
             background-color: #2a2a2a;
@@ -1029,13 +1062,13 @@
         .result-info { flex: 1; min-width: 0; display: flex; flex-direction: column; }
         .result-info h3 {
             font-family: 'Bebas Neue', sans-serif;
-            font-size: clamp(1.5rem, 5vw, 2.5rem);
+            font-size: clamp(1.5rem, 4.2vw, 2.1rem);
             letter-spacing: 0.5px;
             color: #fff;
-            margin-bottom: 12px;
+            margin-bottom: 8px;
             line-height: 1.05;
         }
-        .result-meta { display: flex; align-items: center; gap: clamp(10px, 3vw, 16px); flex-wrap: wrap; margin-bottom: 16px; }
+        .result-meta { display: flex; align-items: center; gap: clamp(10px, 3vw, 16px); flex-wrap: wrap; margin-bottom: 10px; }
         .result-meta > span { display: inline-flex; align-items: center; gap: 6px; }
         .result-meta svg { width: 15px; height: 15px; }
         .result-episodes { color: #ccc; font-weight: 600; font-size: 0.88rem; }
@@ -1052,16 +1085,48 @@
             padding: 4px 10px;
             border-radius: 6px;
         }
+        .result-genres { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 14px; }
+        .result-genre-tag {
+            background: #222;
+            color: #bbb;
+            font-size: 11.5px;
+            font-weight: 600;
+            padding: 4px 11px;
+            border-radius: 999px;
+            border: 1px solid #303030;
+        }
         .result-overview {
             color: #a8a8a8;
             line-height: 1.65;
             font-size: clamp(0.9rem, 2vw, 1.02rem);
-            margin-bottom: clamp(14px, 3.5vw, 22px);
+            margin-bottom: clamp(10px, 2.5vw, 16px);
             display: -webkit-box;
             -webkit-line-clamp: 3;
             -webkit-box-orient: vertical;
             overflow: hidden;
         }
+        .result-overview.expanded {
+            display: block;
+            -webkit-line-clamp: unset;
+            overflow: visible;
+        }
+        .result-overview-toggle {
+            display: none;
+            align-items: center;
+            gap: 5px;
+            background: none;
+            border: none;
+            padding: 0;
+            margin: -8px 0 14px;
+            color: #ff4d5a;
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 700;
+            font-size: 0.82rem;
+            cursor: pointer;
+        }
+        .result-overview-toggle.visible { display: inline-flex; }
+        .result-overview-toggle svg { width: 14px; height: 14px; transition: transform 0.2s ease; }
+        .result-overview-toggle.expanded svg { transform: rotate(180deg); }
         .result-actions { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; margin-top: auto; }
         .result-actions .btn {
             display: inline-flex; align-items: center; gap: 8px;
@@ -1073,6 +1138,23 @@
             white-space: nowrap;
         }
         .result-actions .btn svg { width: 16px; height: 16px; flex-shrink: 0; }
+        .result-relaunch-btn {
+            display: inline-flex; align-items: center; gap: 8px;
+            padding: clamp(10px, 2.6vw, 12px) clamp(15px, 4vw, 22px);
+            border-radius: 8px;
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 600;
+            font-size: clamp(0.8rem, 2.2vw, 0.88rem);
+            white-space: nowrap;
+            background: transparent;
+            border: 1.5px solid #3a3a3a;
+            color: #ccc;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .result-relaunch-btn svg { width: 16px; height: 16px; flex-shrink: 0; transition: transform 0.5s ease; }
+        .result-relaunch-btn:hover { border-color: #777; background: rgba(255,255,255,0.06); color: #fff; }
+        .result-relaunch-btn:hover svg { transform: rotate(180deg); }
         @media (max-width: 480px) {
             .result-poster { width: clamp(96px, 24vw, 120px); height: clamp(144px, 36vw, 180px); }
             .roulette-result { gap: 14px; }
@@ -1090,7 +1172,7 @@
             .result-info h3 { font-size: clamp(1.15rem, 5vw, 1.4rem); }
             .result-overview { -webkit-line-clamp: 2; }
             .result-actions { flex-direction: column; align-items: stretch; }
-            .result-actions .btn, .result-actions .roulette-relaunch { justify-content: center; width: 100%; }
+            .result-actions .btn, .result-actions .result-relaunch-btn { justify-content: center; width: 100%; }
         }
         /* Écrans courts (portrait réduit, tablettes en mode paysage bas) : on compacte
            verticalement pour que tout tienne sans avoir besoin de scroller. */
@@ -1111,6 +1193,27 @@
             .dice-loading { padding: 24px 0; }
             .result-poster { width: clamp(90px, 16vh, 120px); height: clamp(135px, 24vh, 180px); }
             .result-overview { -webkit-line-clamp: 1; margin-bottom: 8px; }
+        }
+        /* Écrans d'ordinateurs portables 14" (viewport large mais peu de hauteur) :
+           tailles FIXES (pas de clamp/vw/vh) pour que tout tienne sans scroll,
+           sans dépendre d'une adaptation proportionnelle. */
+        @media (max-height: 820px) and (min-width: 901px) {
+            .roulette-popup { padding-top: 19px; padding-bottom: 19px; }
+            .roulette-header { margin-bottom: 11px; }
+            .roulette-wrap { padding: 11px 0; }
+            .roulette-frame { width: 133px; height: 200px; }
+            .roulette-card { min-width: 127px; height: 191px; }
+            .roulette-result { padding: 14px; gap: 14px; margin-top: 10px; }
+            .result-poster { width: 120px; height: 182px; }
+            .result-info h3 { font-size: 1.45rem; margin-bottom: 6px; }
+            .result-meta { margin-bottom: 6px; }
+            .result-genres { margin-bottom: 8px; }
+            .result-overview { font-size: 0.86rem; line-height: 1.42; -webkit-line-clamp: 2; margin-bottom: 7px; }
+            .result-actions { gap: 7px; margin-top: 5px; }
+            .result-actions .btn, .result-actions .result-relaunch-btn { padding: 7px 13px; font-size: 0.8rem; }
+            .genre-grid { gap: 6px; margin-bottom: 14px; }
+            .genre-chip { padding: 7px 12px; font-size: 0.8rem; }
+            .chip-box { width: 15px; height: 15px; }
         }
 
         /* ─── ÉCRAN DE CHARGEMENT DU TIRAGE ─── */
@@ -1919,12 +2022,15 @@ function closeOverlayAnimated(overlay) {
 }
 
 // ─── POPUP DE RETOUR (succès / erreur) — plein écran comme la recherche ───
-function showFeedbackPopup(type, message, title) {
+function showFeedbackPopup(type, message, title, options = {}) {
     const overlay = document.createElement('div');
     overlay.className = 'tv-overlay fullscreen';
     const icon = type === 'success'
         ? `<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.6"/><path d="M8 12.3L10.5 14.8L16 9.2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>`
         : `<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 3.5L2.5 20H21.5L12 3.5Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M12 9.5V14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="12" cy="17" r="1.1" fill="currentColor"/></svg>`;
+    const loginBtnHtml = options.showLoginBtn
+        ? `<button class="btn btn-primary feedback-login-btn" style="margin-bottom:10px;width:100%;justify-content:center;border-radius:999px;font-family:'Poppins', sans-serif;">Se connecter</button>`
+        : '';
     overlay.innerHTML = `
         <div class="tv-popup fullscreen feedback-popup ${type}" style="display:flex;align-items:center;justify-content:center;">
             <span class="close-btn">&times;</span>
@@ -1936,18 +2042,25 @@ function showFeedbackPopup(type, message, title) {
                     <span class="feedback-eyebrow">${type === 'success' ? 'Succès' : 'Attention'}</span>
                     <h2 class="feedback-title">${title || (type === 'success' ? 'Merci !' : 'Oups...')}</h2>
                     <p class="feedback-text">${message}</p>
-                    <button class="btn btn-primary feedback-ok-btn">Compris</button>
+                    ${loginBtnHtml}
+                    <button class="btn btn-primary feedback-ok-btn" style="border-radius:999px;background:#3a3a3a;color:#ddd;font-family:'Poppins', sans-serif;">Compris</button>
                 </div>
             </div>
         </div>`;
     attachOverlay(overlay);
     overlay.querySelector('.feedback-ok-btn').addEventListener('click', () => closeOverlayAnimated(overlay));
+    if (options.showLoginBtn) {
+        overlay.querySelector('.feedback-login-btn').addEventListener('click', () => {
+            closeOverlayAnimated(overlay);
+            handleLogin();
+        });
+    }
 }
 
 // ─── BOUTON MESSAGE ───
 document.getElementById('messageBtn').addEventListener('click', () => {
     if (!currentUser || !currentUser.email) {
-        showFeedbackPopup('error', 'Connectez-vous avec votre compte Google pour pouvoir nous envoyer un message.', 'Connexion requise');
+        showFeedbackPopup('error', 'Connectez-vous avec votre compte Google pour pouvoir nous envoyer un message.', 'Connexion requise', { showLoginBtn: true });
     } else {
         showMessagePopup();
     }
@@ -2137,6 +2250,10 @@ function showTypeSelection() {
     };
 }
 
+// ─── GENRES TMDB (id → nom) : utilisé pour afficher les tags de genre sur le résultat ───
+const MOVIE_GENRE_MAP = {28:'Action',12:'Aventure',16:'Animation',35:'Comédie',80:'Crime',99:'Documentaire',18:'Drame',10751:'Familial',14:'Fantastique',36:'Histoire',27:'Horreur',10402:'Musique',9648:'Mystère',10749:'Romance',878:'Science-Fiction',10770:'Téléfilm',53:'Thriller',10752:'Guerre',37:'Western'};
+const TV_GENRE_MAP = {10759:'Action & Aventure',16:'Animation',35:'Comédie',80:'Crime',99:'Documentaire',18:'Drame',10751:'Familial',10762:'Enfants',9648:'Mystère',10763:'Actualités',10764:'Reality',10765:'Sci-Fi & Fantastique',10766:'Soap',10767:'Talk-show',10768:'Guerre & Politique',37:'Western'};
+
 function showGenreSelection(contentType, preSelected = []) {
     const movieGenres = [{id:28,name:'Action'},{id:12,name:'Aventure'},{id:16,name:'Animation'},{id:35,name:'Comédie'},
         {id:80,name:'Crime'},{id:99,name:'Documentaire'},{id:18,name:'Drame'},{id:14,name:'Fantastique'},
@@ -2208,54 +2325,89 @@ function setRandomBtnLoading(isLoading) {
 }
 
 // ─── RÉCUPÈRE UN LOT DE TITRES CONNUS/POPULAIRES (utilisé pour la roulette + le tirage) ───
-async function fetchRandomPool(contentType, genreParam) {
-    const pool = [];
-    const fetches = [];
+// Paliers de filtres, du plus exigeant (titres vraiment connus) au plus permissif
+// (juste le genre, sans aucun seuil). On ne descend d'un palier que si le précédent
+// n'a pas ramené assez de titres — ça garantit qu'un genre avec ne serait-ce qu'une
+// poignée de films/séries dans TMDB finira toujours par proposer quelque chose.
+const RANDOM_FILTER_TIERS = [
+    {
+        movie: [
+            { count: 3, params: '&sort_by=popularity.desc&vote_count.gte=1000' },
+            { count: 2, params: '&sort_by=vote_average.desc&vote_count.gte=1500&vote_average.gte=7' },
+        ],
+        tv: [
+            { count: 3, params: '&sort_by=popularity.desc&vote_count.gte=600' },
+            { count: 2, params: '&sort_by=vote_average.desc&vote_count.gte=800&vote_average.gte=7.2' },
+        ],
+    },
+    {
+        movie: [{ count: 4, params: '&sort_by=popularity.desc&vote_count.gte=200' }],
+        tv: [{ count: 4, params: '&sort_by=popularity.desc&vote_count.gte=100' }],
+    },
+    {
+        movie: [{ count: 5, params: '&sort_by=popularity.desc&vote_count.gte=20' }],
+        tv: [{ count: 5, params: '&sort_by=popularity.desc&vote_count.gte=10' }],
+    },
+    {
+        // Dernier recours : plus aucun seuil, uniquement le genre demandé.
+        movie: [{ count: 6, params: '&sort_by=popularity.desc' }],
+        tv: [{ count: 6, params: '&sort_by=popularity.desc' }],
+    },
+];
 
-    // Tire N pages distinctes (sans remise) dans une plage donnée, pour éviter de retomber
-    // plusieurs fois sur la même page — et donc sur le même sous-ensemble de titres.
-    const distinctPages = (count, max) => {
-        const all = Array.from({ length: max }, (_, i) => i + 1);
-        for (let i = all.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [all[i], all[j]] = [all[j], all[i]];
-        }
-        return all.slice(0, count);
-    };
-
-    // Films / séries "grand public" : pages peu profondes + seuil de votes élevé => vraiment connus
-    // Films / séries "solides mais un peu moins mainstream" : notes élevées + seuil de votes qui reste sérieux
-    // On évite volontairement les pages très profondes / faibles vote_count qui ramènent des titres perdus.
-    if (contentType === 'movie' || contentType === 'both') {
-        distinctPages(3, 8).forEach(page => {
-            fetches.push(tmdb(`/discover/movie?sort_by=popularity.desc&page=${page}${genreParam}&vote_count.gte=1000`)
-                .then(d => (d.results || []).map(m => ({ ...m, type: 'movie' }))));
-        });
-        distinctPages(2, 8).forEach(page => {
-            fetches.push(tmdb(`/discover/movie?sort_by=vote_average.desc&page=${page}${genreParam}&vote_count.gte=1500&vote_average.gte=7`)
-                .then(d => (d.results || []).map(m => ({ ...m, type: 'movie' }))));
-        });
+function distinctPages(count, max) {
+    const all = Array.from({ length: max }, (_, i) => i + 1);
+    for (let i = all.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [all[i], all[j]] = [all[j], all[i]];
     }
-    if (contentType === 'tv' || contentType === 'both') {
-        distinctPages(3, 8).forEach(page => {
-            fetches.push(tmdb(`/discover/tv?sort_by=popularity.desc&page=${page}${genreParam}&vote_count.gte=600`)
-                .then(d => (d.results || []).map(s => ({ ...s, type: 'tv' }))));
-        });
-        distinctPages(2, 8).forEach(page => {
-            fetches.push(tmdb(`/discover/tv?sort_by=vote_average.desc&page=${page}${genreParam}&vote_count.gte=800&vote_average.gte=7.2`)
-                .then(d => (d.results || []).map(s => ({ ...s, type: 'tv' }))));
-        });
-    }
+    return all.slice(0, count);
+}
 
-    const results = await Promise.all(fetches);
-    results.forEach(r => pool.push(...r));
-
+function dedupePool(pool) {
     const seen = new Set();
     return pool.filter(i => {
         const key = `${i.type}-${i.id}`;
         if (seen.has(key) || !(i.title || i.name)) return false;
         seen.add(key); return true;
     });
+}
+
+async function fetchPoolForTier(contentType, genreParam, tier) {
+    const fetches = [];
+    if (contentType === 'movie' || contentType === 'both') {
+        tier.movie.forEach(f => {
+            distinctPages(f.count, 8).forEach(page => {
+                fetches.push(tmdb(`/discover/movie?page=${page}${genreParam}${f.params}`)
+                    .then(d => (d.results || []).map(m => ({ ...m, type: 'movie' }))));
+            });
+        });
+    }
+    if (contentType === 'tv' || contentType === 'both') {
+        tier.tv.forEach(f => {
+            distinctPages(f.count, 8).forEach(page => {
+                fetches.push(tmdb(`/discover/tv?page=${page}${genreParam}${f.params}`)
+                    .then(d => (d.results || []).map(s => ({ ...s, type: 'tv' }))));
+            });
+        });
+    }
+    const results = await Promise.all(fetches);
+    const pool = [];
+    results.forEach(r => pool.push(...r));
+    return dedupePool(pool);
+}
+
+async function fetchRandomPool(contentType, genreParam) {
+    let bestPool = [];
+    for (const tier of RANDOM_FILTER_TIERS) {
+        const pool = await fetchPoolForTier(contentType, genreParam, tier);
+        if (pool.length > bestPool.length) bestPool = pool;
+        // 4 titres suffisent pour une roulette convaincante ; sinon on abaisse le palier.
+        if (pool.length >= 4) return pool;
+    }
+    // Même le palier le plus permissif n'a rien donné de plus : on renvoie le meilleur
+    // trouvé (peut être vide si le genre n'a vraiment aucun contenu dans TMDB).
+    return bestPool;
 }
 
 // ─── CHOISIT UN GAGNANT DANS LE LOT (jamais un titre déjà montré tant que possible) ───
@@ -2309,6 +2461,28 @@ function shuffleArray(arr) {
 // ─── ROULETTE : écran plein écran avec bandeau de vitesse, retour, et relance ───
 let randomRequestToken = 0; // évite les doublons causés par des clics rapides qui se chevauchent
 
+// Recentre instantanément la carte gagnante sous le cadre, en recalculant sa position à
+// partir d'une mise en page à jour (utile après un redimensionnement de fenêtre, puisque
+// les tailles du rouleau dépendent de vw/vh et changent avec la largeur de l'écran).
+function recenterRouletteWinner(overlay) {
+    const track = overlay.querySelector('#rouletteTrack');
+    const wrapEl = overlay.querySelector('.roulette-wrap');
+    if (!track || !wrapEl) return;
+    const winnerCard = track.querySelector('.roulette-card.winner');
+    if (!winnerCard) return; // pas encore atterri (tourne encore, ou en chargement) : rien à faire
+
+    track.style.transition = 'none';
+    track.style.transform = 'translateX(0)';
+    void track.offsetWidth; // force le recalcul de la mise en page avant de mesurer
+
+    const cardRect = winnerCard.getBoundingClientRect();
+    const wrapRect = wrapEl.getBoundingClientRect();
+    const cardCenterX = cardRect.left + cardRect.width / 2 - wrapRect.left;
+    const wrapCenterX = wrapRect.width / 2;
+    const targetOffset = cardCenterX - wrapCenterX;
+    track.style.transform = `translateX(-${targetOffset}px)`;
+}
+
 function showRouletteScreen(contentType, selectedGenres) {
     currentSearchParams = { contentType, selectedGenres };
 
@@ -2348,16 +2522,48 @@ function showRouletteScreen(contentType, selectedGenres) {
     };
     window.spinRoulette = () => spinRouletteOnce(overlay, contentType, selectedGenres);
 
+    // Les tailles du cadre/cartes/écart dépendent de la largeur d'écran (clamp/vw). Si la
+    // fenêtre est redimensionnée après l'atterrissage (ex: on bascule d'un petit à un grand
+    // écran), l'ancien décalage en pixels n'a plus rien à voir avec la nouvelle mise en page :
+    // la carte gagnante se retrouve décentrée, voire complètement hors du cadre visible.
+    // On recalcule donc le centrage à chaque redimensionnement tant que cette roulette existe.
+    const rouletteResizeHandler = () => {
+        if (!document.body.contains(overlay)) {
+            window.removeEventListener('resize', rouletteResizeHandler);
+            return;
+        }
+        if (rouletteResizeHandler._raf) cancelAnimationFrame(rouletteResizeHandler._raf);
+        rouletteResizeHandler._raf = requestAnimationFrame(() => recenterRouletteWinner(overlay));
+    };
+    window.addEventListener('resize', rouletteResizeHandler);
+
     spinRouletteOnce(overlay, contentType, selectedGenres);
+}
+
+const ICON_EMPTY = '<svg viewBox="0 0 64 64" fill="none"><circle cx="27" cy="27" r="16" stroke="#e50914" stroke-width="3.5"/><path d="M38.5 38.5L52 52" stroke="#e50914" stroke-width="3.5" stroke-linecap="round"/><path d="M19.5 27H34.5" stroke="#e50914" stroke-width="3.5" stroke-linecap="round"/></svg>';
+
+function showRouletteEmptyState(overlay, message) {
+    const wrap = overlay.querySelector('.roulette-wrap');
+    const resultBox = overlay.querySelector('#rouletteResult');
+    wrap.style.display = 'none';
+    resultBox.innerHTML = `
+        <div class="roulette-empty">
+            <div class="roulette-empty-icon">${ICON_EMPTY}</div>
+            <h3>Rien à afficher pour l'instant</h3>
+            <p>${message}</p>
+        </div>`;
+    requestAnimationFrame(() => resultBox.classList.add('visible'));
 }
 
 async function spinRouletteOnce(overlay, contentType, selectedGenres) {
     if (!document.body.contains(overlay)) return;
     const myToken = ++randomRequestToken;
+    const wrap = overlay.querySelector('.roulette-wrap');
     const track = overlay.querySelector('#rouletteTrack');
     const resultBox = overlay.querySelector('#rouletteResult');
     const relaunchBtn = overlay.querySelector('#rouletteRelaunchBtn');
 
+    wrap.style.display = '';
     resultBox.classList.remove('visible');
     resultBox.innerHTML = '';
     track.style.transition = 'none';
@@ -2377,7 +2583,7 @@ async function spinRouletteOnce(overlay, contentType, selectedGenres) {
         console.error(err);
         relaunchBtn.disabled = false;
         setRandomBtnLoading(false);
-        track.innerHTML = `<div class="roulette-loading">Une erreur est survenue — cliquez sur Relancer pour réessayer.</div>`;
+        showRouletteEmptyState(overlay, "Une erreur est survenue pendant la recherche. Réessayez dans un instant.");
         return;
     }
 
@@ -2386,7 +2592,7 @@ async function spinRouletteOnce(overlay, contentType, selectedGenres) {
 
     if (!winner || pool.length === 0) {
         relaunchBtn.disabled = false;
-        track.innerHTML = `<div class="roulette-loading">Aucun résultat trouvé — essayez avec d'autres genres !</div>`;
+        showRouletteEmptyState(overlay, "Cette combinaison de genres ne renvoie vraiment rien chez TMDB. Essayez avec d'autres genres.");
         return;
     }
 
@@ -2464,6 +2670,11 @@ function renderRouletteResult(resultBox, item, episodeCount) {
     const episodesMeta = item.type === 'tv'
         ? `<span class="result-episodes">${ICON_EPISODES} ${episodeCount ? episodeCount + ' épisodes' : 'Épisodes —'}</span>`
         : '';
+    const genreMap = item.type === 'tv' ? TV_GENRE_MAP : MOVIE_GENRE_MAP;
+    const genreNames = (item.genre_ids || []).map(id => genreMap[id]).filter(Boolean).slice(0, 3);
+    const genresRow = genreNames.length
+        ? `<div class="result-genres">${genreNames.map(n => `<span class="result-genre-tag">${n}</span>`).join('')}</div>`
+        : '';
 
     resultBox.innerHTML = `
         <div class="result-poster" style="${poster ? `background-image:url('${poster}')` : ''}"></div>
@@ -2474,15 +2685,42 @@ function renderRouletteResult(resultBox, item, episodeCount) {
                 <span class="result-year">${ICON_CALENDAR} ${year || '—'}</span>
                 ${episodesMeta}
             </div>
-            <p class="result-overview">${overview}</p>
+            ${genresRow}
+            <p class="result-overview" id="rouletteOverviewText">${overview}</p>
+            <button type="button" class="result-overview-toggle" id="rouletteOverviewToggle">
+                <span class="toggle-label">Voir plus</span>
+                <svg viewBox="0 0 24 24" fill="none"><path d="M6 9L12 15L18 9" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
             <div class="result-actions">
                 <button type="button" class="btn btn-primary">${ICON_INFO} Voir la fiche</button>
-                <button type="button" class="roulette-relaunch">${ICON_REFRESH} Relancer</button>
+                <button type="button" class="result-relaunch-btn">${ICON_REFRESH} Relancer</button>
             </div>
         </div>`;
 
     resultBox.querySelector('.btn-primary').addEventListener('click', () => openPopup(item, true, true));
-    resultBox.querySelector('.roulette-relaunch').addEventListener('click', () => window.spinRoulette());
+    resultBox.querySelector('.result-relaunch-btn').addEventListener('click', () => window.spinRoulette());
+
+    const toggleBtn = resultBox.querySelector('#rouletteOverviewToggle');
+    const overviewEl = resultBox.querySelector('#rouletteOverviewText');
+    toggleBtn.addEventListener('click', () => {
+        const expanded = overviewEl.classList.toggle('expanded');
+        toggleBtn.classList.toggle('expanded', expanded);
+        toggleBtn.querySelector('.toggle-label').textContent = expanded ? 'Voir moins' : 'Voir plus';
+    });
+    // On affiche le bouton "Voir plus" UNIQUEMENT si le texte est réellement tronqué —
+    // jamais s'il tient déjà en entier. On compare un nombre de lignes (arrondi), pas des
+    // hauteurs en pixels brutes, pour éviter les faux positifs dus aux arrondis du navigateur.
+    requestAnimationFrame(() => {
+        const lineHeightPx = parseFloat(getComputedStyle(overviewEl).lineHeight) || 20;
+        const clampedLines = Math.round(overviewEl.clientHeight / lineHeightPx);
+        overviewEl.style.webkitLineClamp = '999';
+        const fullLines = Math.round(overviewEl.scrollHeight / lineHeightPx);
+        overviewEl.style.webkitLineClamp = '';
+        if (fullLines > clampedLines) {
+            toggleBtn.classList.add('visible');
+        }
+    });
+
 
     requestAnimationFrame(() => { resultBox.classList.add('visible'); });
 }
