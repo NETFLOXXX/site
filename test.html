@@ -240,19 +240,19 @@
         /* ─── HERO ─── */
         .hero {
             position: relative;
-            height: 100vh;
+            min-height: 100vh;
             background-size: cover;
             background-position: center;
             transition: background-image 0.8s ease-in-out;
         }
         .hero-overlay {
             background: linear-gradient(to top, #141414 0%, rgba(20,20,20,0.6) 50%, transparent 100%);
-            height: 100%;
+            min-height: 100vh;
             width: 100%;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 0 60px;
+            padding: 80px 60px 40px;
             position: relative;
         }
         .hero-content {
@@ -621,6 +621,25 @@
         .random-popup {
             border: none;
             background: radial-gradient(circle at 50% 0%, rgba(229,9,20,0.12), transparent 60%), #0c0c0c;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            overflow-y: auto;
+            padding: 30px;
+        }
+        @media (max-width: 700px) {
+            .random-popup { justify-content: flex-start; padding: 70px 16px 24px; }
+        }
+        @media (max-width: 600px) {
+            .tv-popup.fullscreen .close-btn { width: 38px; height: 38px; font-size: 30px; top: 14px; right: 14px; }
+        }
+        @media (max-height: 750px) and (max-width: 900px) {
+            .random-popup { padding-top: 54px; padding-bottom: 14px; }
+        }
+        @media (max-height: 600px) and (max-width: 900px) {
+            .random-popup { padding-top: 44px; }
+            .tv-popup.fullscreen .close-btn { width: 32px; height: 32px; font-size: 26px; top: 10px; right: 10px; }
         }
         .random-inner { max-width: 640px; width: 90%; text-align: center; }
         .random-eyebrow {
@@ -636,7 +655,7 @@
             text-transform: uppercase;
             padding: 6px 16px;
             border-radius: 999px;
-            margin-bottom: 22px;
+            margin-bottom: clamp(10px, 2.5vh, 22px);
         }
         .random-dice {
             font-size: 3.6rem;
@@ -652,12 +671,12 @@
         }
         .random-title {
             font-family: 'Bebas Neue', sans-serif;
-            font-size: 2.6rem;
+            font-size: clamp(1.5rem, 5.5vh, 2.6rem);
             letter-spacing: 1px;
             color: #fff;
-            margin-bottom: 10px;
+            margin-bottom: clamp(6px, 1.2vh, 10px);
         }
-        .random-subtitle { color: #999; font-size: 15px; margin-bottom: 36px; }
+        .random-subtitle { color: #999; font-size: clamp(12.5px, 2.6vh, 15px); margin-bottom: clamp(12px, 3vh, 36px); line-height: 1.4; }
 
         /* ─── CARTES DE CHOIX (Films / Séries / Surprise) ─── */
         .choice-grid { display: flex; flex-direction: column; gap: 14px; }
@@ -702,20 +721,26 @@
         .choice-card.highlight .choice-arrow { color: white; }
 
         /* ─── SÉLECTION DE GENRES ─── */
-        .genre-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 30px; }
+        .genre-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: clamp(6px, 1.6vh, 10px);
+            margin-bottom: clamp(14px, 3vh, 30px);
+        }
         .genre-chip {
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: clamp(8px, 2vw, 12px);
+            min-width: 0;
             background: #171717;
             color: #ddd;
-            padding: 14px 18px;
+            padding: clamp(8px, 1.6vh, 14px) clamp(10px, 3vw, 18px);
             border: 1px solid #2a2a2a;
             border-radius: 10px;
             font-family: 'Montserrat', sans-serif;
-            font-size: 0.94rem;
+            font-size: clamp(0.76rem, 2.6vw, 0.94rem);
             font-weight: 500;
-            line-height: 1;
+            line-height: 1.15;
             cursor: pointer;
             transition: all 0.2s ease;
             user-select: none;
@@ -728,7 +753,7 @@
             pointer-events: none;
         }
         .chip-box {
-            width: 19px; height: 19px;
+            width: clamp(16px, 3.6vw, 19px); height: clamp(16px, 3.6vw, 19px);
             flex-shrink: 0;
             border: 2px solid #555;
             border-radius: 5px;
@@ -746,7 +771,7 @@
             transition: transform 0.15s ease;
             margin-top: -2px;
         }
-        .chip-label { display: block; }
+        .chip-label { display: block; min-width: 0; overflow-wrap: break-word; }
         .genre-chip:has(input:checked) {
             border-color: #e50914;
             background: rgba(229,9,20,0.1);
@@ -754,13 +779,13 @@
         }
         .genre-chip:has(input:checked) .chip-box { background: #e50914; border-color: #e50914; }
         .genre-chip:has(input:checked) .chip-box::after { transform: rotate(45deg) scale(1); }
-        .random-actions { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
+        .random-actions { display: flex; gap: clamp(8px, 2vh, 14px); justify-content: center; flex-wrap: wrap; }
         .random-actions .btn {
-            padding: 15px 32px;
+            padding: clamp(10px, 1.8vh, 15px) clamp(18px, 5vw, 32px);
             border-radius: 999px;
             font-family: 'Montserrat', sans-serif;
             font-weight: 600;
-            font-size: 0.95rem;
+            font-size: clamp(0.82rem, 2.6vw, 0.95rem);
             letter-spacing: 0.2px;
             display: inline-flex;
             align-items: center;
@@ -992,8 +1017,8 @@
         }
         .roulette-result.visible { opacity: 1; transform: translateY(0); }
         .result-poster {
-            width: clamp(110px, 22vw, 140px);
-            height: clamp(165px, 33vw, 210px);
+            width: clamp(120px, 24vw, 170px);
+            height: clamp(180px, 36vw, 255px);
             flex-shrink: 0;
             border-radius: 10px;
             background-color: #2a2a2a;
@@ -1004,7 +1029,7 @@
         .result-info { flex: 1; min-width: 0; display: flex; flex-direction: column; }
         .result-info h3 {
             font-family: 'Bebas Neue', sans-serif;
-            font-size: clamp(1.4rem, 4.5vw, 2rem);
+            font-size: clamp(1.5rem, 5vw, 2.5rem);
             letter-spacing: 0.5px;
             color: #fff;
             margin-bottom: 12px;
@@ -1030,7 +1055,7 @@
         .result-overview {
             color: #a8a8a8;
             line-height: 1.65;
-            font-size: 0.9rem;
+            font-size: clamp(0.9rem, 2vw, 1.02rem);
             margin-bottom: clamp(14px, 3.5vw, 22px);
             display: -webkit-box;
             -webkit-line-clamp: 3;
@@ -1069,7 +1094,7 @@
         }
         /* Écrans courts (portrait réduit, tablettes en mode paysage bas) : on compacte
            verticalement pour que tout tienne sans avoir besoin de scroller. */
-        @media (max-height: 820px) {
+        @media (max-height: 820px) and (max-width: 900px) {
             .roulette-popup { padding-top: 24px; padding-bottom: 24px; }
             .roulette-header { margin-bottom: 14px; }
             .roulette-wrap { padding: clamp(10px, 2.5vh, 20px) 0; }
@@ -1081,11 +1106,11 @@
             .result-meta { margin-bottom: 10px; }
             .result-overview { -webkit-line-clamp: 2; margin-bottom: 12px; }
         }
-        @media (max-height: 650px) {
+        @media (max-height: 650px) and (max-width: 900px) {
             .roulette-popup { padding-top: 16px; }
             .dice-loading { padding: 24px 0; }
             .result-poster { width: clamp(90px, 16vh, 120px); height: clamp(135px, 24vh, 180px); }
-            .result-overview { display: none; }
+            .result-overview { -webkit-line-clamp: 1; margin-bottom: 8px; }
         }
 
         /* ─── ÉCRAN DE CHARGEMENT DU TIRAGE ─── */
@@ -1262,7 +1287,7 @@
             .hero-title { font-size: 36px; }
             .hero-description { font-size: 15.5px; }
             .hero-poster { width: 190px; }
-            .hero-overlay { padding: 0 32px; }
+            .hero-overlay { padding: 76px 32px 36px; }
         }
         @media (max-width: 650px) {
             .logo { display: none; }
@@ -1273,18 +1298,18 @@
             .search-container { width: 100%; height: 44px; padding: 5px 12px; }
             #search-input { font-size: 13px; height: 34px; padding: 7px 10px; }
             .content { padding: 30px 20px 60px; }
-            .hero { height: 70vh; }
+            .hero { min-height: 70vh; }
             .hero-title { font-size: 28px; }
             .hero-description { font-size: 14px; }
             .hero-poster { width: 150px; }
-            .hero-overlay { padding: 0 20px; }
+            .hero-overlay { padding: 70px 20px 30px; min-height: 70vh; }
             .tv-popup { padding: 20px; }
             .popup-left img { width: 160px; }
         }
         @media (max-width: 520px) {
             #randomBtn {
-                width: 60px;
-                height: 60px;
+                width: 64px;
+                height: 64px;
                 padding: 0;
                 border-radius: 50%;
                 display: flex;
@@ -1292,14 +1317,14 @@
                 justify-content: center;
             }
             #randomBtn .btn-random-text { display: none; }
-            #randomBtn .btn-dice svg { width: 26px; height: 26px; }
+            #randomBtn .btn-dice svg { width: 28px; height: 28px; }
         }
         @media (max-width: 480px) {
             .hero-poster { display: none; }
             .hero-content { max-width: 100%; }
-            #randomBtn { width: 50px; height: 50px; right: 15px; bottom: 20px; }
-            #randomBtn .btn-dice svg { width: 22px; height: 22px; }
-            #messageBtn { width: 50px; height: 50px; font-size: 22px; left: 15px; bottom: 20px; }
+            #randomBtn { width: 58px; height: 58px; right: 16px; bottom: 22px; }
+            #randomBtn .btn-dice svg { width: 25px; height: 25px; }
+            #messageBtn { width: 58px; height: 58px; font-size: 25px; left: 16px; bottom: 22px; }
         }
     </style>
 </head>
@@ -1932,11 +1957,11 @@ function showMessagePopup() {
     const overlay = document.createElement('div');
     overlay.className = 'tv-overlay fullscreen';
     overlay.innerHTML = `
-        <div class="tv-popup fullscreen random-popup" style="display:flex;flex-direction:column;align-items:center;justify-content:center;">
+        <div class="tv-popup fullscreen random-popup">
             <span class="close-btn">&times;</span>
             <div class="random-inner" style="max-width:520px;">
                 <span class="random-eyebrow">✉️ Contact</span>
-                <h2 class="random-title" style="font-size:2.2rem;">Envoyer un message</h2>
+                <h2 class="random-title" style="font-size:clamp(1.4rem, 4.8vh, 2.2rem);">Envoyer un message</h2>
                 <p class="random-subtitle">Une question, un bug ou une suggestion ? Écrivez-nous, nous vous répondrons à ${currentUser.email}.</p>
                 <textarea id="messageDescription" class="message-textarea" placeholder="Votre message..."></textarea>
                 <button class="btn btn-primary" style="margin-top:18px;width:100%;justify-content:center;" id="sendMessageBtn">Envoyer</button>
@@ -2077,7 +2102,7 @@ function showTypeSelection() {
     const overlay = document.createElement('div');
     overlay.className = 'tv-overlay fullscreen';
     overlay.innerHTML = `
-        <div class="tv-popup fullscreen random-popup" style="display:flex;flex-direction:column;align-items:center;justify-content:center;">
+        <div class="tv-popup fullscreen random-popup">
             <span class="close-btn">&times;</span>
             <div class="random-inner">
                 <span class="random-eyebrow">🎲 Sélection surprise</span>
@@ -2125,12 +2150,12 @@ function showGenreSelection(contentType, preSelected = []) {
     const overlay = document.createElement('div');
     overlay.className = 'tv-overlay fullscreen';
     overlay.innerHTML = `
-        <div class="tv-popup fullscreen random-popup" style="display:flex;flex-direction:column;align-items:center;justify-content:center;">
+        <div class="tv-popup fullscreen random-popup">
             <span class="close-btn">&times;</span>
             <div class="random-inner" style="max-width:640px;">
                 <span class="random-eyebrow">${contentType === 'movie' ? '🎬 Films' : '📺 Séries'}</span>
-                <h2 class="random-title" style="font-size:2.2rem;">Choisissez vos genres</h2>
-                <p class="random-subtitle" style="margin-bottom:28px;">Sélectionnez un ou plusieurs genres, ou laissez-nous choisir</p>
+                <h2 class="random-title" style="font-size:clamp(1.4rem, 4.8vh, 2.2rem);">Choisissez vos genres</h2>
+                <p class="random-subtitle" style="margin-bottom:clamp(12px, 3vh, 28px);">Sélectionnez un ou plusieurs genres, ou laissez-nous choisir</p>
                 <div class="genre-grid">
                     ${genres.map(g => `
                         <label class="genre-chip">
