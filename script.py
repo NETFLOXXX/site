@@ -6,6 +6,7 @@ from datetime import datetime, timezone
 MOVIX_URL = "https://t.me/s/movix_site"
 STREAMFLIX_URL = "https://t.me/s/streamflixoff"
 KWEFLIX_CONFIG_URL = "https://kweflix.com/config.js?v=4"
+CINEPULSE_CONFIG_URL = "https://cinepulse.wiki/site.js?v=7"
 
 MOVIX_PATTERN = r'(https?://[^\s"\'<]*movix[^\s"\'<]*|\bmovix\.[a-z]{2,10}\b)'
 GENERIC_PATTERN = r'(https?://[^\s"\'<]+|\b[a-z0-9-]+\.[a-z]{2,10}\b)'
@@ -79,11 +80,39 @@ def get_kweflix_url():
     return None
 
 
+def get_cinepulse_url():
+    """
+    CinePulse affiche son domaine actif directement dans site.js
+    sous la forme : const SITE_DOMAIN = "domaine.tld";
+    """
+    try:
+        resp = requests.get(
+            CINEPULSE_CONFIG_URL,
+            headers={"User-Agent": "Mozilla/5.0"},
+            timeout=10
+        )
+        resp.raise_for_status()
+        text = resp.text
+
+        domain_match = re.search(
+            r'const\s+SITE_DOMAIN\s*=\s*["\']([^"\']+)["\']',
+            text
+        )
+
+        if domain_match:
+            return normalize_https(domain_match.group(1))
+
+    except Exception as e:
+        print(f"Erreur CinePulse: {e}")
+    return None
+
+
 def main():
     data = {
         "movix_url": get_movix_url(),
         "streamflix_url": get_streamflix_bio_url(),
         "kweflix_url": get_kweflix_url(),
+        "cinepulse_url": get_cinepulse_url(),
         "updated_at": datetime.now(timezone.utc).isoformat()
     }
     with open("latest.json", "w", encoding="utf-8") as f:
