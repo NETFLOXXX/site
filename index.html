@@ -1511,6 +1511,7 @@ const KNOWN_HOSTS = [
   ['jessicayeahcatch.com','Jessicayeahcatch'],
   ['1embed.cc','1embed'],
   ['vidking.net','Vidking'],
+  ['peachify.top','Peachify'],
   ['viduki.net','Viduki'],
   ['videasy.to','Videasy'],
   ['filmu.in','Filmu'],
@@ -2059,7 +2060,19 @@ async function fetchTMDBSources(id, type, season, episode, allowSeriesFallback=f
       throw new Error(preferredLang === 'fr' ? 'Aucun lien vidéo exploitable trouvé.' : 'No usable video link found.');
     }
 
-    const processed = entries.map(buildSourceMeta);
+    let processed = entries.map(buildSourceMeta)
+      .filter(s => !(s.hostname || '').toLowerCase().includes('lecteurvideo.com'));
+
+    // Nouvelles sources directes (Vidzy / Uqload, flux m3u8) via le nouveau Cloudflare
+    // Worker "code-exe" : ce ne sont PAS des embeds, on les place donc dans l'onglet
+    // "Lecteur NETFLOX" (comme les autres flux directs) — VF -> onglet français,
+    // VO/VOSTFR -> onglet anglais, dans l'ordre Vidzy puis Uqload puis les autres.
+    try {
+      const codeExeSources = await fetchCodeExeSources(id, type, season, episode);
+      processed.push(...codeExeSources);
+    } catch (e) {
+      console.error('Sources directes code-exe indisponibles:', e);
+    }
 
     // Nouvelle source VO (1embed) ajoutée manuellement dans l'onglet Anglais / Autres lecteurs.
     const oneEmbedUrl = type === 'tv'
@@ -2107,6 +2120,18 @@ async function fetchTMDBSources(id, type, season, episode, allowSeriesFallback=f
       isDirect: false,
       hostname: 'filmu.in',
       known: matchKnownHost('filmu.in')
+    });
+
+    // Nouvelle source VO (Peachify) ajoutée manuellement dans l'onglet Anglais / Autres lecteurs.
+    const peachifyUrl = type === 'tv'
+      ? `https://peachify.top/embed/tv/${encodeURIComponent(id)}/${encodeURIComponent(season)}/${encodeURIComponent(episode)}?accent=E50914`
+      : `https://peachify.top/embed/movie/${encodeURIComponent(id)}`;
+    processed.push({
+      url: peachifyUrl,
+      lang: 'en',
+      isDirect: false,
+      hostname: 'peachify.top',
+      known: matchKnownHost('peachify.top')
     });
 
     // Nouvelle source VO (Viduki) — 4 serveurs — ajoutée manuellement dans l'onglet Anglais / Autres lecteurs.
@@ -2255,6 +2280,65 @@ function isDualAudioSource(url) {
     const h = new URL(url).hostname.toLowerCase();
     return DUAL_AUDIO_HOSTS.some(d => h.includes(d));
   } catch (e) { return false; }
+}
+
+// ── Nouvelles sources directes Vidzy / Uqload (m3u8) via le nouveau Cloudflare Worker ──
+// Endpoint racine avec query params : ?id=...&type=movie  ou  ?id=...&type=tv&season=...&episode=...
+// Réponse attendue : { vo: [{url,type,cached}...], vf: [...], vostfr: [...] }
+// Ce sont des flux m3u8 directs (pas des embeds) : vf -> onglet NETFLOX français,
+// vo/vostfr -> onglet NETFLOX anglais, triés Vidzy puis Uqload/Oqload puis les autres.
+const CODE_EXE_API_BASE = 'https://netfloxxx.code-exe-67.workers.dev';
+const CODE_EXE_HOST_ORDER = ['vidzy.cc', 'uqload', 'oqload'];
+
+function codeExeHostRank(url) {
+  let h = '';
+  try { h = new URL(url).hostname.toLowerCase(); } catch (e) {}
+  for (let i = 0; i < CODE_EXE_HOST_ORDER.length; i++) {
+    if (h.includes(CODE_EXE_HOST_ORDER[i])) return i;
+  }
+  return CODE_EXE_HOST_ORDER.length;
+}
+
+async function fetchCodeExeSources(id, type, season, episode) {
+  const qs = type === 'tv'
+    ? `?id=${encodeURIComponent(id)}&type=tv&season=${encodeURIComponent(season)}&episode=${encodeURIComponent(episode)}`
+    : `?id=${encodeURIComponent(id)}&type=movie`;
+
+  try {
+    const response = await fetch(`${CODE_EXE_API_BASE}/${qs}`, {
+      method: 'GET',
+      headers: { 'Accept': 'application/json,text/plain,*/*' }
+    });
+    if (!response.ok) return [];
+
+    let data;
+    try { data = await response.json(); } catch (e) { return []; }
+    if (!data || typeof data !== 'object') return [];
+
+    const out = [];
+    const pushGroup = (list, lang) => {
+      if (!Array.isArray(list)) return;
+      list
+        .slice()
+        .sort((a, b) => codeExeHostRank(a && a.url) - codeExeHostRank(b && b.url))
+        .forEach(item => {
+          const url = item && item.url;
+          if (!url || typeof url !== 'string') return;
+          let hostname = '';
+          try { hostname = new URL(url).hostname.replace(/^www\./, ''); } catch (e) {}
+          out.push({ url, lang, isDirect: true, hostname, known: null });
+        });
+    };
+
+    pushGroup(data.vf, 'fr');
+    pushGroup(data.vo, 'en');
+    pushGroup(data.vostfr, 'en');
+
+    return out;
+  } catch (e) {
+    console.error('fetchCodeExeSources error:', e);
+    return [];
+  }
 }
 
 // ── Nouvelle source directe VO (1embed.cc : token + proxy_m3u8) ──
@@ -3367,7 +3451,45 @@ document.getElementById('bottom-bar').addEventListener('mouseleave', () => {
 
 pw.addEventListener('mousemove', showCtrls);
 pw.addEventListener('touchstart', () => { if (pw.classList.contains('cv')) hideCtrls(); else showCtrls(); }, {passive:true});
-video.addEventListener('click', togglePlay);
+
+// ── CLIC SIMPLE = afficher/masquer les contrôles (pas play/pause) ──
+// ── DOUBLE CLIC = zone gauche -10s / zone centre play-pause / zone droite +10s ──
+let videoClickTimer = null;
+const VIDEO_CLICK_DELAY = 250;
+
+function forceToggleCtrls() {
+  if (pw.classList.contains('cv')) {
+    clearTimeout(hideTimer);
+    pw.classList.remove('cv');
+    pw.style.cursor = 'none';
+  } else {
+    showCtrls();
+  }
+}
+
+video.addEventListener('click', () => {
+  if (videoClickTimer) return; // 2e clic d'un double-clic : on ignore, dblclick s'en charge
+  videoClickTimer = setTimeout(() => {
+    videoClickTimer = null;
+    forceToggleCtrls();
+  }, VIDEO_CLICK_DELAY);
+});
+
+video.addEventListener('dblclick', e => {
+  clearTimeout(videoClickTimer);
+  videoClickTimer = null;
+  const rect = video.getBoundingClientRect();
+  const x = e.clientX - rect.left;
+  const third = rect.width / 3;
+  if (x < third) {
+    seekFlash(-10);
+  } else if (x > third * 2) {
+    seekFlash(10);
+  } else {
+    togglePlay();
+  }
+  showCtrls();
+});
 video.addEventListener('pause', () => {
   clearTimeout(hideTimer);
   // Only show controls if pause was NOT triggered by keyboard
