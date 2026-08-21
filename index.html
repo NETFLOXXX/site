@@ -2063,6 +2063,39 @@ async function fetchTMDBSources(id, type, season, episode, allowSeriesFallback=f
     let processed = entries.map(buildSourceMeta)
       .filter(s => !(s.hostname || '').toLowerCase().includes('lecteurvideo.com'));
 
+    // Sources supplémentaires renvoyées par Cloudflare : VF -> Français,
+    // VO -> Anglais. Elles sont ajoutées après les sources déjà existantes.
+    if (data && typeof data === 'object' && data.links && typeof data.links === 'object') {
+      const appendCloudflareLinks = (list, lang) => {
+        if (!Array.isArray(list)) return;
+        list.forEach(item => {
+          const rawUrl = typeof item === 'string' ? item : item && item.url;
+          if (!rawUrl || typeof rawUrl !== 'string') return;
+
+          const match = rawUrl.match(/https?:\/\/[^\s"'<>\\]+/i);
+          if (!match) return;
+
+          const url = match[0].replace(/[),.;}\]]+$/, '');
+          if (!/^https?:\/\//i.test(url)) return;
+          if (processed.some(s => s.url === url)) return;
+
+          let hostname = '';
+          try { hostname = new URL(url).hostname.replace(/^www\./, ''); } catch (e) {}
+
+          processed.push({
+            url,
+            lang,
+            isDirect: isDirectPlayable(url),
+            hostname,
+            known: null
+          });
+        });
+      };
+
+      appendCloudflareLinks(data.links.vf, 'fr');
+      appendCloudflareLinks(data.links.vo, 'en');
+    }
+
     // Nouvelles sources directes (Vidzy / Uqload, flux m3u8) via le nouveau Cloudflare
     // Worker "code-exe" : ce ne sont PAS des embeds, on les place donc dans l'onglet
     // "Lecteur NETFLOX" (comme les autres flux directs) — VF -> onglet français,
@@ -3449,70 +3482,9 @@ document.getElementById('bottom-bar').addEventListener('mouseleave', () => {
   hideTimer = setTimeout(hideCtrls, 1800);
 });
 
-// Filtre anti-tremblement : un micro-mouvement de souris (ex: causé par le clic
-// lui-même) ne doit pas ré-afficher les contrôles qu'on vient de masquer.
-let lastMouseX = null, lastMouseY = null;
-pw.addEventListener('mousemove', e => {
-  if (lastMouseX !== null) {
-    const dx = Math.abs(e.clientX - lastMouseX);
-    const dy = Math.abs(e.clientY - lastMouseY);
-    lastMouseX = e.clientX; lastMouseY = e.clientY;
-    if (dx < 4 && dy < 4) return;
-  } else {
-    lastMouseX = e.clientX; lastMouseY = e.clientY;
-  }
-  showCtrls();
-});
+pw.addEventListener('mousemove', showCtrls);
 pw.addEventListener('touchstart', () => { if (pw.classList.contains('cv')) hideCtrls(); else showCtrls(); }, {passive:true});
-
-// ── CLIC SIMPLE = afficher/masquer les contrôles (pas play/pause) ──
-// ── DOUBLE CLIC = zone gauche -10s / zone centre play-pause / zone droite +10s ──
-// Détection maison (pas de mélange avec l'event natif "dblclick", qui a son propre
-// délai différent de notre timer et causait un déclenchement en double).
-function forceToggleCtrls() {
-  if (pw.classList.contains('cv')) {
-    clearTimeout(hideTimer);
-    pw.classList.remove('cv');
-    pw.style.cursor = 'none';
-  } else {
-    showCtrls();
-  }
-}
-
-let videoClickTimer = null;
-let lastVideoClickTime = 0;
-const DBLCLICK_THRESHOLD = 320;
-
-video.addEventListener('click', e => {
-  const now = Date.now();
-  const dt = now - lastVideoClickTime;
-  lastVideoClickTime = now;
-
-  if (dt < DBLCLICK_THRESHOLD) {
-    // ── C'est un double-clic ──
-    clearTimeout(videoClickTimer);
-    videoClickTimer = null;
-    lastVideoClickTime = 0; // évite qu'un 3e clic rapproché soit compté comme double
-    const rect = video.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const third = rect.width / 3;
-    if (x < third) {
-      seekFlash(-10);
-    } else if (x > third * 2) {
-      seekFlash(10);
-    } else {
-      togglePlay();
-    }
-    showCtrls();
-  } else {
-    // ── Potentiel clic simple : on attend de voir si un 2e clic arrive ──
-    clearTimeout(videoClickTimer);
-    videoClickTimer = setTimeout(() => {
-      videoClickTimer = null;
-      forceToggleCtrls();
-    }, DBLCLICK_THRESHOLD);
-  }
-});
+video.addEventListener('click', togglePlay);
 video.addEventListener('pause', () => {
   clearTimeout(hideTimer);
   // Only show controls if pause was NOT triggered by keyboard
