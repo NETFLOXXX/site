@@ -3449,14 +3449,26 @@ document.getElementById('bottom-bar').addEventListener('mouseleave', () => {
   hideTimer = setTimeout(hideCtrls, 1800);
 });
 
-pw.addEventListener('mousemove', showCtrls);
+// Filtre anti-tremblement : un micro-mouvement de souris (ex: causé par le clic
+// lui-même) ne doit pas ré-afficher les contrôles qu'on vient de masquer.
+let lastMouseX = null, lastMouseY = null;
+pw.addEventListener('mousemove', e => {
+  if (lastMouseX !== null) {
+    const dx = Math.abs(e.clientX - lastMouseX);
+    const dy = Math.abs(e.clientY - lastMouseY);
+    lastMouseX = e.clientX; lastMouseY = e.clientY;
+    if (dx < 4 && dy < 4) return;
+  } else {
+    lastMouseX = e.clientX; lastMouseY = e.clientY;
+  }
+  showCtrls();
+});
 pw.addEventListener('touchstart', () => { if (pw.classList.contains('cv')) hideCtrls(); else showCtrls(); }, {passive:true});
 
 // ── CLIC SIMPLE = afficher/masquer les contrôles (pas play/pause) ──
 // ── DOUBLE CLIC = zone gauche -10s / zone centre play-pause / zone droite +10s ──
-let videoClickTimer = null;
-const VIDEO_CLICK_DELAY = 250;
-
+// Détection maison (pas de mélange avec l'event natif "dblclick", qui a son propre
+// délai différent de notre timer et causait un déclenchement en double).
 function forceToggleCtrls() {
   if (pw.classList.contains('cv')) {
     clearTimeout(hideTimer);
@@ -3467,28 +3479,39 @@ function forceToggleCtrls() {
   }
 }
 
-video.addEventListener('click', () => {
-  if (videoClickTimer) return; // 2e clic d'un double-clic : on ignore, dblclick s'en charge
-  videoClickTimer = setTimeout(() => {
-    videoClickTimer = null;
-    forceToggleCtrls();
-  }, VIDEO_CLICK_DELAY);
-});
+let videoClickTimer = null;
+let lastVideoClickTime = 0;
+const DBLCLICK_THRESHOLD = 320;
 
-video.addEventListener('dblclick', e => {
-  clearTimeout(videoClickTimer);
-  videoClickTimer = null;
-  const rect = video.getBoundingClientRect();
-  const x = e.clientX - rect.left;
-  const third = rect.width / 3;
-  if (x < third) {
-    seekFlash(-10);
-  } else if (x > third * 2) {
-    seekFlash(10);
+video.addEventListener('click', e => {
+  const now = Date.now();
+  const dt = now - lastVideoClickTime;
+  lastVideoClickTime = now;
+
+  if (dt < DBLCLICK_THRESHOLD) {
+    // ── C'est un double-clic ──
+    clearTimeout(videoClickTimer);
+    videoClickTimer = null;
+    lastVideoClickTime = 0; // évite qu'un 3e clic rapproché soit compté comme double
+    const rect = video.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const third = rect.width / 3;
+    if (x < third) {
+      seekFlash(-10);
+    } else if (x > third * 2) {
+      seekFlash(10);
+    } else {
+      togglePlay();
+    }
+    showCtrls();
   } else {
-    togglePlay();
+    // ── Potentiel clic simple : on attend de voir si un 2e clic arrive ──
+    clearTimeout(videoClickTimer);
+    videoClickTimer = setTimeout(() => {
+      videoClickTimer = null;
+      forceToggleCtrls();
+    }, DBLCLICK_THRESHOLD);
   }
-  showCtrls();
 });
 video.addEventListener('pause', () => {
   clearTimeout(hideTimer);
