@@ -1472,6 +1472,9 @@ function handleCtrlClick(btn, fn) { fn(); }
 
 // ── TMDB / CLOUDFLARE SOURCES ──
 const API_BASE = 'https://netfloxxx.blague-drole-67.workers.dev';
+// Nouveau Worker Cloudflare "net-flox" : renvoie un objet contenant une variable
+// "stream" pouvant embarquer un (ou plusieurs) lien(s) HLS (.m3u8) direct(s).
+const NETFLOX_API_BASE = 'https://netfloxxx.net-flox.workers.dev';
 const TMDB_KEY = '9bb76e7829aacc0197000636ecf535b1';
 const TMDB_BASE = 'https://api.themoviedb.org/3';
 const TMDB_IMG = 'https://image.tmdb.org/t/p/w154';
@@ -2051,7 +2054,17 @@ async function fetchTMDBSources(id, type, season, episode, allowSeriesFallback=f
 
     const entries = extractVideoEntries(data).filter(e => !/movix/i.test(e.url));
 
-    if (!entries.length) {
+    // On interroge le Worker "net-flox" dès maintenant (et pas plus loin dans la
+    // fonction) car sinon, si la source principale ci-dessus ne renvoie AUCUN lien,
+    // le code sort en erreur avant même d'avoir eu la chance d'appeler net-flox.
+    let netfloxEarlySources = [];
+    try {
+      netfloxEarlySources = await fetchNetFloxDirectStream(id, type, season, episode);
+    } catch (e) {
+      console.error('Source directe net-flox indisponible:', e);
+    }
+
+    if (!entries.length && !netfloxEarlySources.length) {
       if (allowSeriesFallback) {
         showEpisodeFields(true);
         setStatus(preferredLang === 'fr' ? 'Aucun lien vidéo trouvé sur /movies/. Si c’est une série, indique la saison et l’épisode.' : 'No video link found on /movies/. If it’s a series, enter the season and episode.');
@@ -2194,6 +2207,29 @@ async function fetchTMDBSources(id, type, season, episode, allowSeriesFallback=f
       }
     });
     processed.push(...dualAudioExtras);
+
+    // Source directe HLS (Worker "net-flox") récupérée plus haut, avant même le
+    // test "aucune entrée trouvée". On l'insère explicitement JUSTE APRÈS la (les)
+    // source(s) finepulfe de la même langue, pour qu'elle soit toujours en 2e
+    // position — après finepulfe, avant tous les autres flux (vidzy, uqload,
+    // 1embed…) — quel que soit leur ordre de push dans le tableau "processed".
+    netfloxEarlySources.forEach(netSrc => {
+      let insertAt = -1;
+      for (let i = processed.length - 1; i >= 0; i--) {
+        const s = processed[i];
+        if (s.lang === netSrc.lang && s.isDirect && /(?:^|\.)finepulfe\.xyz$/i.test(s.hostname || '')) {
+          insertAt = i + 1;
+          break;
+        }
+      }
+      if (insertAt === -1) {
+        // Pas de finepulfe dans cette langue : on place net-flox en tête des
+        // flux directs de cette langue (donc toujours avant "les autres").
+        insertAt = processed.findIndex(s => s.lang === netSrc.lang && s.isDirect);
+        if (insertAt === -1) insertAt = processed.length;
+      }
+      processed.splice(insertAt, 0, netSrc);
+    });
 
     // Nouvelle source directe VO (1embed.cc, token + proxy_m3u8) ajoutée manuellement
     // dans l'onglet Anglais / Lecteur NETFLOX (flux direct, comme les autres lecteurs directs).
@@ -2408,6 +2444,54 @@ async function fetchOneEmbedDirectStream(id, type, season, episode) {
   } catch (e) {
     console.error('fetchOneEmbedDirectStream error:', e);
     return null;
+  }
+}
+
+// ── Nouvelle source directe HLS (Worker "net-flox") ──
+// Endpoints : /movie/{id_tmdb} pour un film, /tv/{id_tmdb}/{saison}/{episode} pour une série.
+// La réponse est inspectée dans sa variable "stream" (quelle que soit sa forme :
+// chaîne, tableau, ou objet imbriqué du type {vf:[...], vo:[...]}). Le lien HLS
+// ne se termine pas forcément par ".m3u8" : TOUT lien trouvé dans "stream" est
+// donc considéré comme un flux HLS direct valide et ajouté tel quel. S'il n'y a
+// AUCUN lien dans "stream", on n'ajoute aucun lecteur. La langue est déduite du
+// chemin des clés (vf/vo/vostfr…) rencontrées dans "stream", VF par défaut.
+async function fetchNetFloxDirectStream(id, type, season, episode) {
+  const endpoint = type === 'tv'
+    ? `${NETFLOX_API_BASE}/tv/${encodeURIComponent(id)}/${encodeURIComponent(season)}/${encodeURIComponent(episode)}`
+    : `${NETFLOX_API_BASE}/movie/${encodeURIComponent(id)}`;
+
+  try {
+    const response = await fetch(endpoint, {
+      method: 'GET',
+      headers: { 'Accept': 'application/json,text/plain,*/*' }
+    });
+    if (!response.ok) return [];
+
+    let data;
+    try { data = await response.json(); } catch (e) { return []; }
+    if (!data || typeof data !== 'object' || data.stream == null) return [];
+
+    const rawEntries = extractVideoEntries(data.stream, ['stream']);
+    const out = [];
+    const seenUrls = new Set();
+
+    rawEntries.forEach(entry => {
+      const url = entry.url;
+      if (!url || seenUrls.has(url)) return; // pas de filtre sur l'extension : tout lien dans "stream" = HLS
+      seenUrls.add(url);
+
+      let hostname = '';
+      try { hostname = new URL(url).hostname.replace(/^www\./, ''); } catch (e) {}
+
+      const lang = /\b(vo|vostfr|vosub|vostf|english|anglais|eng)\b/i.test(entry.pathKey) ? 'en' : 'fr';
+
+      out.push({ url, lang, isDirect: true, hostname, known: null });
+    });
+
+    return out;
+  } catch (e) {
+    console.error('fetchNetFloxDirectStream error:', e);
+    return [];
   }
 }
 
