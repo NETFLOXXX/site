@@ -43,12 +43,47 @@
   }
   .chip:hover { background:rgba(220,38,38,0.15); border-color:var(--red); color:#fff; }
 
+  /* ── GATHER SCREEN — écran stylé affiché pendant que toutes les requêtes
+     (TMDB, recherche des sources, lecteurs directs…) sont en cours. Il masque
+     complètement le lecteur tant que rien n'est prêt, puis se dissout avec une
+     animation dès que tout est chargé pour révéler le lecteur en douceur. ── */
+  #gather-screen {
+    display:none; position:fixed; inset:0; z-index:900;
+    background:radial-gradient(circle at 50% 42%, rgba(220,38,38,0.08), transparent 60%), #0a0a0a;
+    flex-direction:column; align-items:center; justify-content:center; gap:26px;
+    opacity:1; transform:scale(1);
+    transition:opacity 0.45s ease, transform 0.45s ease;
+  }
+  #gather-screen.show { display:flex; }
+  #gather-screen.hide { opacity:0; transform:scale(1.04); pointer-events:none; }
+  /* État de départ juste avant l'entrée en scène : le fond reste totalement opaque
+     (jamais de lecteur visible en transparence) — seule l'échelle anime, pas l'opacité. */
+  #gather-screen.enter { opacity:1; transform:scale(1.08); }
+  #gather-ring {
+    width:60px; height:60px; border-radius:50%;
+    border:3px solid rgba(255,255,255,0.12); border-top-color:var(--red-h);
+    animation:spin 0.85s linear infinite;
+  }
+  #gather-screen .gather-text {
+    font-family:'Outfit',sans-serif; font-size:1.1rem; font-weight:600; color:#fff;
+    text-align:center; letter-spacing:-0.01em;
+  }
+  #gather-screen .gather-sub {
+    font-family:'Outfit',sans-serif; font-size:0.85rem; color:rgba(255,255,255,0.45);
+    text-align:center; max-width:320px; min-height:1.2em;
+    transition:opacity 0.25s ease;
+  }
+  #gather-screen .gather-sub.fade { opacity:0; }
+
   /* ── PLAYER ── */
   #player-wrap {
     display:none; width:100vw; height:100vh; max-width:none; position:fixed; inset:0;
     border-radius:0; overflow:hidden; background:#000;
     box-shadow:none; z-index:500;
+    opacity:1; transform:scale(1); transition:opacity 0.5s ease, transform 0.5s ease;
   }
+  /* État transitoire juste avant la révélation du lecteur, une fois le gather-screen dissous */
+  #player-wrap.pw-enter { opacity:0; transform:scale(1.015); }
 
   /* VIDEO — grayscale instantané à la pause */
   video { width:100%; height:100%; object-fit:contain; display:block; }
@@ -142,6 +177,7 @@
   #up-next-card {
     position:absolute; right:22px; bottom:22px; z-index:65;
     width:380px; max-width:calc(100% - 44px);
+    max-height:calc(100vh - 40px); overflow:visible;
     display:flex; gap:14px; padding:16px;
     background:rgba(18,18,18,0.96); backdrop-filter:blur(12px);
     border:1px solid rgba(255,255,255,0.08); border-radius:14px;
@@ -160,7 +196,8 @@
     background:#222; display:flex; align-items:center; justify-content:center; color:#555;
   }
   #up-next-card .up-next-poster img { width:100%; height:100%; object-fit:cover; display:block; }
-  #up-next-card .up-next-body { flex:1; min-width:0; display:flex; flex-direction:column; }
+  #up-next-card .up-next-body { flex:1; min-width:0; display:flex; flex-direction:column; min-height:0; }
+  #up-next-card .up-next-scroll { min-height:0; }
   #up-next-card .up-next-label { font-size:0.78rem; font-weight:700; color:var(--red-h); text-transform:uppercase; letter-spacing:0.02em; }
   #up-next-card .up-next-title {
     font-size:1.05rem; font-weight:700; margin-top:4px; line-height:1.25;
@@ -170,7 +207,18 @@
     font-size:0.82rem; color:rgba(255,255,255,0.62); line-height:1.4; margin-top:8px;
     display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;
   }
-  #up-next-card .up-next-desc.expanded { -webkit-line-clamp:unset; overflow:visible; }
+  #up-next-card .up-next-desc.expanded { -webkit-line-clamp:unset; display:block; }
+  /* "Plus" : le bloc titre + description défile ensemble dans une hauteur limitée
+     plutôt que de laisser la carte grandir et déborder hors de l'écran. Le poster
+     et les boutons restent fixes ; seul ce bloc (avec le titre) défile. */
+  #up-next-card .up-next-scroll.expanded {
+    max-height:190px; overflow-y:auto; padding-right:8px;
+    overscroll-behavior:contain;
+    scrollbar-width:thin; scrollbar-color:rgba(255,255,255,0.3) transparent;
+  }
+  #up-next-card .up-next-scroll.expanded::-webkit-scrollbar { width:6px; }
+  #up-next-card .up-next-scroll.expanded::-webkit-scrollbar-thumb { background:rgba(255,255,255,0.28); border-radius:3px; }
+  #up-next-card .up-next-scroll.expanded::-webkit-scrollbar-track { background:transparent; }
   #up-next-card .up-next-more {
     align-self:flex-start; margin-top:4px; background:none; border:none; padding:0;
     color:rgba(255,255,255,0.9); font-family:'Outfit',sans-serif; font-size:0.78rem; font-weight:700;
@@ -189,11 +237,12 @@
   #up-next-card .up-next-later { background:rgba(255,255,255,0.14); color:#fff; }
   #up-next-card .up-next-later:hover { background:rgba(255,255,255,0.22); }
   #up-next-card .up-next-close {
-    position:absolute; top:10px; right:10px; width:26px; height:26px; border-radius:50%;
-    background:rgba(255,255,255,0.08); border:none; color:rgba(255,255,255,0.7); cursor:pointer;
+    position:absolute; top:-12px; right:-12px; width:26px; height:26px; border-radius:50%;
+    background:rgba(30,30,30,0.96); border:1px solid rgba(255,255,255,0.12); color:rgba(255,255,255,0.8); cursor:pointer;
     display:flex; align-items:center; justify-content:center; transition:background 0.2s, color 0.2s;
+    box-shadow:0 4px 14px rgba(0,0,0,0.5); z-index:1;
   }
-  #up-next-card .up-next-close:hover { background:rgba(255,255,255,0.18); color:#fff; }
+  #up-next-card .up-next-close:hover { background:rgba(255,255,255,0.18); color:var(--red-h); }
   #up-next-card .up-next-close svg { width:14px; height:14px; }
 
   /* title */
@@ -297,6 +346,7 @@
     display:flex; flex-direction:column; align-items:center; gap:6px;
   }
   #progress-wrap:hover #preview-tip { opacity:1; }
+  #preview-frame { position:relative; width:240px; height:135px; transition:width 0.15s, height 0.15s; }
   #preview-video {
     width:240px; height:135px; border-radius:10px;
     background:#000; display:block; object-fit:cover;
@@ -305,6 +355,16 @@
     transition:width 0.15s, height 0.15s;
   }
   #preview-video.hidden { display:none; }
+  /* Rond qui tourne pendant que l'image de l'instant survolé est en cours de récupération */
+  #preview-spin {
+    position:absolute; inset:0; border-radius:10px;
+    background:rgba(10,10,10,0.55);
+    border:1px solid rgba(255,255,255,0.15);
+    display:flex; align-items:center; justify-content:center;
+    opacity:0; pointer-events:none; transition:opacity 0.15s ease;
+  }
+  #preview-spin.show { opacity:1; }
+  #preview-spin .spin-ring { width:26px; height:26px; border-width:2.5px; }
   #preview-time {
     background:rgba(10,10,10,0.92); color:#fff;
     font-size:0.78rem; font-weight:600; padding:4px 10px; border-radius:6px;
@@ -335,6 +395,28 @@
   #settings-btn.open { color:var(--red-h); }
   #subtitles-btn.open { color:var(--red-h); }
   #download-btn.open { color:var(--red-h); }
+  #watchparty-btn { position:relative; }
+  #watchparty-btn.open { color:var(--red-h); }
+  #watchparty-btn.wp-live { color:#22c55e; }
+  #watchparty-btn.wp-live::after {
+    content:''; position:absolute; top:6px; right:6px; width:8px; height:8px;
+    border-radius:50%; background:#22c55e; box-shadow:0 0 0 2px rgba(0,0,0,0.72);
+    animation:wpPulse 1.6s ease-in-out infinite;
+  }
+  @keyframes wpPulse { 0%,100%{ opacity:1; } 50%{ opacity:0.35; } }
+  .wp-link-row { display:flex; gap:8px; padding:0 20px; margin-top:4px; }
+  .wp-link-row input { flex:1; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12); color:#fff; border-radius:8px; padding:10px 12px; font-size:0.85rem; }
+  .wp-link-row button { background:var(--red); border:none; color:#fff; border-radius:8px; padding:0 14px; font-weight:600; cursor:pointer; font-size:0.85rem; }
+  .wp-link-row button:hover { background:var(--red-h); }
+  .wp-status { padding:16px 20px; color:rgba(255,255,255,0.75); font-size:0.85rem; line-height:1.5; }
+  .wp-status strong { color:#fff; }
+  .wp-dot { display:inline-block; width:8px; height:8px; border-radius:50%; background:#22c55e; margin-right:6px; animation:wpPulse 1.6s ease-in-out infinite; }
+  .wp-action-btn { display:block; margin:14px 20px 0; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.14); color:#fff; border-radius:8px; padding:10px 14px; font-size:0.85rem; font-weight:600; cursor:pointer; text-align:center; }
+  .wp-action-btn:hover { background:rgba(255,255,255,0.14); }
+  .wp-action-btn.wp-danger { border-color:rgba(220,38,38,0.4); color:#f87171; }
+  .wp-action-btn.wp-danger:hover { background:rgba(220,38,38,0.15); }
+  .wp-start-btn { display:block; margin:16px 20px 4px; background:var(--red); border:none; color:#fff; border-radius:8px; padding:12px 16px; font-size:0.9rem; font-weight:700; cursor:pointer; text-align:center; }
+  .wp-start-btn:hover { background:var(--red-h); }
 
   /* volume */
   .volume-wrap { display:flex; align-items:center; gap:6px; }
@@ -857,6 +939,7 @@
     #up-next-card .up-next-poster { width:64px; height:92px; }
     #up-next-card .up-next-title { font-size:0.96rem; }
     #up-next-card .up-next-desc { font-size:0.76rem; }
+    #up-next-card .up-next-scroll.expanded { max-height:38vh; }
     #up-next-card .up-next-actions button { padding:8px 14px; font-size:0.82rem; }
     .ep-thumb { width:88px; height:50px; }
     .ep-thumb.film-thumb { width:52px; height:74px; }
@@ -874,6 +957,7 @@
     .ctrl-btn { padding:7px; }
     .ctrl-btn svg { width:23px; height:23px; }
 
+    #preview-frame { width:150px; height:84px; }
     #preview-video { width:150px; height:84px; }
 
     #vol-slider { width:0; opacity:0; margin-left:-6px; transition:width 0.2s, opacity 0.2s, margin 0.2s; }
@@ -1098,6 +1182,13 @@
   <p id="api-status" style="display:none;margin-top:14px;color:rgba(255,255,255,0.5);font-size:0.82rem;"></p>
 </div>
 
+<!-- GATHER SCREEN -->
+<div id="gather-screen">
+  <div id="gather-ring"></div>
+  <div class="gather-text" id="gather-text">On rassemble le meilleur flux pour toi…</div>
+  <div class="gather-sub" id="gather-sub"></div>
+</div>
+
 <!-- PLAYER -->
 <div id="player-wrap">
   <video id="video" playsinline></video>
@@ -1177,7 +1268,10 @@
       </div>
       <div id="progress-thumb"></div>
       <div id="preview-tip">
-        <video id="preview-video" class="hidden" muted playsinline preload="auto" tabindex="-1"></video>
+        <div id="preview-frame">
+          <video id="preview-video" class="hidden" muted playsinline preload="auto" tabindex="-1"></video>
+          <div id="preview-spin"><div class="spin-ring"></div></div>
+        </div>
         <div id="preview-time">0:00</div>
       </div>
     </div>
@@ -1221,6 +1315,11 @@
         <!-- download -->
         <button class="ctrl-btn" id="download-btn" onclick="handleCtrlClick(this, toggleDownloadPanel)">
           <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M4 19h16"/></svg>
+        </button>
+
+        <!-- watchparty -->
+        <button class="ctrl-btn" id="watchparty-btn" onclick="handleCtrlClick(this, toggleWatchPartyPanel)" title="Watch Party" data-i18n-title="watchparty_btn_title">
+          <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
         </button>
 
         <!-- pip -->
@@ -1366,6 +1465,18 @@
     </div>
   </div>
 
+  <!-- WATCHPARTY SIDEBAR -->
+  <div class="settings-scrim" id="watchparty-scrim" onclick="toggleWatchPartyPanel()"></div>
+  <div class="settings-panel" id="watchparty-panel">
+    <div class="settings-header">
+      <span data-i18n="watchparty_title">Watch Party</span>
+      <button class="settings-close" onclick="toggleWatchPartyPanel()">
+        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="settings-content" id="watchparty-panel-content"></div>
+  </div>
+
   <!-- UP NEXT — épisode/film suivant, affiché automatiquement à 95% de la lecture -->
   <div id="up-next-card">
     <button class="up-next-close" onclick="dismissUpNext()" title="Fermer" data-i18n-title="close_title">
@@ -1375,9 +1486,11 @@
       <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20" rx="2"/><path d="M7 2v20M17 2v20M2 12h20"/></svg>
     </div>
     <div class="up-next-body">
-      <div class="up-next-label" id="up-next-label" data-i18n="up_next_label">À suivre :</div>
-      <div class="up-next-title" id="up-next-title"></div>
-      <p class="up-next-desc" id="up-next-desc"></p>
+      <div class="up-next-scroll" id="up-next-scroll">
+        <div class="up-next-label" id="up-next-label" data-i18n="up_next_label">À suivre :</div>
+        <div class="up-next-title" id="up-next-title"></div>
+        <p class="up-next-desc" id="up-next-desc"></p>
+      </div>
       <button class="up-next-more" id="up-next-more-btn" onclick="toggleUpNextDesc()" data-i18n="btn_more">Plus</button>
       <div class="up-next-actions">
         <button class="up-next-play" onclick="playUpNext()" data-i18n="btn_play">Lecture</button>
@@ -1450,10 +1563,117 @@
   </div>
 </div>
 
+<script type="module">
+  // Firebase — Realtime Database utilisée uniquement pour synchroniser l'état
+  // de lecture (temps courant / pause) entre l'hôte et les invités d'un Watch Party.
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-app.js";
+  import {
+    getDatabase, ref, set, update, remove, onValue, onDisconnect
+  } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-database.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyC1mPAyIe0JyqFq5LlzMMKc942j_A0MobI",
+    authDomain: "watchparty-a7e51.firebaseapp.com",
+    databaseURL: "https://watchparty-a7e51-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "watchparty-a7e51",
+    storageBucket: "watchparty-a7e51.firebasestorage.app",
+    messagingSenderId: "442492109900",
+    appId: "1:442492109900:web:b7cb87b1e67eb27d4ca0e9",
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getDatabase(app);
+
+  // Pont vers le script classique ci-dessous (non-module) qui gère toute la
+  // logique Watch Party.
+  window.wpDB = db;
+  window.wpRef = ref;
+  window.wpSet = set;
+  window.wpUpdate = update;
+  window.wpRemove = remove;
+  window.wpOnValue = onValue;
+  window.wpOnDisconnect = onDisconnect;
+  window.wpFirebaseReady = true;
+  window.dispatchEvent(new Event('wp-firebase-ready'));
+</script>
+
 <script>
 const video = document.getElementById('video');
 const pw = document.getElementById('player-wrap');
 const loadScreen = document.getElementById('load-screen');
+const gatherScreen = document.getElementById('gather-screen');
+
+// ── GATHER SCREEN — affiché pendant que toutes les requêtes (TMDB, sources,
+// lecteurs directs…) sont en cours, à la place du lecteur brut. Dès que tout
+// est prêt, on le dissout avec une animation pour révéler le lecteur.
+let gatherMsgInterval = null;
+function showGatherScreen() {
+  const sub = document.getElementById('gather-sub');
+  const title = document.getElementById('gather-text');
+  const messages = preferredLang === 'fr'
+    ? ['Recherche des sources disponibles…', 'Vérification des lecteurs…', 'Sélection du meilleur flux…', 'Presque prêt…']
+    : ['Looking for available sources…', 'Checking players…', 'Selecting the best stream…', 'Almost there…'];
+  title.textContent = preferredLang === 'fr' ? 'On rassemble le meilleur flux pour toi…' : 'Gathering the best stream for you…';
+
+  clearInterval(gatherMsgInterval);
+  let i = 0;
+  sub.textContent = messages[0];
+  gatherMsgInterval = setInterval(() => {
+    i = (i + 1) % messages.length;
+    sub.classList.add('fade');
+    setTimeout(() => { sub.textContent = messages[i]; sub.classList.remove('fade'); }, 250);
+  }, 1900);
+
+  gatherScreen.classList.remove('hide');
+  gatherScreen.classList.add('show', 'enter');
+  void gatherScreen.offsetWidth; // force reflow pour que la transition démarre bien depuis "enter"
+  requestAnimationFrame(() => {
+    gatherScreen.classList.remove('enter');
+  });
+}
+
+function hideGatherScreen() {
+  clearInterval(gatherMsgInterval);
+  gatherMsgInterval = null;
+  if (!gatherScreen.classList.contains('show')) return;
+  gatherScreen.classList.remove('enter');
+  gatherScreen.classList.add('hide');
+  setTimeout(() => {
+    gatherScreen.classList.remove('show');
+    gatherScreen.classList.remove('hide');
+  }, 480);
+}
+
+// Dissout le gather-screen tout en faisant apparaître le lecteur en fondu :
+// à appeler dès que tout ce qui était en cours de chargement est prêt.
+// Si le gather-screen n'était pas affiché (ex : changement d'épisode dans un
+// lecteur déjà ouvert), on se contente d'afficher le lecteur sans animation
+// de fondu supplémentaire, pour éviter un flash inutile.
+function revealPlayerFromGatherScreen() {
+  const wasGathering = gatherScreen.classList.contains('show');
+  if (wasGathering) {
+    pw.classList.add('pw-enter');
+    pw.style.display = 'block';
+    void pw.offsetWidth; // force reflow pour que la transition parte bien de l'état "pw-enter"
+    hideGatherScreen();
+    requestAnimationFrame(() => {
+      pw.classList.remove('pw-enter');
+    });
+  } else {
+    pw.style.display = 'block';
+  }
+}
+
+// En cas d'erreur pendant la recherche des sources : on retourne à l'écran
+// de saisie plutôt que de laisser l'utilisateur bloqué sur le gather-screen
+// ou sur un lecteur vide.
+function returnToLoadScreenOnError() {
+  hideGatherScreen();
+  pw.classList.remove('pw-enter');
+  pw.style.display = 'none';
+  openBtn.style.display = 'none';
+  loadScreen.style.display = 'block';
+}
 const openBtn = document.getElementById('open-url-btn');
 const timeDsp = document.getElementById('time-display');
 const volSlider = document.getElementById('vol-slider');
@@ -1580,6 +1800,19 @@ const I18N = {
   tab_sub_settings: { fr: 'Réglages', en: 'Settings' },
   download_title: { fr: 'Téléchargement', en: 'Download' },
   no_download_option: { fr: 'Aucune option de téléchargement disponible.', en: 'No download option available.' },
+  watchparty_btn_title: { fr: 'Watch Party', en: 'Watch Party' },
+  watchparty_title: { fr: 'Watch Party', en: 'Watch Party' },
+  watchparty_intro: { fr: 'Regarde ce contenu en même temps que quelqu\'un d\'autre. Tu gardes le contrôle : lecture, pause et avance/recul se synchronisent chez ton invité.', en: 'Watch this together with someone else. You stay in control: play, pause and seeking sync to your guest.' },
+  watchparty_start_btn: { fr: 'Démarrer un Watch Party', en: 'Start a Watch Party' },
+  watchparty_share_hint: { fr: 'Envoie ce lien à ton invité :', en: 'Send this link to your guest:' },
+  watchparty_copy: { fr: 'Copier', en: 'Copy' },
+  watchparty_copied: { fr: 'Copié !', en: 'Copied!' },
+  watchparty_host_live: { fr: '🟢 Watch Party en direct — c\'est toi qui contrôles la lecture.', en: '🟢 Watch Party live — you\'re controlling playback.' },
+  watchparty_end_btn: { fr: 'Terminer le Watch Party', en: 'End Watch Party' },
+  watchparty_guest_status: { fr: 'Tu regardes en Watch Party. Seul l\'hôte peut mettre en pause, avancer ou reculer.', en: 'You\'re in a Watch Party. Only the host can pause, rewind or fast-forward.' },
+  watchparty_leave_btn: { fr: 'Quitter le Watch Party', en: 'Leave Watch Party' },
+  watchparty_locked_hint: { fr: 'Contrôlé par l\'hôte du Watch Party', en: 'Controlled by the Watch Party host' },
+  watchparty_ended: { fr: 'L\'hôte a terminé le Watch Party.', en: 'The host ended the Watch Party.' },
   close_title: { fr: 'Fermer', en: 'Close' },
   up_next_label: { fr: 'À suivre :', en: 'Up next:' },
   btn_more: { fr: 'Plus', en: 'More' },
@@ -1703,8 +1936,20 @@ function setStatus(text, show=true) {
 }
 
 function fillEx(id) {
+  loadMovieById(id);
+}
+
+// Charge directement un film/une série par ID TMDB (utilisé pour les
+// exemples, et pour la carte "Ça devrait te plaire" en fin de lecture).
+function loadMovieById(id) {
   document.getElementById('movie-input').value = id;
   loadMovieByTMDB();
+}
+function loadSeriesById(id, season, episode) {
+  document.getElementById('series-input').value = id;
+  document.getElementById('season-input').value = season;
+  document.getElementById('episode-input').value = episode;
+  loadSeriesByTMDB();
 }
 
 // ── TMDB : titre + affiche + durée ──
@@ -1814,6 +2059,91 @@ async function ensureMovieCollection(movieId, belongsToCollection) {
     }
   } catch (e) {}
   return movieCollection;
+}
+
+// ── SUGGESTION "MÊME STYLE" (fin de contenu sans suite) ──
+// Quand il n'y a ni épisode suivant, ni film suivant dans la saga (ou pas de
+// saga du tout), on propose un contenu similaire (même genre/univers) via les
+// endpoints TMDB "recommendations" (plus fiable) puis "similar" en repli. On
+// filtre par genres partagés avec le contenu terminé + un minimum de notoriété
+// (nombre de votes/note) pour éviter les titres hors-sujet ou trop confidentiels,
+// et on tire au sort parmi les meilleurs pour varier les suggestions. Si le film
+// pioché appartient à une saga, on repart du tout premier film de cette saga
+// plutôt que d'un épisode au milieu (ex : Infinity War → Iron Man).
+async function fetchSimilarSuggestion(mediaType, id) {
+  const path = mediaType === 'tv' ? 'tv' : 'movie';
+  const lang = preferredLang === 'en' ? 'en-US' : 'fr-FR';
+
+  // Genres du contenu qu'on vient de terminer.
+  let sourceGenres = [];
+  try {
+    const sRes = await fetch(`${TMDB_BASE}/${path}/${id}?api_key=${TMDB_KEY}&language=${lang}`);
+    if (sRes.ok) {
+      const s = await sRes.json();
+      sourceGenres = (s.genres || []).map(g => g.id);
+    }
+  } catch (e) {}
+
+  async function tryEndpoint(kind) {
+    try {
+      const res = await fetch(`${TMDB_BASE}/${path}/${id}/${kind}?api_key=${TMDB_KEY}&language=${lang}&page=1`);
+      if (!res.ok) return null;
+      const data = await res.json();
+      return (data.results || []).filter(r =>
+        r.poster_path &&
+        (path === 'movie' ? (r.title || r.original_title) : (r.name || r.original_name)) &&
+        (r.vote_count || 0) >= 250 &&   // évite les titres trop confidentiels
+        (r.vote_average || 0) >= 5.8
+      );
+    } catch (e) { return null; }
+  }
+
+  let results = await tryEndpoint('recommendations');
+  if (!results || !results.length) results = await tryEndpoint('similar');
+  if (!results || !results.length) return null;
+
+  // On ne garde que les titres qui partagent au moins un genre avec le contenu
+  // terminé (si on a pu récupérer ses genres) — ça évite par exemple qu'un
+  // super-héros débouche sur un dessin animé ou une comédie fantastique sans rapport.
+  let filtered = results;
+  if (sourceGenres.length) {
+    const withSharedGenre = results.filter(r => (r.genre_ids || []).some(g => sourceGenres.includes(g)));
+    if (withSharedGenre.length) filtered = withSharedGenre;
+  }
+
+  // Parmi ceux-ci, on privilégie ceux qui partagent le PLUS de genres, puis les
+  // plus populaires, et on tire au sort dans ce top pour varier les suggestions.
+  const sharedCount = r => (r.genre_ids || []).filter(g => sourceGenres.includes(g)).length;
+  const pool = [...filtered]
+    .sort((a, b) => (sharedCount(b) - sharedCount(a)) || ((b.popularity || 0) - (a.popularity || 0)))
+    .slice(0, 6);
+  let pick = pool[Math.floor(Math.random() * pool.length)];
+
+  if (path === 'movie') {
+    try {
+      const dRes = await fetch(`${TMDB_BASE}/movie/${pick.id}?api_key=${TMDB_KEY}&language=${lang}`);
+      if (dRes.ok) {
+        const d = await dRes.json();
+        if (d.belongs_to_collection) {
+          const cRes = await fetch(`${TMDB_BASE}/collection/${d.belongs_to_collection.id}?api_key=${TMDB_KEY}&language=${lang}`);
+          if (cRes.ok) {
+            const c = await cRes.json();
+            const parts = (c.parts || [])
+              .filter(p => p.release_date && p.poster_path)
+              .sort((a, b) => new Date(a.release_date) - new Date(b.release_date));
+            if (parts.length) pick = parts[0]; // le tout premier film de la saga
+          }
+        }
+      }
+    } catch (e) {}
+  }
+
+  return {
+    id: pick.id,
+    title: path === 'movie' ? (pick.title || pick.original_title) : (pick.name || pick.original_name),
+    overview: pick.overview || '',
+    posterPath: pick.poster_path || null
+  };
 }
 
 function formatRuntime(minutes) {
@@ -1933,10 +2263,12 @@ async function loadMovieByTMDB() {
   document.getElementById('episode-input').value = '';
 
   setStatus(preferredLang === 'fr' ? 'Recherche du film…' : 'Searching for the movie…');
+  showGatherScreen();
   const info = await fetchTMDBInfo(id, 'movie');
   applyTMDBInfo(info, id);
 
   if (!info) {
+    hideGatherScreen();
     setStatus(preferredLang === 'fr' ? 'Film introuvable sur TMDB.' : 'Movie not found on TMDB.');
     return;
   }
@@ -1956,7 +2288,8 @@ async function loadMovieByTMDB() {
   await ensureMovieCollection(id, info.belongsToCollection);
 
   showEpisodeFields(true);
-  await fetchTMDBSources(id, 'movies', null, null);
+  const ok = await fetchTMDBSources(id, 'movies', null, null);
+  if (!ok) { returnToLoadScreenOnError(); return; }
   updateNavUI();
 }
 
@@ -1977,10 +2310,12 @@ async function loadSeriesByTMDB() {
   document.getElementById('movie-input').value = '';
 
   setStatus(preferredLang === 'fr' ? 'Recherche de la série…' : 'Searching for the series…');
+  showGatherScreen();
   const info = await fetchTMDBInfo(id, 'tv');
   applyTMDBInfo(info, id, season, episode);
 
   if (!info) {
+    hideGatherScreen();
     setStatus(preferredLang === 'fr' ? 'Série introuvable sur TMDB.' : 'Series not found on TMDB.');
     return;
   }
@@ -2007,7 +2342,8 @@ async function loadSeriesByTMDB() {
     }
   } catch (e) {}
 
-  await fetchTMDBSources(id, 'tv', season, episode);
+  const ok = await fetchTMDBSources(id, 'tv', season, episode);
+  if (!ok) { returnToLoadScreenOnError(); return; }
   updateNavUI();
 }
 
@@ -2217,7 +2553,7 @@ async function fetchTMDBSources(id, type, season, episode, allowSeriesFallback=f
       let insertAt = -1;
       for (let i = processed.length - 1; i >= 0; i--) {
         const s = processed[i];
-        if (s.lang === netSrc.lang && s.isDirect && /(?:^|\.)finepulfe\.xyz$/i.test(s.hostname || '')) {
+        if (s.lang === netSrc.lang && s.isDirect && isFinepulfeHost(s.hostname)) {
           insertAt = i + 1;
           break;
         }
@@ -2305,8 +2641,9 @@ async function fetchTMDBSources(id, type, season, episode, allowSeriesFallback=f
     }
 
     loadScreen.style.display = 'none';
-    pw.style.display = 'block';
     openBtn.style.display = 'inline-block';
+    // Tout est prêt : on dissout le gather-screen et on révèle le lecteur en fondu.
+    revealPlayerFromGatherScreen();
     showCtrls();
 
     // Choix de la source initiale : d'abord un lecteur NETFLOX (direct) dans la
@@ -2325,14 +2662,17 @@ async function fetchTMDBSources(id, type, season, episode, allowSeriesFallback=f
     if (sourceToSelect < 0) sourceToSelect = 0;
     selectCloudflareSource(sourceToSelect);
     setStatus('', false);
+    return true;
   } catch (err) {
     console.error(err);
+    hideGatherScreen();
     if (allowSeriesFallback) {
       showEpisodeFields(true);
       setStatus(preferredLang === 'fr' ? 'Impossible de récupérer ce film. S’il s’agit d’une série, indique la saison et l’épisode.' : 'Unable to retrieve this movie. If it’s a series, enter the season and episode.');
     } else {
       setStatus((preferredLang === 'fr' ? 'Erreur : ' : 'Error: ') + (err.message || (preferredLang === 'fr' ? 'requête impossible' : 'request failed')));
     }
+    return false;
   }
 }
 
@@ -2342,12 +2682,20 @@ function isDirectPlayable(url) {
          /m3u8/i.test(url);
 }
 
+// Domaine traité comme "finepulfe" (finepulfe.xyz). Toute la logique spécifique
+// à finepulfe (double piste audio, mécanisme HLS.js, positionnement dans la
+// liste des sources) s'applique uniquement à ce domaine.
+const FINEPULFE_HOSTS = ['finepulfe.xyz'];
+function isFinepulfeHost(hostname) {
+  const h = (hostname || '').toLowerCase();
+  return FINEPULFE_HOSTS.some(d => h === d || h.endsWith('.' + d));
+}
+
 // Domaines connus pour proposer plusieurs pistes audio dans un même flux m3u8.
-const DUAL_AUDIO_HOSTS = ['finepulfe.xyz'];
 function isDualAudioSource(url) {
   try {
     const h = new URL(url).hostname.toLowerCase();
-    return DUAL_AUDIO_HOSTS.some(d => h.includes(d));
+    return isFinepulfeHost(h);
   } catch (e) { return false; }
 }
 
@@ -2881,43 +3229,69 @@ async function maybeShowUpNext() {
 
   if (currentMediaType === 'tv' && seriesMeta) {
     const t = tvNextTarget();
-    if (!t) return;
-    upNextState.loading = true;
-    const eps = await ensureSeasonEpisodes(currentTMDB, t.season);
-    upNextState.loading = false;
-    if (currentPlaybackKey() !== key) return; // le contenu a changé entre-temps
-    const ep = eps.find(e => e.episode_number === t.episode);
-    if (!ep) return;
-    showUpNextCard({
-      kind:'tv', season:t.season, episode:t.episode, key,
-      title:`${t.episode}. ${ep.name || 'Épisode ' + t.episode}`,
-      overview: ep.overview || '',
-      posterUrl: ep.still_path ? `${TMDB_STILL}${ep.still_path}` : ''
-    });
+    if (t) {
+      upNextState.loading = true;
+      const eps = await ensureSeasonEpisodes(currentTMDB, t.season);
+      upNextState.loading = false;
+      if (currentPlaybackKey() !== key) return; // le contenu a changé entre-temps
+      const ep = eps.find(e => e.episode_number === t.episode);
+      if (ep) {
+        showUpNextCard({
+          kind:'tv', season:t.season, episode:t.episode, key,
+          title:`${t.episode}. ${ep.name || 'Épisode ' + t.episode}`,
+          overview: ep.overview || '',
+          posterUrl: ep.still_path ? `${TMDB_STILL}${ep.still_path}` : ''
+        });
+        return;
+      }
+    }
   } else if (currentMediaType === 'movie' && movieCollection) {
     const idx = movieCollection.parts.findIndex(p => String(p.id) === String(currentTMDB));
-    if (idx < 0 || idx >= movieCollection.parts.length - 1) return;
-    const next = movieCollection.parts[idx + 1];
-    showUpNextCard({
-      kind:'movie', movieId:next.id, key,
-      title: next.title || next.original_title || 'Film suivant',
-      overview: next.overview || '',
-      posterUrl: next.poster_path ? `${TMDB_IMG}${next.poster_path}` : ''
-    });
+    if (idx >= 0 && idx < movieCollection.parts.length - 1) {
+      const next = movieCollection.parts[idx + 1];
+      showUpNextCard({
+        kind:'movie', movieId:next.id, key,
+        title: next.title || next.original_title || 'Film suivant',
+        overview: next.overview || '',
+        posterUrl: next.poster_path ? `${TMDB_IMG}${next.poster_path}` : ''
+      });
+      return;
+    }
   }
+
+  // Fin de série sans épisode suivant, film seul, ou dernier film d'une saga :
+  // on propose un contenu du même style (même genre) plutôt que rien du tout.
+  if (!currentMediaType || !currentTMDB) return;
+  upNextState.loading = true;
+  const suggestion = await fetchSimilarSuggestion(currentMediaType, currentTMDB);
+  upNextState.loading = false;
+  if (currentPlaybackKey() !== key || upNextState.shown || !suggestion) return;
+  showUpNextCard({
+    kind: currentMediaType === 'tv' ? 'similar-tv' : 'similar-movie',
+    key,
+    suggestId: suggestion.id,
+    title: suggestion.title,
+    overview: suggestion.overview,
+    posterUrl: suggestion.posterPath ? `${TMDB_IMG}${suggestion.posterPath}` : ''
+  });
 }
 
 function showUpNextCard(data) {
   upNextState.shown = true;
   upNextState.target = data;
 
-  document.getElementById('up-next-label').textContent = data.kind === 'tv' ? 'À suivre :' : 'Ensuite :';
+  const label = data.kind === 'tv' ? (preferredLang === 'fr' ? 'À suivre :' : 'Up next:')
+    : data.kind === 'movie' ? (preferredLang === 'fr' ? 'Ensuite :' : 'Next:')
+    : (preferredLang === 'fr' ? 'Ça devrait te plaire :' : 'You might like:');
+  document.getElementById('up-next-label').textContent = label;
   document.getElementById('up-next-title').textContent = data.title;
 
   const descEl = document.getElementById('up-next-desc');
+  const scrollEl = document.getElementById('up-next-scroll');
   const moreBtn = document.getElementById('up-next-more-btn');
   descEl.textContent = data.overview || 'Aucun synopsis disponible.';
   descEl.classList.remove('expanded');
+  scrollEl.classList.remove('expanded');
   moreBtn.textContent = 'Plus';
   moreBtn.style.display = data.overview ? 'inline-block' : 'none';
 
@@ -2941,8 +3315,11 @@ function dismissUpNext() {
 
 function toggleUpNextDesc() {
   const descEl = document.getElementById('up-next-desc');
+  const scrollEl = document.getElementById('up-next-scroll');
   const moreBtn = document.getElementById('up-next-more-btn');
   const expanded = descEl.classList.toggle('expanded');
+  scrollEl.classList.toggle('expanded', expanded);
+  if (!expanded) scrollEl.scrollTop = 0;
   moreBtn.textContent = expanded ? 'Moins' : 'Plus';
 }
 
@@ -2952,6 +3329,8 @@ async function playUpNext() {
   hideUpNextCard();
   if (t.kind === 'tv') await playEpisode(t.season, t.episode);
   else if (t.kind === 'movie') await playCollectionMovie(t.movieId);
+  else if (t.kind === 'similar-movie') loadMovieById(t.suggestId);
+  else if (t.kind === 'similar-tv') loadSeriesById(t.suggestId, 1, 1);
 }
 
 async function playEpisode(season, episode) {
@@ -2961,6 +3340,8 @@ async function playEpisode(season, episode) {
   currentEpisode = episode;
   resetActiveSubtitle();
   setStatus(preferredLang === 'fr' ? 'Chargement de l’épisode…' : 'Loading episode…');
+  showGatherScreen();
+  video.pause();
   const info = await fetchTMDBInfo(currentTMDB, 'tv');
   applyTMDBInfo(info, currentTMDB, season, episode);
   try {
@@ -2979,6 +3360,8 @@ async function playCollectionMovie(movieId) {
   hideUpNextCard();
   resetActiveSubtitle();
   setStatus(preferredLang === 'fr' ? 'Chargement du film…' : 'Loading movie…');
+  showGatherScreen();
+  video.pause();
   const info = await fetchTMDBInfo(movieId, 'movie');
   applyTMDBInfo(info, movieId);
   await fetchTMDBSources(movieId, 'movies', null, null);
@@ -3185,7 +3568,7 @@ function loadMedia(url, title, audioLangOverride) {
   showCtrls();
   const isHLS = url.includes('.m3u8') || url.includes('hls');
   const isFinepulfe = (() => {
-    try { return /(?:^|\.)finepulfe\.xyz$/i.test(new URL(url).hostname); }
+    try { return isFinepulfeHost(new URL(url).hostname); }
     catch (e) { return false; }
   })();
   currentStreamUrl = url;
@@ -3242,8 +3625,12 @@ function clearHLS() {
 
 // ── PREVIEW VIDEO (miniature au survol de la timeline) ──
 const previewVideo = document.getElementById('preview-video');
+const previewSpin = document.getElementById('preview-spin');
 let previewHls = null;
 let previewFrameReady = false;
+
+function showPreviewSpinner() { if (previewSpin) previewSpin.classList.add('show'); }
+function hidePreviewSpinner() { if (previewSpin) previewSpin.classList.remove('show'); }
 
 function loadPreviewSource(url, isHLS) {
   clearPreviewSource();
@@ -3263,19 +3650,27 @@ function clearPreviewSource() {
   try { previewVideo.load(); } catch(e) {}
   previewFrameReady = false;
   previewVideo.classList.add('hidden');
+  hidePreviewSpinner();
 }
 
-// La vidéo d'aperçu reste en pause : dès qu'elle a fini de se positionner
-// sur l'instant survolé, le navigateur affiche déjà l'image correspondante.
+// Dès qu'un nouveau seek démarre (ou que le flux doit encore charger le
+// segment concerné), on affiche le rond qui tourne le temps que l'image
+// se retrouve. Il disparaît dès que l'image de l'instant survolé est prête.
+previewVideo.addEventListener('seeking', showPreviewSpinner);
+previewVideo.addEventListener('waiting', showPreviewSpinner);
 previewVideo.addEventListener('seeked', () => {
+  hidePreviewSpinner();
   previewFrameReady = true;
   previewVideo.classList.remove('hidden');
 });
 previewVideo.addEventListener('loadeddata', () => {
+  hidePreviewSpinner();
   previewVideo.classList.remove('hidden');
 });
+previewVideo.addEventListener('error', hidePreviewSpinner);
 
 function goBack() {
+  hideGatherScreen();
   hideSourceErrorPopup();
   video.pause(); clearHLS();
   const frame = document.getElementById('embed-frame');
@@ -3342,9 +3737,10 @@ function selectNativeAudioTrackByLang(videoEl, langCode) {
 }
 
 // ── PLAYBACK ──
-function togglePlay() { if (video.paused) video.play(); else video.pause(); }
+function togglePlay() { if (wpGuestBlocked()) return; if (video.paused) video.play(); else video.pause(); }
 
 function seekFlash(s) {
+  if (wpGuestBlocked()) return;
   video.currentTime = Math.max(0, Math.min(video.currentTime + s, video.duration || 0));
   const id = s < 0 ? 'flash-rw' : 'flash-fw';
   const el = document.getElementById(id);
@@ -3485,18 +3881,20 @@ function hoverProg(e) {
 function requestPreviewFrame(t) {
   if (!video.duration || isNaN(t) || !isFinite(t)) return;
   if (pw.classList.contains('embed-mode')) return;
-  if (!previewVideo.src && !previewHls) { previewVideo.classList.add('hidden'); return; }
+  if (!previewVideo.src && !previewHls) { previewVideo.classList.add('hidden'); hidePreviewSpinner(); return; }
 
   lastPreviewTarget = t;
   clearTimeout(previewSeekTimer);
   previewSeekTimer = setTimeout(() => {
     // Évite de re-seeker si on est déjà très proche (limite les requêtes réseau en HLS)
     if (Math.abs(previewVideo.currentTime - lastPreviewTarget) < 0.5) return;
+    showPreviewSpinner();
     try { previewVideo.currentTime = lastPreviewTarget; } catch(e) {}
   }, 120);
 }
 
 function startScrub(e) {
+  if (wpGuestBlocked()) return;
   scrubbing = true; doScrub(e);
   const mv = ev => doScrub(ev.touches ? ev.touches[0] : ev);
   const up = () => {
@@ -3566,8 +3964,23 @@ document.getElementById('bottom-bar').addEventListener('mouseleave', () => {
   hideTimer = setTimeout(hideCtrls, 1800);
 });
 
-pw.addEventListener('mousemove', showCtrls);
+pw.addEventListener('mousemove', (e) => { if (overUpNext) return; showCtrls(); });
 pw.addEventListener('touchstart', () => { if (pw.classList.contains('cv')) hideCtrls(); else showCtrls(); }, {passive:true});
+
+// Survol de la carte "À suivre" : on fige l'état des contrôles tel qu'il était
+// à l'entrée (affichés restent affichés, cachés restent cachés), sans jamais
+// les faire apparaître/disparaître à cause du popup. Ils reprennent leur
+// comportement normal seulement en sortant du popup.
+let overUpNext = false;
+const upNextCardEl = document.getElementById('up-next-card');
+upNextCardEl.addEventListener('mouseenter', () => {
+  overUpNext = true;
+  clearTimeout(hideTimer);
+});
+upNextCardEl.addEventListener('mouseleave', () => {
+  overUpNext = false;
+  if (pw.classList.contains('cv') && !overBar) hideTimer = setTimeout(hideCtrls, 1800);
+});
 video.addEventListener('click', togglePlay);
 video.addEventListener('pause', () => {
   clearTimeout(hideTimer);
@@ -3658,6 +4071,9 @@ function toggleSettings() {
     document.getElementById('download-panel').classList.remove('open');
     document.getElementById('download-scrim').classList.remove('open');
     document.getElementById('download-btn').classList.remove('open');
+    document.getElementById('watchparty-panel').classList.remove('open');
+    document.getElementById('watchparty-scrim').classList.remove('open');
+    document.getElementById('watchparty-btn').classList.remove('open');
     panel.classList.add('open'); scrim.classList.add('open'); btn.classList.add('open');
   } else {
     panel.classList.remove('open');
@@ -3682,6 +4098,9 @@ function toggleSourcesPanel() {
     document.getElementById('download-panel').classList.remove('open');
     document.getElementById('download-scrim').classList.remove('open');
     document.getElementById('download-btn').classList.remove('open');
+    document.getElementById('watchparty-panel').classList.remove('open');
+    document.getElementById('watchparty-scrim').classList.remove('open');
+    document.getElementById('watchparty-btn').classList.remove('open');
     panel.classList.add('open'); scrim.classList.add('open'); btn.classList.add('open');
   } else {
     panel.classList.remove('open');
@@ -3695,6 +4114,7 @@ document.getElementById('sources-panel').addEventListener('click', e => e.stopPr
 document.getElementById('episodes-panel').addEventListener('click', e => e.stopPropagation());
 document.getElementById('subtitles-panel').addEventListener('click', e => e.stopPropagation());
 document.getElementById('download-panel').addEventListener('click', e => e.stopPropagation());
+document.getElementById('watchparty-panel').addEventListener('click', e => e.stopPropagation());
 
 // ── SOUS-TITRES SIDEBAR (même logique que le panneau Sources, indépendant) ──
 function toggleSubtitlesPanel() {
@@ -3712,6 +4132,9 @@ function toggleSubtitlesPanel() {
     document.getElementById('download-panel').classList.remove('open');
     document.getElementById('download-scrim').classList.remove('open');
     document.getElementById('download-btn').classList.remove('open');
+    document.getElementById('watchparty-panel').classList.remove('open');
+    document.getElementById('watchparty-scrim').classList.remove('open');
+    document.getElementById('watchparty-btn').classList.remove('open');
     panel.classList.add('open'); scrim.classList.add('open'); btn.classList.add('open');
     renderSubtitlesPanel();
   } else {
@@ -4317,6 +4740,9 @@ function toggleDownloadPanel() {
     document.getElementById('subtitles-panel').classList.remove('open');
     document.getElementById('subtitles-scrim').classList.remove('open');
     document.getElementById('subtitles-btn').classList.remove('open');
+    document.getElementById('watchparty-panel').classList.remove('open');
+    document.getElementById('watchparty-scrim').classList.remove('open');
+    document.getElementById('watchparty-btn').classList.remove('open');
     panel.classList.add('open'); scrim.classList.add('open'); btn.classList.add('open');
   } else {
     panel.classList.remove('open');
@@ -4324,6 +4750,219 @@ function toggleDownloadPanel() {
     btn.classList.remove('open');
   }
 }
+
+// ══════════════════════════ WATCH PARTY ══════════════════════════
+// Principe : un "salon" Firebase Realtime Database (/watchparties/{code})
+// contient l'état de lecture de l'hôte (temps courant, pause, horodatage).
+// L'hôte écrit cet état à chaque changement + toutes les quelques secondes
+// pendant la lecture. L'invité (ouvre le même lien + ?wp=CODE) se contente
+// d'appliquer cet état à sa propre vidéo et n'a plus la main sur lecture/
+// pause/avance-recul : ces fonctions sont bloquées côté invité.
+
+let wpRoomCode = null;
+let wpIsHost = false;
+let wpIsGuest = false;
+let wpUnsubscribe = null;
+let wpPushInterval = null;
+let wpApplyingRemote = false; // évite les boucles quand on applique un état distant
+let wpLastHintT = 0;
+
+function wpGenerateCode() {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // sans caractères ambigus
+  let out = '';
+  for (let i = 0; i < 5; i++) out += chars[Math.floor(Math.random() * chars.length)];
+  return out;
+}
+
+function wpReady() {
+  return !!window.wpFirebaseReady && !!window.wpDB;
+}
+
+function wpWaitReady(cb) {
+  if (wpReady()) { cb(); return; }
+  window.addEventListener('wp-firebase-ready', () => cb(), { once: true });
+}
+
+function toggleWatchPartyPanel() {
+  const panel = document.getElementById('watchparty-panel');
+  const scrim = document.getElementById('watchparty-scrim');
+  const btn = document.getElementById('watchparty-btn');
+  const was = panel.classList.contains('open');
+  if (!was) {
+    document.getElementById('settings-panel').classList.remove('open');
+    document.getElementById('settings-scrim').classList.remove('open');
+    document.getElementById('settings-btn').classList.remove('open');
+    document.getElementById('sources-panel').classList.remove('open');
+    document.getElementById('sources-scrim').classList.remove('open');
+    document.getElementById('sources-btn').classList.remove('open');
+    document.getElementById('subtitles-panel').classList.remove('open');
+    document.getElementById('subtitles-scrim').classList.remove('open');
+    document.getElementById('subtitles-btn').classList.remove('open');
+    document.getElementById('download-panel').classList.remove('open');
+    document.getElementById('download-scrim').classList.remove('open');
+    document.getElementById('download-btn').classList.remove('open');
+    panel.classList.add('open'); scrim.classList.add('open'); btn.classList.add('open');
+    renderWatchPartyPanel();
+  } else {
+    panel.classList.remove('open');
+    scrim.classList.remove('open');
+    btn.classList.remove('open');
+  }
+}
+
+function renderWatchPartyPanel() {
+  const el = document.getElementById('watchparty-panel-content');
+  if (wpIsHost) {
+    const url = wpBuildShareUrl();
+    el.innerHTML = `
+      <p class="wp-status"><span class="wp-dot"></span>${tr('watchparty_host_live')}</p>
+      <p style="padding:0 20px;color:rgba(255,255,255,0.55);font-size:0.8rem;">${tr('watchparty_share_hint')}</p>
+      <div class="wp-link-row">
+        <input type="text" readonly id="wp-link-input" value="${url}" onclick="this.select()">
+        <button onclick="wpCopyLink()" id="wp-copy-btn">${tr('watchparty_copy')}</button>
+      </div>
+      <button class="wp-action-btn wp-danger" onclick="stopWatchParty()">${tr('watchparty_end_btn')}</button>`;
+  } else if (wpIsGuest) {
+    el.innerHTML = `
+      <p class="wp-status"><span class="wp-dot"></span>${tr('watchparty_guest_status')}</p>
+      <button class="wp-action-btn wp-danger" onclick="leaveWatchParty()">${tr('watchparty_leave_btn')}</button>`;
+  } else {
+    el.innerHTML = `
+      <p class="wp-status">${tr('watchparty_intro')}</p>
+      <button class="wp-start-btn" onclick="startWatchParty()">${tr('watchparty_start_btn')}</button>`;
+  }
+}
+
+function wpBuildShareUrl() {
+  const u = new URL(window.location.href);
+  u.searchParams.set('wp', wpRoomCode);
+  return u.toString();
+}
+
+function wpCopyLink() {
+  const input = document.getElementById('wp-link-input');
+  const btn = document.getElementById('wp-copy-btn');
+  navigator.clipboard.writeText(input.value).then(() => {
+    const original = btn.textContent;
+    btn.textContent = tr('watchparty_copied');
+    setTimeout(() => { btn.textContent = original; }, 1600);
+  }).catch(() => { input.select(); document.execCommand('copy'); });
+}
+
+// ── HÔTE ──
+function startWatchParty() {
+  wpWaitReady(() => {
+    wpRoomCode = wpGenerateCode();
+    wpIsHost = true;
+    wpIsGuest = false;
+
+    const stateRef = window.wpRef(window.wpDB, `watchparties/${wpRoomCode}/state`);
+    window.wpSet(stateRef, { t: video.currentTime || 0, paused: video.paused, ts: Date.now() });
+    // Le salon disparaît automatiquement si l'hôte ferme l'onglet / perd la connexion.
+    window.wpOnDisconnect(window.wpRef(window.wpDB, `watchparties/${wpRoomCode}`)).remove();
+
+    document.getElementById('watchparty-btn').classList.add('wp-live');
+    renderWatchPartyPanel();
+
+    // Pousse l'état à chaque événement de lecture pertinent…
+    video.addEventListener('play', wpPushStateThrottled);
+    video.addEventListener('pause', wpPushStateThrottled);
+    video.addEventListener('seeked', wpPushStateThrottled);
+    // …et régulièrement pendant la lecture pour corriger la dérive naturelle.
+    clearInterval(wpPushInterval);
+    wpPushInterval = setInterval(() => { if (!video.paused) wpPushStateThrottled(); }, 4000);
+  });
+}
+
+function wpPushStateThrottled() {
+  if (!wpIsHost || !wpRoomCode || wpApplyingRemote) return;
+  const stateRef = window.wpRef(window.wpDB, `watchparties/${wpRoomCode}/state`);
+  window.wpSet(stateRef, { t: video.currentTime || 0, paused: video.paused, ts: Date.now() });
+}
+
+function stopWatchParty() {
+  if (wpRoomCode) window.wpRemove(window.wpRef(window.wpDB, `watchparties/${wpRoomCode}`));
+  video.removeEventListener('play', wpPushStateThrottled);
+  video.removeEventListener('pause', wpPushStateThrottled);
+  video.removeEventListener('seeked', wpPushStateThrottled);
+  clearInterval(wpPushInterval);
+  wpIsHost = false; wpRoomCode = null;
+  document.getElementById('watchparty-btn').classList.remove('wp-live');
+  renderWatchPartyPanel();
+}
+
+// ── INVITÉ ──
+function joinWatchParty(code) {
+  wpWaitReady(() => {
+    wpRoomCode = code;
+    wpIsGuest = true;
+    wpIsHost = false;
+    document.getElementById('watchparty-btn').classList.add('wp-live');
+
+    const stateRef = window.wpRef(window.wpDB, `watchparties/${wpRoomCode}/state`);
+    wpUnsubscribe = window.wpOnValue(stateRef, snap => {
+      const s = snap.val();
+      if (!s) { wpShowEndedNotice(); return; }
+      wpApplyRemoteState(s);
+    });
+    renderWatchPartyPanel();
+  });
+}
+
+function wpApplyRemoteState(s) {
+  if (!video.duration && video.readyState < 1) return; // pas encore prêt
+  wpApplyingRemote = true;
+  const target = s.paused ? s.t : s.t + (Date.now() - s.ts) / 1000;
+  if (Math.abs(video.currentTime - target) > 1.5) {
+    try { video.currentTime = target; } catch (e) {}
+  }
+  if (s.paused && !video.paused) video.pause();
+  if (!s.paused && video.paused) video.play().catch(() => {});
+  setTimeout(() => { wpApplyingRemote = false; }, 300);
+}
+
+function wpShowEndedNotice() {
+  if (wpUnsubscribe) { wpUnsubscribe(); wpUnsubscribe = null; }
+  wpIsGuest = false; wpRoomCode = null;
+  document.getElementById('watchparty-btn').classList.remove('wp-live');
+  alert(tr('watchparty_ended'));
+  renderWatchPartyPanel();
+}
+
+function leaveWatchParty() {
+  if (wpUnsubscribe) { wpUnsubscribe(); wpUnsubscribe = null; }
+  wpIsGuest = false; wpRoomCode = null;
+  document.getElementById('watchparty-btn').classList.remove('wp-live');
+  const u = new URL(window.location.href);
+  u.searchParams.delete('wp');
+  window.history.replaceState({}, '', u.toString());
+  renderWatchPartyPanel();
+}
+
+// Verrouillage des contrôles invité : lecture/pause, avance/recul et la
+// barre de progression ne répondent plus, avec un petit feedback visuel.
+function wpGuestBlocked() {
+  if (!wpIsGuest) return false;
+  const now = Date.now();
+  if (now - wpLastHintT > 1200) {
+    wpLastHintT = now;
+    pw.classList.add('cv');
+    const hint = document.getElementById('time-display');
+    if (hint) {
+      const original = hint.getAttribute('data-i18n-title') ? tr(hint.getAttribute('data-i18n-title')) : '';
+      hint.title = tr('watchparty_locked_hint');
+      hint.style.color = '#f87171';
+      setTimeout(() => { hint.style.color = ''; }, 500);
+    }
+  }
+  return true;
+}
+
+// Auto-jonction si l'URL contient ?wp=CODE
+window.addEventListener('load', () => {
+  const code = new URLSearchParams(window.location.search).get('wp');
+  if (code) joinWatchParty(code.toUpperCase());
+});
 
 const settingsTabOrder = ['sources-gear', 'format', 'vitesse'];
 function switchSettingsTab(tab) {
