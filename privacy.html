@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Politique de Confidentialité - Netflox</title>
+    <style>
+        :root {
+            --bg-color: #060404;
+            --container-bg: #100b0c;
+            --text-color: #f5f0f0;
+            --accent-color: #e50914;
+            --border-color: rgba(255, 255, 255, 0.05);
+            --text-muted: #a39a9a;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            background-image: radial-gradient(circle at 50% 0%, #1a1214 0%, #100b0c 40%, #060404 100%);
+            background-attachment: fixed;
+            color: var(--text-color);
+            font-family: "Segoe UI", Inter, -apple-system, BlinkMacSystemFont, sans-serif;
+            line-height: 1.6;
+            display: flex;
+            justify-content: center;
+            padding: 40px 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            width: 100%;
+            background: var(--container-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 40px;
+            box-shadow: 0 18px 40px rgba(0, 0, 0, 0.6);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .header h1 {
+            font-size: 28px;
+            font-weight: 800;
+            letter-spacing: 2px;
+            color: var(--text-color);
+            margin-bottom: 10px;
+        }
+
+        .header span {
+            color: var(--accent-color);
+        }
+
+        .last-updated {
+            font-size: 14px;
+            color: var(--text-muted);
+        }
+
+        h2 {
+            font-size: 20px;
+            color: var(--accent-color);
+            margin-top: 30px;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+
+        p, ul {
+            margin-bottom: 15px;
+            color: #d1cbcb;
+        }
+
+        ul {
+            padding-left: 20px;
+        }
+
+        li {
+            margin-bottom: 8px;
+        }
+
+        .highlight {
+            background: rgba(229, 9, 20, 0.1);
+            padding: 2px 6px;
+            border-radius: 4px;
+            color: #ff4f58;
+            font-family: monospace;
+            font-size: 0.95em;
+        }
+
+        a {
+            color: var(--accent-color);
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        a:hover {
+            color: #ff4f58;
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Politique de Confidentialité <span>Netflox</span></h1>
+            <p class="last-updated">Dernière mise à jour : 23 août 2026</p>
+        </div>
+
+        <p>Cette politique de confidentialité décrit la façon dont l'extension Chrome <strong>Netflox</strong> traite les données de ses utilisateurs. Notre principe fondamental est la protection de votre vie privée : nous ne collectons aucune donnée personnelle.</p>
+
+        <h2>1. Collecte et traitement des données</h2>
+        <p>L'extension <strong>Netflox ne collecte, ne stocke, n'analyse et ne transmet aucune de vos données personnelles</strong>. Nous n'avons pas accès à votre historique de navigation, à vos mots de passe, ni à vos informations d'identité.</p>
+
+        <h2>2. Utilisation des permissions</h2>
+        <p>Pour pouvoir fonctionner, l'extension nécessite certaines autorisations spécifiques du navigateur. Ces permissions sont utilisées exclusivement en local sur votre machine et sont justifiées ainsi :</p>
+        <ul>
+            <li><span class="highlight">storage</span> : Utilisé uniquement pour sauvegarder vos préférences locales (état d'activation de l'extension) et l'adresse du serveur de configuration.</li>
+            <li><span class="highlight">declarativeNetRequest</span> et <span class="highlight">&lt;all_urls&gt;</span> : Nécessaires pour modifier à la volée les en-têtes HTTP (tels que <em>Origin</em> et <em>Referer</em>). Cela est requis pour contourner les restrictions CORS et permettre aux ressources vidéo d'être chargées correctement sur le site associé. Le contenu de vos requêtes n'est ni lu ni enregistré.</li>
+            <li><span class="highlight">tabs</span> : Permet à l'extension de détecter lorsqu'un onglet du domaine <em>netfloxxx.github.io</em> est ouvert, mis à jour ou fermé, afin d'appliquer les règles de modification d'en-têtes de manière ciblée, sans impacter le reste de votre navigation.</li>
+        </ul>
+
+        <h2>3. Services tiers et requêtes externes</h2>
+        <p>L'extension effectue une requête automatisée vers un dépôt GitHub public (<code>latest.json</code>) afin de synchroniser ses règles de routage. Aucune donnée utilisateur, identifiant ou information de suivi n'est envoyée lors de cette requête.</p>
+
+        <h2>4. Contact</h2>
+        <p>Si vous avez des questions concernant cette politique de confidentialité ou le fonctionnement technique de l'extension, vous pouvez nous contacter à l'adresse suivante : <a href="mailto:net.flox@outlook.fr">net.flox@outlook.fr</a>.</p>
+    </div>
+</body>
+</html>
