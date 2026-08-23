@@ -1,138 +1,287 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Politique de Confidentialité - Netflox</title>
-    <style>
-        :root {
-            --bg-color: #060404;
-            --container-bg: #100b0c;
-            --text-color: #f5f0f0;
-            --accent-color: #e50914;
-            --border-color: rgba(255, 255, 255, 0.05);
-            --text-muted: #a39a9a;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Politique de Confidentialité - Netflox</title>
+<link rel="icon" type="image/png" href="https://i.ibb.co/VYfvTC6F/untilted-1752571740-trimmy.png">
+<style>
+  :root{
+    --bg: #0e0e0e;
+    --panel: #1a1a1a;
+    --panel-border: #2a2a2a;
+    --ink: #f0f0f0;
+    --ink-dim: #b3b3b3;
+    --ink-faint: #7a7a7a;
+    --red: #e50914;
+    --red-soft: rgba(229,9,20,0.12);
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font-family:"Helvetica Neue", Helvetica, Arial, sans-serif;
+    line-height:1.7;
+  }
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
+  /* Top bar */
+  .topbar{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:22px 20px;
+    border-bottom:1px solid var(--panel-border);
+  }
+  .logo-img{
+    height:32px;
+    width:auto;
+    display:block;
+  }
 
-        body {
-            background-color: var(--bg-color);
-            background-image: radial-gradient(circle at 50% 0%, #1a1214 0%, #100b0c 40%, #060404 100%);
-            background-attachment: fixed;
-            color: var(--text-color);
-            font-family: "Segoe UI", Inter, -apple-system, BlinkMacSystemFont, sans-serif;
-            line-height: 1.6;
-            display: flex;
-            justify-content: center;
-            padding: 40px 20px;
-        }
+  /* Hero */
+  .hero{
+    max-width:760px;
+    margin:0 auto;
+    padding:56px 24px 40px;
+    text-align:center;
+  }
+  .hero-eyebrow{
+    font-size:13px;
+    font-weight:600;
+    letter-spacing:1.5px;
+    text-transform:uppercase;
+    color:var(--red);
+    margin-bottom:14px;
+  }
+  .hero h1{
+    font-size:clamp(30px, 5vw, 42px);
+    font-weight:800;
+    letter-spacing:-0.5px;
+    margin-bottom:16px;
+  }
+  .hero p{
+    color:var(--ink-dim);
+    font-size:16px;
+    max-width:520px;
+    margin:0 auto;
+  }
+  .hero .updated{
+    display:inline-block;
+    margin-top:22px;
+    font-size:13px;
+    color:var(--ink-faint);
+    background:var(--panel);
+    border:1px solid var(--panel-border);
+    padding:6px 16px;
+    border-radius:20px;
+  }
 
-        .container {
-            max-width: 800px;
-            width: 100%;
-            background: var(--container-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            padding: 40px;
-            box-shadow: 0 18px 40px rgba(0, 0, 0, 0.6);
-        }
+  /* Body */
+  .content{
+    max-width:760px;
+    margin:0 auto;
+    padding:10px 24px 70px;
+  }
 
-        .header {
-            text-align: center;
-            margin-bottom: 40px;
-            padding-bottom: 20px;
-            border-bottom: 1px solid var(--border-color);
-        }
+  .card{
+    background:var(--panel);
+    border:1px solid var(--panel-border);
+    border-radius:12px;
+    padding:32px;
+    margin-bottom:24px;
+    box-shadow:0 12px 30px rgba(0,0,0,0.35);
+  }
 
-        .header h1 {
-            font-size: 28px;
-            font-weight: 800;
-            letter-spacing: 2px;
-            color: var(--text-color);
-            margin-bottom: 10px;
-        }
+  .card-title{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    margin-bottom:16px;
+  }
+  .card-title .idx{
+    flex:none;
+    width:32px; height:32px;
+    border-radius:8px;
+    background:var(--red-soft);
+    color:var(--red);
+    font-weight:800;
+    font-size:14px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+  .card-title h2{
+    font-size:19px;
+    font-weight:700;
+  }
 
-        .header span {
-            color: var(--accent-color);
-        }
+  .card p{
+    color:var(--ink-dim);
+    font-size:15px;
+    margin-bottom:12px;
+  }
+  .card p:last-child{margin-bottom:0;}
 
-        .last-updated {
-            font-size: 14px;
-            color: var(--text-muted);
-        }
+  .perm-list{
+    display:flex;
+    flex-direction:column;
+    gap:16px;
+  }
+  .perm-item{
+    padding-top:14px;
+    border-top:1px solid var(--panel-border);
+  }
+  .perm-item:first-child{border-top:none; padding-top:0;}
+  .perm-name{
+    display:inline-block;
+    font-family:"Courier New", monospace;
+    font-size:13px;
+    font-weight:700;
+    color:var(--red);
+    background:var(--red-soft);
+    padding:3px 10px;
+    border-radius:5px;
+    margin-bottom:8px;
+  }
+  .perm-item p{margin:0; font-size:14.5px; color:var(--ink-dim);}
 
-        h2 {
-            font-size: 20px;
-            color: var(--accent-color);
-            margin-top: 30px;
-            margin-bottom: 15px;
-            font-weight: 600;
-        }
+  code{
+    font-family:"Courier New", monospace;
+    background:var(--red-soft);
+    color:#ff5a62;
+    padding:2px 7px;
+    border-radius:4px;
+    font-size:0.88em;
+  }
 
-        p, ul {
-            margin-bottom: 15px;
-            color: #d1cbcb;
-        }
+  /* Badge strip */
+  .badges{
+    display:flex;
+    flex-wrap:wrap;
+    justify-content:center;
+    gap:12px;
+    margin:8px 0 40px;
+  }
+  .badge{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    font-size:13px;
+    font-weight:600;
+    color:var(--ink);
+    background:var(--panel);
+    border:1px solid var(--panel-border);
+    padding:9px 16px;
+    border-radius:24px;
+  }
+  .badge::before{
+    content:"";
+    width:7px; height:7px;
+    border-radius:50%;
+    background:var(--red);
+  }
 
-        ul {
-            padding-left: 20px;
-        }
+  /* Contact card */
+  .contact-card{
+    text-align:center;
+    background:linear-gradient(180deg, var(--panel), #151515);
+  }
+  .contact-card h2{font-size:20px; margin-bottom:8px;}
+  .contact-card p{margin-bottom:20px;}
+  .contact-btn{
+    display:inline-block;
+    background:var(--red);
+    color:#fff;
+    font-weight:700;
+    font-size:14px;
+    padding:12px 26px;
+    border-radius:6px;
+    text-decoration:none;
+  }
+  .contact-btn:hover{background:#c40812;}
 
-        li {
-            margin-bottom: 8px;
-        }
+  footer{
+    text-align:center;
+    padding:24px;
+    color:var(--ink-faint);
+    font-size:12.5px;
+    border-top:1px solid var(--panel-border);
+  }
 
-        .highlight {
-            background: rgba(229, 9, 20, 0.1);
-            padding: 2px 6px;
-            border-radius: 4px;
-            color: #ff4f58;
-            font-family: monospace;
-            font-size: 0.95em;
-        }
-
-        a {
-            color: var(--accent-color);
-            text-decoration: none;
-            transition: color 0.3s ease;
-        }
-
-        a:hover {
-            color: #ff4f58;
-            text-decoration: underline;
-        }
-    </style>
+  @media(max-width:520px){
+    .card{padding:24px;}
+  }
+</style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>Politique de Confidentialité <span>Netflox</span></h1>
-            <p class="last-updated">Dernière mise à jour : 23 août 2026</p>
-        </div>
 
-        <p>Cette politique de confidentialité décrit la façon dont l'extension Chrome <strong>Netflox</strong> traite les données de ses utilisateurs. Notre principe fondamental est la protection de votre vie privée : nous ne collectons aucune donnée personnelle.</p>
+  <div class="topbar">
+    <img class="logo-img" src="https://i.ibb.co/XfwSy6jF/2.png" alt="Netflox">
+  </div>
 
-        <h2>1. Collecte et traitement des données</h2>
-        <p>L'extension <strong>Netflox ne collecte, ne stocke, n'analyse et ne transmet aucune de vos données personnelles</strong>. Nous n'avons pas accès à votre historique de navigation, à vos mots de passe, ni à vos informations d'identité.</p>
+  <div class="hero">
+    <div class="hero-eyebrow">Extension navigateur</div>
+    <h1>Politique de confidentialité</h1>
+    <p>Notre principe fondamental : la protection de votre vie privée. Nous ne collectons aucune donnée personnelle, sous aucune forme.</p>
+    <div class="updated">Dernière mise à jour — 23 août 2026</div>
+  </div>
 
-        <h2>2. Utilisation des permissions</h2>
-        <p>Pour pouvoir fonctionner, l'extension nécessite certaines autorisations spécifiques du navigateur. Ces permissions sont utilisées exclusivement en local sur votre machine et sont justifiées ainsi :</p>
-        <ul>
-            <li><span class="highlight">storage</span> : Utilisé uniquement pour sauvegarder vos préférences locales (état d'activation de l'extension) et l'adresse du serveur de configuration.</li>
-            <li><span class="highlight">declarativeNetRequest</span> et <span class="highlight">&lt;all_urls&gt;</span> : Nécessaires pour modifier à la volée les en-têtes HTTP (tels que <em>Origin</em> et <em>Referer</em>). Cela est requis pour contourner les restrictions CORS et permettre aux ressources vidéo d'être chargées correctement sur le site associé. Le contenu de vos requêtes n'est ni lu ni enregistré.</li>
-            <li><span class="highlight">tabs</span> : Permet à l'extension de détecter lorsqu'un onglet du domaine <em>netfloxxx.github.io</em> est ouvert, mis à jour ou fermé, afin d'appliquer les règles de modification d'en-têtes de manière ciblée, sans impacter le reste de votre navigation.</li>
-        </ul>
+  <div class="content">
 
-        <h2>3. Services tiers et requêtes externes</h2>
-        <p>L'extension effectue une requête automatisée vers un dépôt GitHub public (<code>latest.json</code>) afin de synchroniser ses règles de routage. Aucune donnée utilisateur, identifiant ou information de suivi n'est envoyée lors de cette requête.</p>
-
-        <h2>4. Contact</h2>
-        <p>Si vous avez des questions concernant cette politique de confidentialité ou le fonctionnement technique de l'extension, vous pouvez nous contacter à l'adresse suivante : <a href="mailto:net.flox@outlook.fr">net.flox@outlook.fr</a>.</p>
+    <div class="badges">
+      <div class="badge">Aucune collecte de données</div>
+      <div class="badge">Traitement 100% local</div>
+      <div class="badge">Aucun tracking</div>
     </div>
+
+    <div class="card">
+      <div class="card-title">
+        <div class="idx">1</div>
+        <h2>Collecte et traitement des données</h2>
+      </div>
+      <p>L'extension <strong>Netflox ne collecte, ne stocke, n'analyse et ne transmet aucune de vos données personnelles</strong>. Nous n'avons pas accès à votre historique de navigation, à vos mots de passe, ni à vos informations d'identité.</p>
+    </div>
+
+    <div class="card">
+      <div class="card-title">
+        <div class="idx">2</div>
+        <h2>Utilisation des permissions</h2>
+      </div>
+      <p>Pour pouvoir fonctionner, l'extension nécessite certaines autorisations spécifiques du navigateur. Ces permissions sont utilisées exclusivement en local sur votre machine et sont justifiées ainsi :</p>
+
+      <div class="perm-list">
+        <div class="perm-item">
+          <span class="perm-name">storage</span>
+          <p>Utilisé uniquement pour sauvegarder vos préférences locales (état d'activation de l'extension) et l'adresse du serveur de configuration.</p>
+        </div>
+        <div class="perm-item">
+          <span class="perm-name">declarativeNetRequest</span> <span class="perm-name">&lt;all_urls&gt;</span>
+          <p>Nécessaires pour modifier à la volée les en-têtes HTTP (tels que <em>Origin</em> et <em>Referer</em>). Cela est requis pour contourner les restrictions CORS et permettre aux ressources vidéo d'être chargées correctement sur le site associé. Le contenu de vos requêtes n'est ni lu ni enregistré.</p>
+        </div>
+        <div class="perm-item">
+          <span class="perm-name">tabs</span>
+          <p>Permet à l'extension de détecter lorsqu'un onglet du domaine <em>netfloxxx.github.io</em> est ouvert, mis à jour ou fermé, afin d'appliquer les règles de modification d'en-têtes de manière ciblée, sans impacter le reste de votre navigation.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">
+        <div class="idx">3</div>
+        <h2>Services tiers et requêtes externes</h2>
+      </div>
+      <p>L'extension effectue une requête automatisée vers un dépôt GitHub public (<code>latest.json</code>) afin de synchroniser ses règles de routage. Aucune donnée utilisateur, identifiant ou information de suivi n'est envoyée lors de cette requête.</p>
+    </div>
+
+    <div class="card contact-card">
+      <h2>Une question ?</h2>
+      <p>Contactez-nous à propos de cette politique ou du fonctionnement technique de l'extension.</p>
+      <a class="contact-btn" href="mailto:net.flox@outlook.fr">net.flox@outlook.fr</a>
+    </div>
+
+  </div>
+
+  <footer>© 2026 Netflox</footer>
+
 </body>
 </html>
