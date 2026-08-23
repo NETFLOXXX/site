@@ -397,26 +397,160 @@
   #download-btn.open { color:var(--red-h); }
   #watchparty-btn { position:relative; }
   #watchparty-btn.open { color:var(--red-h); }
-  #watchparty-btn.wp-live { color:#22c55e; }
+  #watchparty-btn.wp-live { color:var(--red-h); }
   #watchparty-btn.wp-live::after {
     content:''; position:absolute; top:6px; right:6px; width:8px; height:8px;
-    border-radius:50%; background:#22c55e; box-shadow:0 0 0 2px rgba(0,0,0,0.72);
+    border-radius:50%; background:var(--red-h); box-shadow:0 0 0 2px rgba(0,0,0,0.72);
     animation:wpPulse 1.6s ease-in-out infinite;
   }
   @keyframes wpPulse { 0%,100%{ opacity:1; } 50%{ opacity:0.35; } }
-  .wp-link-row { display:flex; gap:8px; padding:0 20px; margin-top:4px; }
+
+  /* ── WATCH PARTY PANEL — refonte visuelle ── */
+  .wp-hero { display:flex; flex-direction:column; align-items:center; text-align:center; padding:20px 24px 8px; }
+  .wp-hero-icon {
+    width:48px; height:48px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+    background:linear-gradient(145deg, rgba(220,38,38,0.22), rgba(220,38,38,0.06));
+    border:1px solid rgba(220,38,38,0.3); color:var(--red-h); margin-bottom:13px;
+  }
+  .wp-hero p { color:rgba(255,255,255,0.5); font-size:0.84rem; line-height:1.48; max-width:280px; }
+  .wp-section { padding:15px 24px 0; }
+  .wp-section-label { font-size:0.72rem; font-weight:700; letter-spacing:0.06em; text-transform:uppercase; color:rgba(255,255,255,0.4); margin-bottom:9px; }
+  .wp-primary-btn {
+    display:flex; align-items:center; justify-content:center; gap:8px; width:100%;
+    background:linear-gradient(135deg, var(--red), var(--red-h)); border:none; color:#fff;
+    border-radius:10px; padding:13px 16px; font-size:0.92rem; font-weight:700; cursor:pointer;
+    transition:transform 0.15s, box-shadow 0.15s; box-shadow:0 4px 14px rgba(220,38,38,0.28);
+  }
+  .wp-primary-btn:hover { transform:translateY(-1px); box-shadow:0 6px 18px rgba(220,38,38,0.4); }
+  .wp-primary-btn:active { transform:translateY(0); }
+  .wp-divider { display:flex; align-items:center; gap:10px; margin:15px 24px 10px; color:rgba(255,255,255,0.32); font-size:0.71rem; font-weight:700; letter-spacing:0.05em; text-transform:uppercase; }
+  .wp-divider::before, .wp-divider::after { content:''; flex:1; height:1px; background:rgba(255,255,255,0.1); }
+  .wp-join-row { display:flex; gap:8px; padding:0 24px; margin-top:9px; }
+  .wp-code-input {
+    flex:1; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.14); color:#fff;
+    border-radius:10px; padding:11px 14px; font-size:1.05rem; font-weight:700; letter-spacing:0.28em;
+    text-transform:uppercase; text-align:center; font-family:'Outfit',Arial,sans-serif;
+  }
+  .wp-code-input:focus { outline:none; border-color:var(--red-h); background:rgba(220,38,38,0.08); }
+  .wp-code-input::placeholder { letter-spacing:0.08em; font-weight:600; color:rgba(255,255,255,0.28); }
+  .wp-join-btn {
+    background:rgba(255,255,255,0.09); border:1px solid rgba(255,255,255,0.16); color:#fff;
+    border-radius:10px; padding:0 18px; font-weight:700; cursor:pointer; font-size:0.87rem; transition:background 0.15s;
+  }
+  .wp-join-btn:hover { background:rgba(255,255,255,0.16); }
+  .wp-join-error { padding:6px 24px 0; color:#f87171; font-size:0.77rem; }
+  .wp-pseudo-input {
+    width:100%; box-sizing:border-box; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.14);
+    color:#fff; border-radius:10px; padding:11px 14px; font-size:0.92rem; font-family:'Outfit',Arial,sans-serif;
+  }
+  .wp-pseudo-input:focus { outline:none; border-color:var(--red-h); background:rgba(220,38,38,0.08); }
+  .wp-pseudo-input::placeholder { color:rgba(255,255,255,0.28); }
+  .wp-pseudo-shared { padding:8px 24px 15px; margin-bottom:0; border-bottom:1px solid rgba(255,255,255,0.08); }
+  .wp-pseudo-row { display:flex; align-items:flex-end; gap:12px; }
+  .wp-pseudo-avatar {
+    width:42px; height:42px; border-radius:50%; flex-shrink:0; display:flex; align-items:center; justify-content:center;
+    background:linear-gradient(145deg, rgba(255,255,255,0.1), rgba(255,255,255,0.03));
+    border:1px solid rgba(255,255,255,0.14); color:rgba(255,255,255,0.55);
+  }
+  .wp-pseudo-field { flex:1; min-width:0; }
+  .wp-pseudo-field .wp-section-label { margin-bottom:6px; }
+  .wp-pseudo-sub { margin:10px 0 0; color:rgba(255,255,255,0.4); font-size:0.76rem; line-height:1.4; }
+  .wp-pseudo-error {
+    display:flex; align-items:center; gap:8px; margin:10px 0 0; padding:9px 12px; border-radius:8px;
+    background:rgba(220,38,38,0.16); border:1px solid rgba(220,38,38,0.4); color:#fecaca;
+    font-size:0.79rem; font-weight:600; line-height:1.4;
+  }
+  .wp-pseudo-error::before { content:'⚠'; font-size:0.9rem; flex-shrink:0; }
+  .wp-pseudo-input.wp-input-error { border-color:#ef4444; background:rgba(220,38,38,0.08); }
+
+  .wp-live-card { margin:18px 20px 0; padding:16px 18px; border-radius:12px; background:rgba(220,38,38,0.08); border:1px solid rgba(220,38,38,0.22); }
+  .wp-live-card .wp-status { padding:0; display:flex; align-items:center; color:#fff; font-size:0.85rem; font-weight:600; }
+  .wp-live-card .wp-status-sub { padding:8px 0 0; margin:0; color:rgba(255,255,255,0.55); font-size:0.8rem; line-height:1.5; }
+  .wp-dot { display:inline-block; width:8px; height:8px; border-radius:50%; background:var(--red-h); margin-right:8px; box-shadow:0 0 0 3px rgba(220,38,38,0.18); animation:wpPulse 1.6s ease-in-out infinite; flex-shrink:0; }
+
+  .wp-link-row { display:flex; gap:8px; padding:0 20px; margin-top:12px; }
   .wp-link-row input { flex:1; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12); color:#fff; border-radius:8px; padding:10px 12px; font-size:0.85rem; }
-  .wp-link-row button { background:var(--red); border:none; color:#fff; border-radius:8px; padding:0 14px; font-weight:600; cursor:pointer; font-size:0.85rem; }
+  .wp-link-row button { background:var(--red); border:none; color:#fff; border-radius:8px; padding:0 14px; font-weight:600; cursor:pointer; font-size:0.85rem; transition:background 0.15s; }
   .wp-link-row button:hover { background:var(--red-h); }
-  .wp-status { padding:16px 20px; color:rgba(255,255,255,0.75); font-size:0.85rem; line-height:1.5; }
+
+  .wp-code-display { display:flex; align-items:center; justify-content:center; gap:10px; margin:16px 20px 0; padding:14px; border-radius:10px; background:rgba(255,255,255,0.05); border:1px dashed rgba(255,255,255,0.18); }
+  .wp-code-display .wp-code-value { font-size:1.5rem; font-weight:800; letter-spacing:0.3em; color:#fff; }
+  .wp-code-display .wp-code-copy { background:rgba(255,255,255,0.1); border:none; color:#fff; border-radius:8px; padding:6px 10px; cursor:pointer; font-size:0.75rem; font-weight:700; }
+  .wp-code-display .wp-code-copy:hover { background:rgba(255,255,255,0.18); }
+
+  .wp-status { padding:16px 20px; color:rgba(255,255,255,0.75); font-size:0.85rem; line-height:1.5; display:flex; align-items:flex-start; }
   .wp-status strong { color:#fff; }
-  .wp-dot { display:inline-block; width:8px; height:8px; border-radius:50%; background:#22c55e; margin-right:6px; animation:wpPulse 1.6s ease-in-out infinite; }
-  .wp-action-btn { display:block; margin:14px 20px 0; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.14); color:#fff; border-radius:8px; padding:10px 14px; font-size:0.85rem; font-weight:600; cursor:pointer; text-align:center; }
+  .wp-action-btn { display:block; width:calc(100% - 40px); margin:16px 20px 0; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.14); color:#fff; border-radius:10px; padding:11px 14px; font-size:0.85rem; font-weight:600; cursor:pointer; text-align:center; transition:background 0.15s; }
   .wp-action-btn:hover { background:rgba(255,255,255,0.14); }
-  .wp-action-btn.wp-danger { border-color:rgba(220,38,38,0.4); color:#f87171; }
-  .wp-action-btn.wp-danger:hover { background:rgba(220,38,38,0.15); }
-  .wp-start-btn { display:block; margin:16px 20px 4px; background:var(--red); border:none; color:#fff; border-radius:8px; padding:12px 16px; font-size:0.9rem; font-weight:700; cursor:pointer; text-align:center; }
-  .wp-start-btn:hover { background:var(--red-h); }
+  .wp-action-btn.wp-danger { border-color:rgba(220,38,38,0.35); color:#f87171; margin-bottom:20px; }
+  .wp-action-btn.wp-danger:hover { background:rgba(220,38,38,0.14); }
+  .wp-conn-error { margin:14px 20px 0; padding:11px 14px; border-radius:10px; background:rgba(220,38,38,0.12); border:1px solid rgba(220,38,38,0.3); color:#fca5a5; font-size:0.78rem; line-height:1.5; }
+
+  /* ── POPUP "Watch Party terminée" — remplace l'ancien alert() natif ── */
+  #wp-ended-overlay {
+    display:none; position:fixed; inset:0; z-index:950;
+    background:rgba(0,0,0,0.6); backdrop-filter:blur(3px);
+    align-items:center; justify-content:center;
+    opacity:0; transition:opacity 0.25s ease;
+  }
+  #wp-ended-overlay.show { display:flex; }
+  #wp-ended-overlay.show.in { opacity:1; }
+  #wp-ended-card {
+    width:340px; max-width:88vw;
+    background:rgba(16,16,16,0.98); border:1px solid rgba(255,255,255,0.1);
+    border-radius:16px; padding:28px 26px 22px; text-align:center;
+    box-shadow:0 24px 70px rgba(0,0,0,0.6);
+    transform:translateY(10px) scale(0.96); transition:transform 0.28s cubic-bezier(0.34,1.56,0.64,1);
+  }
+  #wp-ended-overlay.show.in #wp-ended-card { transform:translateY(0) scale(1); }
+  #wp-ended-icon {
+    width:52px; height:52px; margin:0 auto 16px; border-radius:50%;
+    background:rgba(220,38,38,0.14); display:flex; align-items:center; justify-content:center;
+    color:var(--red-h);
+  }
+  #wp-ended-card h3 { font-size:1.08rem; font-weight:700; letter-spacing:-0.01em; margin-bottom:8px; }
+  #wp-ended-card p { color:rgba(255,255,255,0.55); font-size:0.86rem; line-height:1.5; margin-bottom:22px; }
+  #wp-ended-card button {
+    width:100%; background:var(--red); border:none; color:#fff; font-family:'Outfit',sans-serif;
+    font-weight:600; font-size:0.92rem; padding:12px; border-radius:10px;
+    cursor:pointer; transition:background 0.15s, transform 0.15s;
+  }
+  #wp-ended-card button:hover { background:var(--red-h); }
+  #wp-ended-card button:active { transform:scale(0.97); }
+
+  /* ── POPUP "Rejoindre une Watch Party" (pseudo requis avant de rejoindre via un lien) ── */
+  #wp-join-prompt-overlay {
+    display:none; position:fixed; inset:0; z-index:950;
+    background:rgba(0,0,0,0.6); backdrop-filter:blur(3px);
+    align-items:center; justify-content:center;
+    opacity:0; transition:opacity 0.25s ease;
+  }
+  #wp-join-prompt-overlay.show { display:flex; }
+  #wp-join-prompt-overlay.show.in { opacity:1; }
+  #wp-join-prompt-card {
+    width:340px; max-width:88vw;
+    background:rgba(16,16,16,0.98); border:1px solid rgba(255,255,255,0.1);
+    border-radius:16px; padding:28px 26px 22px; text-align:center;
+    box-shadow:0 24px 70px rgba(0,0,0,0.6);
+    transform:translateY(10px) scale(0.96); transition:transform 0.28s cubic-bezier(0.34,1.56,0.64,1);
+  }
+  #wp-join-prompt-overlay.show.in #wp-join-prompt-card { transform:translateY(0) scale(1); }
+  #wp-join-prompt-icon {
+    width:52px; height:52px; margin:0 auto 16px; border-radius:50%;
+    background:rgba(220,38,38,0.14); display:flex; align-items:center; justify-content:center;
+    color:var(--red-h);
+  }
+  #wp-join-prompt-card h3 { font-size:1.08rem; font-weight:700; letter-spacing:-0.01em; margin-bottom:8px; }
+  #wp-join-prompt-card .wp-join-prompt-sub { color:rgba(255,255,255,0.55); font-size:0.86rem; line-height:1.5; margin:0 0 18px; }
+  #wp-join-prompt-card .wp-pseudo-input { margin-bottom:12px; text-align:left; }
+  #wp-join-prompt-card .wp-pseudo-error { text-align:left; margin:0 0 12px; }
+  #wp-join-prompt-card button.wp-join-prompt-confirm {
+    width:100%; background:var(--red); border:none; color:#fff; font-family:'Outfit',sans-serif;
+    font-weight:600; font-size:0.92rem; padding:12px; border-radius:10px;
+    cursor:pointer; transition:background 0.15s, transform 0.15s;
+  }
+  #wp-join-prompt-card button.wp-join-prompt-confirm:hover { background:var(--red-h); }
+  #wp-join-prompt-card button.wp-join-prompt-confirm:active { transform:scale(0.97); }
 
   /* volume */
   .volume-wrap { display:flex; align-items:center; gap:6px; }
@@ -480,6 +614,9 @@
     display:flex; align-items:center; justify-content:space-between;
     padding:22px 24px; border-bottom:1px solid rgba(255,255,255,0.08); flex-shrink:0;
   }
+  /* En-tête plus compacte pour le panneau Watch Party : libère de la place
+     en bas (zone du code) sans provoquer de scroll. */
+  #watchparty-panel .settings-header { padding:14px 24px; }
   .settings-header span { font-size:1.2rem; font-weight:700; letter-spacing:-0.01em; }
   .settings-close {
     background:none; border:none; color:rgba(255,255,255,0.5); cursor:pointer;
@@ -504,6 +641,9 @@
   }
 
   .settings-content { overflow-y:auto; overflow-x:hidden; padding:10px 0; flex:1; }
+  /* Plus d'air en bas du panneau Watch Party, autour du champ code,
+     grâce à l'espace regagné sur l'en-tête / le bloc pseudo au-dessus. */
+  #watchparty-panel .settings-content { padding-bottom:26px; }
   .settings-content::-webkit-scrollbar { width:6px; }
   .settings-content::-webkit-scrollbar-thumb { background:rgba(255,255,255,0.15); border-radius:6px; }
 
@@ -1150,6 +1290,16 @@
 </head>
 <body>
 
+<!-- Si l'URL contient ?wp=CODE (lien de Watch Party), on masque immédiatement
+     le menu d'accueil (choix d'ID TMDB) pour ne pas l'afficher une fraction de
+     seconde avant le popup de pseudo — ce script s'exécute pendant le parsing,
+     avant que le menu ne soit peint à l'écran. -->
+<script>
+  if (new URLSearchParams(window.location.search).get('wp')) {
+    document.write('<style>#load-screen{display:none !important}</style>');
+  }
+</script>
+
 <!-- LOAD SCREEN -->
 <div id="load-screen">
   <h1>Movix <span>Player</span></h1>
@@ -1477,6 +1627,18 @@
     <div class="settings-content" id="watchparty-panel-content"></div>
   </div>
 
+  <!-- POPUP fin de Watch Party (côté invité) -->
+  <div id="wp-ended-overlay" onclick="if(event.target===this) wpCloseEndedPopup()">
+    <div id="wp-ended-card">
+      <div id="wp-ended-icon">
+        <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="17" y1="8" x2="23" y2="14"/><line x1="23" y1="8" x2="17" y2="14"/></svg>
+      </div>
+      <h3 data-i18n="watchparty_ended_title">Watch Party terminée</h3>
+      <p id="wp-ended-msg" data-i18n="watchparty_ended">L'hôte a terminé la Watch Party.</p>
+      <button onclick="wpCloseEndedPopup()" data-i18n="watchparty_ended_ok">Compris</button>
+    </div>
+  </div>
+
   <!-- UP NEXT — épisode/film suivant, affiché automatiquement à 95% de la lecture -->
   <div id="up-next-card">
     <button class="up-next-close" onclick="dismissUpNext()" title="Fermer" data-i18n-title="close_title">
@@ -1501,6 +1663,25 @@
 </div>
 
 <button id="open-url-btn" onclick="goBack()" data-i18n="btn_open_other_url">⊕ Ouvrir une autre URL</button>
+
+<!-- POPUP pseudo obligatoire pour rejoindre une Watch Party via un lien.
+     Placé en dehors de #player-wrap (qui reste display:none tant que la vidéo
+     n'a pas démarré) pour qu'il soit visible dès l'arrivée sur le lien, avant
+     tout chargement de contenu. -->
+<div id="wp-join-prompt-overlay" onclick="if(event.target===this) wpCancelJoinPrompt()">
+  <div id="wp-join-prompt-card">
+    <div id="wp-join-prompt-icon">
+      <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+    </div>
+    <h3 data-i18n="watchparty_join_prompt_title">Rejoindre la Watch Party</h3>
+    <p class="wp-join-prompt-sub" data-i18n="watchparty_pseudo_sub">Nécessaire pour créer une Watch Party ou en rejoindre une.</p>
+    <input type="text" id="wp-join-prompt-input" class="wp-pseudo-input" maxlength="20" autocomplete="off"
+      data-i18n-placeholder="watchparty_pseudo_label" placeholder="Ton pseudo"
+      onkeydown="if(event.key==='Enter') wpConfirmJoinPrompt()">
+    <p id="wp-join-prompt-error" class="wp-pseudo-error" style="display:none;"></p>
+    <button class="wp-join-prompt-confirm" onclick="wpConfirmJoinPrompt()" data-i18n="watchparty_join_btn">Rejoindre</button>
+  </div>
+</div>
 
 <!-- POPUP AVERTISSEMENT "AUTRES LECTEURS" -->
 <div id="ab-overlay">
@@ -1565,10 +1746,10 @@
 
 <script type="module">
   // Firebase — Realtime Database utilisée uniquement pour synchroniser l'état
-  // de lecture (temps courant / pause) entre l'hôte et les invités d'un Watch Party.
+  // de lecture (temps courant / pause) entre l'hôte et les invités d'une Watch Party.
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-app.js";
   import {
-    getDatabase, ref, set, update, remove, onValue, onDisconnect
+    getDatabase, ref, set, update, remove, onValue, onDisconnect, get
   } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-database.js";
 
   const firebaseConfig = {
@@ -1593,6 +1774,7 @@
   window.wpRemove = remove;
   window.wpOnValue = onValue;
   window.wpOnDisconnect = onDisconnect;
+  window.wpGet = get;
   window.wpFirebaseReady = true;
   window.dispatchEvent(new Event('wp-firebase-ready'));
 </script>
@@ -1802,17 +1984,33 @@ const I18N = {
   no_download_option: { fr: 'Aucune option de téléchargement disponible.', en: 'No download option available.' },
   watchparty_btn_title: { fr: 'Watch Party', en: 'Watch Party' },
   watchparty_title: { fr: 'Watch Party', en: 'Watch Party' },
-  watchparty_intro: { fr: 'Regarde ce contenu en même temps que quelqu\'un d\'autre. Tu gardes le contrôle : lecture, pause et avance/recul se synchronisent chez ton invité.', en: 'Watch this together with someone else. You stay in control: play, pause and seeking sync to your guest.' },
-  watchparty_start_btn: { fr: 'Démarrer un Watch Party', en: 'Start a Watch Party' },
+  watchparty_intro: { fr: 'Regarde ce contenu en même temps que quelqu\'un d\'autre. Tu gardes le contrôle : lecture, pause et avance/recul se synchronisent chez ton invité.', en: 'Watch this content at the same time as someone else. You stay in control: play, pause and seeking sync to your guest.' },
+  watchparty_start_btn: { fr: 'Démarrer une Watch Party', en: 'Start a Watch Party' },
   watchparty_share_hint: { fr: 'Envoie ce lien à ton invité :', en: 'Send this link to your guest:' },
   watchparty_copy: { fr: 'Copier', en: 'Copy' },
   watchparty_copied: { fr: 'Copié !', en: 'Copied!' },
-  watchparty_host_live: { fr: '🟢 Watch Party en direct — c\'est toi qui contrôles la lecture.', en: '🟢 Watch Party live — you\'re controlling playback.' },
-  watchparty_end_btn: { fr: 'Terminer le Watch Party', en: 'End Watch Party' },
-  watchparty_guest_status: { fr: 'Tu regardes en Watch Party. Seul l\'hôte peut mettre en pause, avancer ou reculer.', en: 'You\'re in a Watch Party. Only the host can pause, rewind or fast-forward.' },
-  watchparty_leave_btn: { fr: 'Quitter le Watch Party', en: 'Leave Watch Party' },
-  watchparty_locked_hint: { fr: 'Contrôlé par l\'hôte du Watch Party', en: 'Controlled by the Watch Party host' },
-  watchparty_ended: { fr: 'L\'hôte a terminé le Watch Party.', en: 'The host ended the Watch Party.' },
+  watchparty_host_live: { fr: 'Watch Party active', en: 'Watch Party live' },
+  watchparty_host_live_sub: { fr: 'Tu contrôles la lecture pour tout le monde.', en: "You're controlling playback for everyone." },
+  watchparty_guest_status: { fr: 'Watch Party en cours', en: 'Watch Party in progress' },
+  watchparty_guest_status_sub: { fr: 'Seul l\'hôte peut mettre en pause, avancer ou reculer.', en: 'Only the host can pause, rewind or fast-forward.' },
+  watchparty_conn_error: { fr: 'Connexion au salon impossible. Vérifie les règles Firebase (lecture/écriture) et ta connexion.', en: 'Could not connect to the room. Check the Firebase rules (read/write) and your connection.' },
+  watchparty_end_btn: { fr: 'Terminer la Watch Party', en: 'End Watch Party' },
+  watchparty_leave_btn: { fr: 'Quitter la Watch Party', en: 'Leave Watch Party' },
+  watchparty_locked_hint: { fr: 'Contrôlé par l\'hôte de la Watch Party', en: 'Controlled by the Watch Party host' },
+  watchparty_ended: { fr: 'L\'hôte a terminé la Watch Party.', en: 'The host ended the Watch Party.' },
+  watchparty_ended_title: { fr: 'Watch Party terminée', en: 'Watch Party ended' },
+  watchparty_ended_ok: { fr: 'Compris', en: 'Got it' },
+  watchparty_or: { fr: 'ou', en: 'or' },
+  watchparty_join_label: { fr: 'Rejoindre avec un code', en: 'Join with a code' },
+  watchparty_join_placeholder: { fr: 'CODE', en: 'CODE' },
+  watchparty_join_btn: { fr: 'Rejoindre', en: 'Join' },
+  watchparty_bad_code: { fr: 'Code à 5 caractères invalide.', en: 'Invalid 5-character code.' },
+  watchparty_invalid_code: { fr: 'Salon introuvable ou terminé.', en: 'Room not found or ended.' },
+  watchparty_your_code: { fr: 'Code du salon', en: 'Room code' },
+  watchparty_pseudo_label: { fr: 'Ton pseudo', en: 'Your name' },
+  watchparty_pseudo_sub: { fr: 'Nécessaire pour créer une Watch Party ou en rejoindre une.', en: 'Needed both to create or join a Watch Party.' },
+  watchparty_pseudo_required: { fr: 'Entre un pseudo pour continuer.', en: 'Enter a name to continue.' },
+  watchparty_join_prompt_title: { fr: 'Rejoindre la Watch Party', en: 'Join the Watch Party' },
   close_title: { fr: 'Fermer', en: 'Close' },
   up_next_label: { fr: 'À suivre :', en: 'Up next:' },
   btn_more: { fr: 'Plus', en: 'More' },
@@ -4766,6 +4964,11 @@ let wpUnsubscribe = null;
 let wpPushInterval = null;
 let wpApplyingRemote = false; // évite les boucles quand on applique un état distant
 let wpLastHintT = 0;
+let wpJoinErrorMsg = null;
+let wpConnErrorMsg = null;
+let wpPseudoErrorMsg = null;
+let wpPseudo = (typeof localStorage !== 'undefined' && localStorage.getItem('netflox_wp_pseudo')) || '';
+let wpWaitingFirstSync = false; // empêche l'autoplay du guest tant que l'état de l'hôte n'est pas encore appliqué
 
 function wpGenerateCode() {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // sans caractères ambigus
@@ -4802,6 +5005,8 @@ function toggleWatchPartyPanel() {
     document.getElementById('download-scrim').classList.remove('open');
     document.getElementById('download-btn').classList.remove('open');
     panel.classList.add('open'); scrim.classList.add('open'); btn.classList.add('open');
+    wpJoinErrorMsg = null;
+    wpPseudoErrorMsg = null;
     renderWatchPartyPanel();
   } else {
     panel.classList.remove('open');
@@ -4815,27 +5020,137 @@ function renderWatchPartyPanel() {
   if (wpIsHost) {
     const url = wpBuildShareUrl();
     el.innerHTML = `
-      <p class="wp-status"><span class="wp-dot"></span>${tr('watchparty_host_live')}</p>
-      <p style="padding:0 20px;color:rgba(255,255,255,0.55);font-size:0.8rem;">${tr('watchparty_share_hint')}</p>
-      <div class="wp-link-row">
+      <div class="wp-live-card">
+        <p class="wp-status"><span class="wp-dot"></span><strong>${tr('watchparty_host_live')}</strong></p>
+        <p class="wp-status-sub">${tr('watchparty_host_live_sub')}</p>
+      </div>
+      ${wpConnErrorMsg ? `<p class="wp-conn-error">${wpConnErrorMsg}</p>` : ''}
+      <div class="wp-section" style="padding-top:18px;">
+        <div class="wp-section-label">${tr('watchparty_your_code')}</div>
+      </div>
+      <div class="wp-code-display">
+        <span class="wp-code-value">${wpRoomCode}</span>
+        <button class="wp-code-copy" onclick="wpCopyCode()">${tr('watchparty_copy')}</button>
+      </div>
+      <div class="wp-section" style="padding-top:18px;">
+        <div class="wp-section-label">${tr('watchparty_share_hint')}</div>
+      </div>
+      <div class="wp-link-row" style="margin-top:0;">
         <input type="text" readonly id="wp-link-input" value="${url}" onclick="this.select()">
         <button onclick="wpCopyLink()" id="wp-copy-btn">${tr('watchparty_copy')}</button>
       </div>
       <button class="wp-action-btn wp-danger" onclick="stopWatchParty()">${tr('watchparty_end_btn')}</button>`;
   } else if (wpIsGuest) {
     el.innerHTML = `
-      <p class="wp-status"><span class="wp-dot"></span>${tr('watchparty_guest_status')}</p>
+      <div class="wp-live-card">
+        <p class="wp-status"><span class="wp-dot"></span><strong>${tr('watchparty_guest_status')}</strong></p>
+        <p class="wp-status-sub">${tr('watchparty_guest_status_sub')}</p>
+      </div>
+      ${wpConnErrorMsg ? `<p class="wp-conn-error">${wpConnErrorMsg}</p>` : ''}
       <button class="wp-action-btn wp-danger" onclick="leaveWatchParty()">${tr('watchparty_leave_btn')}</button>`;
   } else {
     el.innerHTML = `
-      <p class="wp-status">${tr('watchparty_intro')}</p>
-      <button class="wp-start-btn" onclick="startWatchParty()">${tr('watchparty_start_btn')}</button>`;
+      <div class="wp-pseudo-shared">
+        <div class="wp-pseudo-row">
+          <div class="wp-pseudo-avatar">
+            <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          </div>
+          <div class="wp-pseudo-field">
+            <div class="wp-section-label">${tr('watchparty_pseudo_label')}</div>
+            <input type="text" id="wp-pseudo-input" class="wp-pseudo-input${wpPseudoErrorMsg ? ' wp-input-error' : ''}" maxlength="20" autocomplete="off"
+              value="${(wpPseudo || '').replace(/"/g, '&quot;')}">
+          </div>
+        </div>
+        <p class="wp-pseudo-sub">${tr('watchparty_pseudo_sub')}</p>
+        ${wpPseudoErrorMsg ? `<p class="wp-pseudo-error">${wpPseudoErrorMsg}</p>` : ''}
+      </div>
+      <div class="wp-hero" style="padding-top:14px;">
+        <div class="wp-hero-icon">
+          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        </div>
+        <p>${tr('watchparty_intro')}</p>
+      </div>
+      ${wpConnErrorMsg ? `<p class="wp-conn-error">${wpConnErrorMsg}</p>` : ''}
+      <div class="wp-section">
+        <button class="wp-primary-btn" onclick="startWatchParty()">
+          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.6" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          ${tr('watchparty_start_btn')}
+        </button>
+      </div>
+      <div class="wp-divider">${tr('watchparty_or')}</div>
+      <div class="wp-section" style="padding-top:0;">
+        <div class="wp-section-label">${tr('watchparty_join_label')}</div>
+      </div>
+      <div class="wp-join-row">
+        <input type="text" id="wp-join-input" class="wp-code-input" maxlength="5"
+          placeholder="${tr('watchparty_join_placeholder')}" autocomplete="off"
+          oninput="this.value=this.value.toUpperCase()"
+          onkeydown="if(event.key==='Enter') wpJoinByCodeClick()">
+        <button class="wp-join-btn" onclick="wpJoinByCodeClick()">${tr('watchparty_join_btn')}</button>
+      </div>
+      ${wpJoinErrorMsg ? `<p class="wp-join-error">${wpJoinErrorMsg}</p>` : ''}
+      <div style="height:12px;"></div>`;
   }
+}
+
+function wpCopyCode() {
+  if (!wpRoomCode) return;
+  navigator.clipboard.writeText(wpRoomCode).catch(() => {});
+  const btn = document.querySelector('.wp-code-copy');
+  if (btn) {
+    const original = btn.textContent;
+    btn.textContent = tr('watchparty_copied');
+    setTimeout(() => { btn.textContent = original; }, 1600);
+  }
+}
+
+function wpReadPseudo() {
+  const input = document.getElementById('wp-pseudo-input');
+  return (input ? input.value : '').trim();
+}
+
+function wpSavePseudo(pseudo) {
+  wpPseudo = pseudo;
+  wpPseudoErrorMsg = null;
+  try { localStorage.setItem('netflox_wp_pseudo', pseudo); } catch (e) {}
+}
+
+function wpJoinByCodeClick() {
+  const pseudo = wpReadPseudo();
+  if (!pseudo) {
+    wpPseudoErrorMsg = tr('watchparty_pseudo_required');
+    renderWatchPartyPanel();
+    return;
+  }
+  const input = document.getElementById('wp-join-input');
+  const val = (input ? input.value : '').trim().toUpperCase();
+  if (!/^[A-Z0-9]{5}$/.test(val)) {
+    wpJoinErrorMsg = tr('watchparty_bad_code');
+    renderWatchPartyPanel();
+    return;
+  }
+  wpSavePseudo(pseudo);
+  wpJoinErrorMsg = null;
+  joinWatchParty(val);
 }
 
 function wpBuildShareUrl() {
   const u = new URL(window.location.href);
   u.searchParams.set('wp', wpRoomCode);
+  // On encode aussi le contenu en cours pour que l'invité charge exactement
+  // le même film/épisode dès l'ouverture du lien (sinon il atterrit sur
+  // l'écran d'accueil et rien ne se synchronise).
+  if (currentMediaType && currentTMDB) {
+    u.searchParams.set('wpType', currentMediaType);
+    u.searchParams.set('wpId', currentTMDB);
+    if (currentMediaType === 'tv') {
+      u.searchParams.set('wpSeason', currentSeason);
+      u.searchParams.set('wpEpisode', currentEpisode);
+    } else {
+      u.searchParams.delete('wpSeason');
+      u.searchParams.delete('wpEpisode');
+    }
+  }
   return u.toString();
 }
 
@@ -4851,15 +5166,45 @@ function wpCopyLink() {
 
 // ── HÔTE ──
 function startWatchParty() {
+  const pseudo = wpReadPseudo();
+  if (!pseudo) {
+    wpPseudoErrorMsg = tr('watchparty_pseudo_required');
+    renderWatchPartyPanel();
+    return;
+  }
+  if (!currentMediaType || !currentTMDB) {
+    alert(preferredLang === 'fr'
+      ? 'Charge d\'abord un film ou un épisode avant de démarrer une Watch Party.'
+      : 'Load a movie or episode first before starting a Watch Party.');
+    return;
+  }
+  wpSavePseudo(pseudo);
   wpWaitReady(() => {
     wpRoomCode = wpGenerateCode();
     wpIsHost = true;
     wpIsGuest = false;
+    wpConnErrorMsg = null;
 
-    const stateRef = window.wpRef(window.wpDB, `watchparties/${wpRoomCode}/state`);
-    window.wpSet(stateRef, { t: video.currentTime || 0, paused: video.paused, ts: Date.now() });
+    // Écriture ATOMIQUE de state + media en une seule fois (un seul update()
+    // sur la racine du salon) : ça évite tout souci d'ordre d'écriture avec
+    // d'éventuelles règles Firebase qui valident la présence des deux champs.
+    const roomRef = window.wpRef(window.wpDB, `watchparties/${wpRoomCode}`);
+    window.wpSet(roomRef, {
+      state: { t: video.currentTime || 0, paused: video.paused, ts: Date.now() },
+      media: {
+        type: currentMediaType,
+        id: currentTMDB,
+        season: currentMediaType === 'tv' ? currentSeason : null,
+        episode: currentMediaType === 'tv' ? currentEpisode : null,
+      },
+    }).catch(err => {
+      console.error('Watch Party (hôte): écriture Firebase refusée', err);
+      wpConnErrorMsg = tr('watchparty_conn_error');
+      renderWatchPartyPanel();
+    });
+
     // Le salon disparaît automatiquement si l'hôte ferme l'onglet / perd la connexion.
-    window.wpOnDisconnect(window.wpRef(window.wpDB, `watchparties/${wpRoomCode}`)).remove();
+    window.wpOnDisconnect(roomRef).remove();
 
     document.getElementById('watchparty-btn').classList.add('wp-live');
     renderWatchPartyPanel();
@@ -4877,7 +5222,8 @@ function startWatchParty() {
 function wpPushStateThrottled() {
   if (!wpIsHost || !wpRoomCode || wpApplyingRemote) return;
   const stateRef = window.wpRef(window.wpDB, `watchparties/${wpRoomCode}/state`);
-  window.wpSet(stateRef, { t: video.currentTime || 0, paused: video.paused, ts: Date.now() });
+  window.wpSet(stateRef, { t: video.currentTime || 0, paused: video.paused, ts: Date.now() })
+    .catch(err => console.error('Watch Party (hôte): push état refusé', err));
 }
 
 function stopWatchParty() {
@@ -4893,20 +5239,90 @@ function stopWatchParty() {
 
 // ── INVITÉ ──
 function joinWatchParty(code) {
-  wpWaitReady(() => {
+  wpWaitReady(async () => {
+    wpConnErrorMsg = null;
+    // 1. On récupère le contenu regardé depuis Firebase (fonctionne que
+    // l'invité arrive via le lien ou en tapant juste le code).
+    let media = null;
+    let fbFailed = false;
+    try {
+      const snap = await window.wpGet(window.wpRef(window.wpDB, `watchparties/${code}/media`));
+      media = snap.exists() ? snap.val() : null;
+    } catch (e) {
+      console.error('Watch Party: lecture Firebase impossible', e);
+      fbFailed = true;
+    }
+
+    if (!media) {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('wpType') && params.get('wpId')) {
+        media = {
+          type: params.get('wpType'), id: params.get('wpId'),
+          season: params.get('wpSeason'), episode: params.get('wpEpisode'),
+        };
+      }
+    }
+
+    if (!media) {
+      wpJoinErrorMsg = fbFailed ? tr('watchparty_conn_error') : tr('watchparty_invalid_code');
+      renderWatchPartyPanel();
+      return;
+    }
+
     wpRoomCode = code;
+
+    // On coupe tout de suite ce qui tournait déjà (contenu précédent,
+    // écran d'accueil, etc.) pendant que le nouveau contenu se charge —
+    // sinon l'ancienne vidéo continue de jouer pendant ce temps-là.
+    try { video.pause(); } catch (e) {}
+    wpWaitingFirstSync = true;
+    video.addEventListener('play', wpSuppressAutoplay);
+
+    try {
+      if (media.type === 'movie') {
+        document.getElementById('movie-input').value = media.id;
+        await loadMovieByTMDB();
+      } else if (media.type === 'tv') {
+        document.getElementById('series-input').value = media.id;
+        document.getElementById('season-input').value = media.season || 1;
+        document.getElementById('episode-input').value = media.episode || 1;
+        await loadSeriesByTMDB();
+      }
+    } catch (e) { console.error('Watch Party: échec du chargement du contenu', e); }
+
+    // Le chargement du film le relance automatiquement en lecture — on le
+    // remet en pause : c'est l'état réel de l'hôte (reçu juste après) qui
+    // doit décider si ça lit ou pas, pas le chargement.
+    try { video.pause(); } catch (e) {}
+
     wpIsGuest = true;
     wpIsHost = false;
     document.getElementById('watchparty-btn').classList.add('wp-live');
 
     const stateRef = window.wpRef(window.wpDB, `watchparties/${wpRoomCode}/state`);
-    wpUnsubscribe = window.wpOnValue(stateRef, snap => {
-      const s = snap.val();
-      if (!s) { wpShowEndedNotice(); return; }
-      wpApplyRemoteState(s);
-    });
+    wpUnsubscribe = window.wpOnValue(
+      stateRef,
+      snap => {
+        wpConnErrorMsg = null;
+        const s = snap.val();
+        if (!s) { wpShowEndedNotice(); return; }
+        wpApplyRemoteState(s);
+      },
+      err => {
+        // C'est ICI que ça coinçait en silence : si les règles Firebase
+        // refusent la lecture, aucune mise à jour n'arrive jamais côté
+        // invité — mais avant, rien ne le signalait.
+        console.error('Watch Party (invité): écoute Firebase refusée', err);
+        wpConnErrorMsg = tr('watchparty_conn_error');
+        renderWatchPartyPanel();
+      }
+    );
     renderWatchPartyPanel();
   });
+}
+
+function wpSuppressAutoplay() {
+  if (wpIsGuest && wpWaitingFirstSync) video.pause();
 }
 
 function wpApplyRemoteState(s) {
@@ -4916,21 +5332,42 @@ function wpApplyRemoteState(s) {
   if (Math.abs(video.currentTime - target) > 1.5) {
     try { video.currentTime = target; } catch (e) {}
   }
+  if (wpWaitingFirstSync) {
+    wpWaitingFirstSync = false;
+    video.removeEventListener('play', wpSuppressAutoplay);
+  }
   if (s.paused && !video.paused) video.pause();
   if (!s.paused && video.paused) video.play().catch(() => {});
   setTimeout(() => { wpApplyingRemote = false; }, 300);
 }
 
+function wpShowEndedPopup() {
+  const overlay = document.getElementById('wp-ended-overlay');
+  document.getElementById('wp-ended-msg').textContent = tr('watchparty_ended');
+  overlay.classList.add('show');
+  requestAnimationFrame(() => requestAnimationFrame(() => overlay.classList.add('in')));
+}
+
+function wpCloseEndedPopup() {
+  const overlay = document.getElementById('wp-ended-overlay');
+  overlay.classList.remove('in');
+  setTimeout(() => overlay.classList.remove('show'), 250);
+}
+
 function wpShowEndedNotice() {
   if (wpUnsubscribe) { wpUnsubscribe(); wpUnsubscribe = null; }
+  video.removeEventListener('play', wpSuppressAutoplay);
+  wpWaitingFirstSync = false;
   wpIsGuest = false; wpRoomCode = null;
   document.getElementById('watchparty-btn').classList.remove('wp-live');
-  alert(tr('watchparty_ended'));
+  wpShowEndedPopup();
   renderWatchPartyPanel();
 }
 
 function leaveWatchParty() {
   if (wpUnsubscribe) { wpUnsubscribe(); wpUnsubscribe = null; }
+  video.removeEventListener('play', wpSuppressAutoplay);
+  wpWaitingFirstSync = false;
   wpIsGuest = false; wpRoomCode = null;
   document.getElementById('watchparty-btn').classList.remove('wp-live');
   const u = new URL(window.location.href);
@@ -4958,10 +5395,60 @@ function wpGuestBlocked() {
   return true;
 }
 
-// Auto-jonction si l'URL contient ?wp=CODE
-window.addEventListener('load', () => {
+// Auto-jonction si l'URL contient ?wp=CODE — on demande d'abord le pseudo
+// via une popup dédiée (un pseudo est obligatoire pour rejoindre une Watch
+// Party), puis joinWatchParty() se charge de récupérer le bon film/épisode
+// (via Firebase, avec repli sur l'URL).
+let wpPendingJoinCode = null;
+
+function wpShowJoinPrompt(code) {
+  wpPendingJoinCode = code;
+  const overlay = document.getElementById('wp-join-prompt-overlay');
+  const input = document.getElementById('wp-join-prompt-input');
+  const errorEl = document.getElementById('wp-join-prompt-error');
+  input.value = wpPseudo || '';
+  input.classList.remove('wp-input-error');
+  errorEl.style.display = 'none';
+  errorEl.textContent = '';
+  overlay.classList.add('show');
+  requestAnimationFrame(() => requestAnimationFrame(() => overlay.classList.add('in')));
+  setTimeout(() => input.focus(), 50);
+}
+
+function wpCloseJoinPrompt() {
+  const overlay = document.getElementById('wp-join-prompt-overlay');
+  overlay.classList.remove('in');
+  setTimeout(() => overlay.classList.remove('show'), 250);
+}
+
+function wpCancelJoinPrompt() {
+  wpPendingJoinCode = null;
+  wpCloseJoinPrompt();
+  // L'utilisateur annule : on réaffiche le menu normal (masqué au départ
+  // pour éviter qu'il ne clignote derrière le popup de pseudo).
+  loadScreen.style.display = 'block';
+}
+
+function wpConfirmJoinPrompt() {
+  const input = document.getElementById('wp-join-prompt-input');
+  const errorEl = document.getElementById('wp-join-prompt-error');
+  const pseudo = (input.value || '').trim();
+  if (!pseudo) {
+    input.classList.add('wp-input-error');
+    errorEl.textContent = tr('watchparty_pseudo_required');
+    errorEl.style.display = 'flex';
+    return;
+  }
+  wpSavePseudo(pseudo);
+  const code = wpPendingJoinCode;
+  wpPendingJoinCode = null;
+  wpCloseJoinPrompt();
+  if (code) joinWatchParty(code);
+}
+
+window.addEventListener('DOMContentLoaded', () => {
   const code = new URLSearchParams(window.location.search).get('wp');
-  if (code) joinWatchParty(code.toUpperCase());
+  if (code) wpShowJoinPrompt(code.toUpperCase());
 });
 
 const settingsTabOrder = ['sources-gear', 'format', 'vitesse'];
