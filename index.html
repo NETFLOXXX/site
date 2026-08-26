@@ -7,6 +7,20 @@
 <link rel="icon" type="image/png" href="https://i.ibb.co/VYfvTC6F/untilted-1752571740-trimmy.png">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/hls.js/1.4.12/hls.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script>
+  // Stub chargé AVANT le SDK Cast (qui est en `async` et peut s'exécuter
+  // avant le reste du script du player). On mémorise juste l'état ici ;
+  // l'initialisation réelle (definie plus bas, avec cast.framework) se
+  // déclenche dès que les deux sont prêts, peu importe l'ordre.
+  window.__castApiState = { ready:false, available:false };
+  window['__onGCastApiAvailable'] = function (isAvailable) {
+    window.__castApiState.ready = true;
+    window.__castApiState.available = isAvailable;
+    if (isAvailable && typeof window.__initCastFramework === 'function') {
+      window.__initCastFramework();
+    }
+  };
+</script>
 <script src="https://www.gstatic.com/cv/js/sender/v1/cast_sender.js?loadCastFramework=1" async></script>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
@@ -5856,7 +5870,14 @@ let castAvailable = false;
 let castMenuOpen = false;
 
 window['__onGCastApiAvailable'] = function (isAvailable) {
-  if (!isAvailable) return;
+  window.__castApiState.ready = true;
+  window.__castApiState.available = isAvailable;
+  if (!isAvailable) { renderCastMenu(); return; }
+  initCastFramework();
+};
+window.__initCastFramework = initCastFramework; // au cas où le SDK a fini de charger avant ce script
+
+function initCastFramework() {
   const ctx = cast.framework.CastContext.getInstance();
   ctx.setOptions({
     receiverApplicationId: chrome.cast.media.DEFAULT_MEDIA_RECEIVER_APP_ID,
@@ -5882,7 +5903,13 @@ window['__onGCastApiAvailable'] = function (isAvailable) {
 
   castAvailable = ctx.getCastState() !== cast.framework.CastState.NO_DEVICES_AVAILABLE;
   renderCastMenu();
-};
+}
+
+// Si le SDK Cast avait déjà fini de charger et appelé le stub avant que ce
+// script n'atteigne cette ligne, on rattrape l'initialisation ici.
+if (window.__castApiState?.ready) {
+  if (window.__castApiState.available) initCastFramework();
+}
 
 function toggleCastMenu() {
   castMenuOpen = !castMenuOpen;
