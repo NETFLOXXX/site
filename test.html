@@ -1225,6 +1225,13 @@
             .genre-chip { padding: clamp(9px, calc(1.518vh + 0.636px), 12.37px) clamp(14px, calc(1.8018vh + 4.072px), 18px); font-size: clamp(0.85rem, calc(0.6486vh + 0.6266rem), 0.94rem); }
             .chip-box { width: clamp(17px, calc(0.9009vh + 12.036px), 19px); height: clamp(17px, calc(0.9009vh + 12.036px), 19px); }
         }
+        /* Sur les écrans vraiment courts (14", ≤650px) uniquement : on remonte le
+           contenu du popup "choisissez vos genres" au lieu de le centrer verticalement,
+           pour combler le vide en haut/bas. Ne touche pas le 17" (773px), qui reste
+           centré comme avant. */
+        @media (max-height: 650px) and (min-width: 901px) {
+            .random-popup { justify-content: flex-start; padding-top: clamp(20px, 4vh, 30px); }
+        }
 
         /* ─── ÉCRAN DE CHARGEMENT DU TIRAGE ─── */
         .random-loading-overlay { background: #0a0a0a !important; }
