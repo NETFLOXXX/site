@@ -7,6 +7,7 @@
 <link rel="icon" type="image/png" href="https://i.ibb.co/VYfvTC6F/untilted-1752571740-trimmy.png">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/hls.js/1.4.12/hls.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://www.gstatic.com/cv/js/sender/v1/cast_sender.js?loadCastFramework=1" async></script>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
   * { margin:0; padding:0; box-sizing:border-box; }
@@ -526,6 +527,47 @@
   .ctrl-btn:hover { color:var(--red-h); transform:scale(1.16); background:rgba(255,255,255,0.06); }
   .ctrl-btn:focus { outline:none; }
   .ctrl-btn:active { transform:scale(0.88); color:var(--red); }
+
+  /* ── CAST (Chromecast) ── */
+  .cast-wrap { position:relative; display:flex; }
+  #cast-btn.open { color:var(--red-h); }
+  #cast-btn.cast-live { color:var(--red-h); }
+  #cast-btn.cast-live #cast-icon-idle { display:none; }
+  #cast-btn.cast-live #cast-icon-active { display:block; }
+  #cast-btn.cast-live::after {
+    content:''; position:absolute; top:5px; right:5px; width:6px; height:6px; border-radius:50%;
+    background:var(--red-h); box-shadow:0 0 0 2px rgba(0,0,0,0.72);
+  }
+  .cast-menu {
+    position:absolute; bottom:calc(100% + 14px); left:50%; transform:translateX(-50%) translateY(6px);
+    width:240px; max-width:76vw; background:rgba(18,18,18,0.98); border:1px solid rgba(255,255,255,0.1);
+    border-radius:14px; box-shadow:0 12px 34px rgba(0,0,0,0.55); padding:10px;
+    opacity:0; pointer-events:none; transition:opacity .18s ease, transform .18s ease;
+    z-index:40; backdrop-filter:blur(14px);
+  }
+  .cast-menu.open { opacity:1; pointer-events:auto; transform:translateX(-50%) translateY(0); }
+  .cast-menu-title {
+    font-size:0.72rem; font-weight:700; text-transform:uppercase; letter-spacing:.04em;
+    color:rgba(255,255,255,0.4); padding:4px 10px 8px;
+  }
+  .cast-menu-list { display:flex; flex-direction:column; gap:3px; max-height:220px; overflow-y:auto; }
+  .cast-menu-list::-webkit-scrollbar { width:6px; }
+  .cast-menu-list::-webkit-scrollbar-thumb { background:rgba(255,255,255,0.15); border-radius:6px; }
+  .cast-device-row {
+    display:flex; align-items:center; gap:10px; padding:10px 10px; border-radius:10px; cursor:pointer;
+    font-size:0.86rem; color:rgba(255,255,255,0.88); transition:background .15s, color .15s;
+  }
+  .cast-device-row:hover { background:rgba(255,255,255,0.07); }
+  .cast-device-row.active { color:var(--red-h); background:rgba(220,38,38,0.12); }
+  .cast-device-row svg { width:18px; height:18px; flex-shrink:0; color:rgba(255,255,255,0.55); }
+  .cast-device-row.active svg { color:var(--red-h); }
+  .cast-device-name { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .cast-device-status { font-size:0.68rem; color:var(--red-h); flex-shrink:0; }
+  .cast-menu-empty { padding:14px 10px; font-size:0.8rem; color:rgba(255,255,255,0.4); text-align:center; }
+  .cast-menu-stop {
+    margin-top:4px; padding-top:8px; border-top:1px solid rgba(255,255,255,0.08);
+  }
+  .cast-menu-stop .cast-device-row { color:var(--red-h); }
 
   /* GEAR — rotate one notch on open */
   #gear-icon { transition:transform 0.35s cubic-bezier(0.34,1.56,0.64,1); transform:rotate(0deg); }
@@ -1759,14 +1801,6 @@
     border-top:1px solid rgba(255,255,255,0.07); border-radius:0; margin-top:4px; padding-top:14px;
   }
   #ab-modal button.ab-ghost:hover { color:rgba(255,255,255,0.7); }
-  /* Si un adblocker est détecté, le bas du popup devient un seul bouton
-     "J'ai compris" : le reste du popup ne change pas. */
-  #ab-modal .ab-btns.ab-adblock-detected button.ab-primary { display:none; }
-  #ab-modal .ab-btns.ab-adblock-detected button.ab-ghost {
-    background:var(--red); color:#fff; padding:13px 16px; font-size:0.88rem;
-    border-top:none; border-radius:12px; margin-top:0;
-  }
-  #ab-modal .ab-btns.ab-adblock-detected button.ab-ghost:hover { background:var(--red-h); color:#fff; }
 
   /* ── POPUP "AUCUN LECTEUR DANS LA LANGUE CHOISIE" ── */
   #nolang-overlay {
@@ -2105,6 +2139,20 @@
         <button class="ctrl-btn wp-guest-hide" id="lock-btn" onclick="handleCtrlClick(this, lockPlayer)" title="Verrouiller les contrôles" data-i18n-title="lock_btn_title">
           <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
         </button>
+
+        <!-- cast (chromecast) -->
+        <div class="cast-wrap">
+          <button class="ctrl-btn" id="cast-btn" onclick="handleCtrlClick(this, toggleCastMenu)" title="Caster" data-i18n-title="cast_btn_title">
+            <svg id="cast-icon-idle" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M2 8V6a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-6"/><path d="M2 12a9 9 0 0 1 8 8"/><path d="M2 16a5 5 0 0 1 4 4"/><line x1="2" y1="20" x2="2.01" y2="20"/></svg>
+            <svg id="cast-icon-active" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="display:none"><path d="M2 8V6a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-6"/><path d="M2 12a9 9 0 0 1 8 8"/><path d="M2 16a5 5 0 0 1 4 4"/><line x1="2" y1="20" x2="2.01" y2="20"/></svg>
+          </button>
+          <div class="menu-popup cast-menu" id="cast-menu">
+            <div class="cast-menu-title" data-i18n="cast_menu_title">Caster sur</div>
+            <div class="cast-menu-list" id="cast-menu-list">
+              <div class="cast-menu-empty" id="cast-menu-empty">Recherche d'appareils…</div>
+            </div>
+          </div>
+        </div>
 
         <!-- pip -->
         <button class="ctrl-btn" onclick="handleCtrlClick(this, togglePiP)">
@@ -2878,6 +2926,13 @@ const I18N = {
   pip_overlay_title: { fr: 'Lecture en Picture-in-Picture', en: 'Playing in Picture-in-Picture' },
   pip_overlay_sub: { fr: 'La vidéo continue dans la fenêtre flottante. Tu peux naviguer ailleurs, elle reste au premier plan.', en: 'The video keeps playing in the floating window. You can browse elsewhere, it stays on top.' },
   pip_overlay_return: { fr: 'Revenir au lecteur', en: 'Return to player' },
+  cast_btn_title: { fr: 'Caster', en: 'Cast' },
+  cast_menu_title: { fr: 'Caster sur', en: 'Cast to' },
+  cast_menu_searching: { fr: "Recherche d'appareils…", en: 'Searching for devices…' },
+  cast_menu_unavailable: { fr: 'Chromecast indisponible sur ce navigateur', en: 'Chromecast unavailable on this browser' },
+  cast_menu_none: { fr: 'Aucun appareil trouvé sur ce réseau', en: 'No device found on this network' },
+  cast_status_connected: { fr: 'En cours', en: 'Casting' },
+  cast_stop: { fr: 'Arrêter la diffusion', en: 'Stop casting' },
   solo_autoplay_title: { fr: 'Continuer ?', en: 'Continue?' },
   solo_autoplay_no: { fr: 'Non', en: 'No' },
   solo_autoplay_countdown: { fr: 'Lancement automatique dans {s}s', en: 'Starting automatically in {s}s' },
@@ -5791,6 +5846,139 @@ video.addEventListener('leavepictureinpicture', () => {
   document.getElementById('pip-overlay').classList.remove('show');
 });
 
+// ══════════════════════════════════════════════
+// ── CAST (Chromecast) ──
+// Utilise l'API Cast officielle de Google (Cast Sender Framework).
+// currentStreamUrl / currentStreamIsHLS sont déjà remplis par le loader du player.
+// ══════════════════════════════════════════════
+let castSession = null;
+let castAvailable = false;
+let castMenuOpen = false;
+
+window['__onGCastApiAvailable'] = function (isAvailable) {
+  if (!isAvailable) return;
+  const ctx = cast.framework.CastContext.getInstance();
+  ctx.setOptions({
+    receiverApplicationId: chrome.cast.media.DEFAULT_MEDIA_RECEIVER_APP_ID,
+    autoJoinPolicy: chrome.cast.AutoJoinPolicy.ORIGIN_SCOPED,
+  });
+
+  ctx.addEventListener(cast.framework.CastContextEventType.CAST_STATE_CHANGED, e => {
+    castAvailable = e.castState !== cast.framework.CastState.NO_DEVICES_AVAILABLE;
+    renderCastMenu();
+  });
+
+  ctx.addEventListener(cast.framework.CastContextEventType.SESSION_STATE_CHANGED, e => {
+    const S = cast.framework.SessionState;
+    if (e.sessionState === S.SESSION_STARTED || e.sessionState === S.SESSION_RESUMED) {
+      castSession = ctx.getCurrentSession();
+      onCastConnected();
+    } else if (e.sessionState === S.SESSION_ENDED) {
+      castSession = null;
+      onCastDisconnected();
+    }
+    renderCastMenu();
+  });
+
+  castAvailable = ctx.getCastState() !== cast.framework.CastState.NO_DEVICES_AVAILABLE;
+  renderCastMenu();
+};
+
+function toggleCastMenu() {
+  castMenuOpen = !castMenuOpen;
+  const menu = document.getElementById('cast-menu');
+  const btn = document.getElementById('cast-btn');
+  if (castMenuOpen) {
+    renderCastMenu();
+    menu.classList.add('open');
+    btn.classList.add('open');
+  } else {
+    menu.classList.remove('open');
+    btn.classList.remove('open');
+  }
+}
+
+function renderCastMenu() {
+  const list = document.getElementById('cast-menu-list');
+  if (!list) return;
+  const isConnected = !!castSession;
+
+  if (typeof cast === 'undefined' || typeof chrome === 'undefined' || !chrome.cast) {
+    list.innerHTML = `<div class="cast-menu-empty">${tr('cast_menu_unavailable')}</div>`;
+    return;
+  }
+
+  if (!castAvailable && !isConnected) {
+    list.innerHTML = `<div class="cast-menu-empty">${tr('cast_menu_none')}</div>`;
+    return;
+  }
+
+  const deviceName = isConnected ? (castSession.getCastDevice()?.friendlyName || 'Chromecast') : 'Chromecast';
+
+  list.innerHTML = `
+    <div class="cast-device-row ${isConnected ? 'active' : ''}" onclick="handleCastRowClick()">
+      <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M2 8V6a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-6"/><path d="M2 12a9 9 0 0 1 8 8"/><path d="M2 16a5 5 0 0 1 4 4"/><line x1="2" y1="20" x2="2.01" y2="20"/></svg>
+      <span class="cast-device-name">${deviceName}</span>
+      ${isConnected ? `<span class="cast-device-status">${tr('cast_status_connected')}</span>` : ''}
+    </div>
+    ${isConnected ? `
+    <div class="cast-menu-stop">
+      <div class="cast-device-row" onclick="stopCasting()">
+        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        <span class="cast-device-name">${tr('cast_stop')}</span>
+      </div>
+    </div>` : ''}
+  `;
+}
+
+function handleCastRowClick() {
+  if (castSession) { stopCasting(); return; }
+  startCasting();
+}
+
+function startCasting() {
+  if (typeof cast === 'undefined') return;
+  if (!currentStreamUrl) return;
+  const ctx = cast.framework.CastContext.getInstance();
+  ctx.requestSession().then(() => {
+    castSession = ctx.getCurrentSession();
+    onCastConnected();
+    loadMediaOnCast();
+  }).catch(() => {});
+}
+
+function loadMediaOnCast() {
+  if (!castSession || !currentStreamUrl) return;
+  const contentType = currentStreamIsHLS ? 'application/x-mpegurl' : 'video/mp4';
+  const mediaInfo = new chrome.cast.media.MediaInfo(currentStreamUrl, contentType);
+  mediaInfo.metadata = new chrome.cast.media.GenericMediaMetadata();
+  mediaInfo.metadata.title = currentStreamTitle || 'Netflox';
+  mediaInfo.currentTime = video?.currentTime || 0;
+
+  const request = new chrome.cast.media.LoadRequest(mediaInfo);
+  request.currentTime = video?.currentTime || 0;
+  request.autoplay = true;
+
+  castSession.loadMedia(request).then(() => {
+    if (!video.paused) video.pause();
+  }).catch(() => {});
+}
+
+function stopCasting() {
+  if (!castSession) return;
+  castSession.endSession(true);
+  castSession = null;
+  onCastDisconnected();
+  toggleCastMenu();
+}
+
+function onCastConnected() {
+  document.getElementById('cast-btn').classList.add('cast-live');
+}
+function onCastDisconnected() {
+  document.getElementById('cast-btn').classList.remove('cast-live');
+}
+
 function toggleFullscreen() {
   if (!document.fullscreenElement) pw.requestFullscreen?.();
   else document.exitFullscreen?.();
@@ -6012,6 +6200,8 @@ function closeMenus() {
   document.getElementById('download-scrim').classList.remove('open');
   document.getElementById('download-btn').classList.remove('open');
   document.getElementById('nav-mid').classList.remove('open');
+  document.getElementById('cast-btn')?.classList.remove('open');
+  castMenuOpen = false;
 }
 document.addEventListener('click', e => {
   // Les clics à l'intérieur du panneau Sources / Épisodes ne doivent JAMAIS fermer le panneau.
@@ -8235,56 +8425,11 @@ function goToNextSourceAfterError() {
 // ── POPUP AVERTISSEMENT "AUTRES LECTEURS" (pubs) ──
 let abProceedCallback = null;
 let abPopupAlreadyShown = false; // reste à false tant que la page n'est pas rechargée
-let abBlockDetected = null; // null = pas encore testé, true/false = résultat
-
-// Détection légère par "bait" DOM, inspirée de l'approche IAB : les
-// bloqueurs qui appliquent leurs filtres cosmétiques masquent généralement
-// ce type d'élément. On ne fait cette vérification qu'au moment d'ouvrir
-// le popup afin de ne rien modifier ailleurs dans le lecteur.
-function detectAdBlockForPopup(callback) {
-  if (abBlockDetected !== null) { callback(abBlockDetected); return; }
-
-  const bait = document.createElement('div');
-  bait.className = 'ad ads adsbox ad-banner text-ad text_ads';
-  bait.setAttribute('aria-hidden', 'true');
-  bait.style.cssText = 'position:absolute !important; left:-10000px !important; top:-10000px !important; width:1px !important; height:1px !important;';
-  document.body.appendChild(bait);
-
-  setTimeout(() => {
-    const style = window.getComputedStyle ? window.getComputedStyle(bait) : null;
-    const detected = !!(
-      document.body.getAttribute('abp') !== null ||
-      bait.offsetParent === null ||
-      bait.offsetWidth === 0 ||
-      bait.offsetHeight === 0 ||
-      (style && (style.display === 'none' || style.visibility === 'hidden'))
-    );
-
-    bait.remove();
-    abBlockDetected = detected;
-    callback(detected);
-  }, 100);
-}
-
-function updateAdblockPopupButtons(detected) {
-  const btns = document.querySelector('#ab-modal .ab-btns');
-  const installBtn = document.querySelector('#ab-modal .ab-primary');
-  const proceedBtn = document.querySelector('#ab-modal .ab-ghost');
-  if (!btns || !installBtn || !proceedBtn) return;
-
-  btns.classList.toggle('ab-adblock-detected', detected);
-  if (detected) {
-    proceedBtn.textContent = preferredLang === 'fr' ? "J'ai compris" : 'Got it';
-  } else {
-    proceedBtn.textContent = preferredLang === 'fr' ? 'Continuer quand même' : 'Continue anyway';
-  }
-}
 
 function openAdblockPopup(onProceed) {
   if (abPopupAlreadyShown) { onProceed(); return; }
   abProceedCallback = onProceed;
   document.getElementById('ab-overlay').classList.add('open');
-  detectAdBlockForPopup(updateAdblockPopupButtons);
 }
 
 function confirmAdblockAndProceed() {
