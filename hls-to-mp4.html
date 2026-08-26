@@ -287,17 +287,19 @@ async function getFFmpeg() {
   });
   try {
     const baseURL = "https://unpkg.com/@ffmpeg/core@0.12.6/dist/esm";
+    const workerURL = "https://unpkg.com/@ffmpeg/ffmpeg@0.12.10/dist/esm/worker.js";
     await instance.load({
       coreURL: await toBlobURL(`${baseURL}/ffmpeg-core.js`, "text/javascript"),
       wasmURL: await toBlobURL(`${baseURL}/ffmpeg-core.wasm`, "application/wasm"),
+      classWorkerURL: await toBlobURL(workerURL, "text/javascript"),
     });
   } catch (e) {
     ffmpeg = null; // ne pas garder une instance à moitié chargée, on réessaiera au prochain clic
     throw new Error(
       "Le moteur ffmpeg n'a pas pu se charger (" + e.message + "). " +
-      "Si tu as ouvert ce fichier directement en double-cliquant dessus (file://), " +
-      "certains navigateurs bloquent les workers/modules dans ce cas : essaie de le servir " +
-      "via un petit serveur local (ex: `python3 -m http.server` dans le dossier, puis ouvre http://localhost:8000/hls-to-mp4.html)."
+      "Vérifie ta connexion, ou que ton bloqueur de pub/script n'empêche pas unpkg.com de répondre. " +
+      "Si le fichier est ouvert en file://, sers-le via un petit serveur local " +
+      "(ex: `npx serve .` puis ouvre l'URL http://localhost affichée)."
     );
   }
   if (!instance.loaded) {
