@@ -1299,31 +1299,53 @@
             width: 80px; height: 80px;
             border-radius: 50%;
             background: #141414;
-            border: 3px solid;
             display: flex; align-items: center; justify-content: center;
             z-index: 2;
             animation: feedbackPop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both;
         }
-        .feedback-icon-wrap svg { width: 38px; height: 38px; overflow: visible; }
-        .feedback-popup.success .feedback-icon-wrap { border-color: #2ecc71; color: #2ecc71; }
-        .feedback-popup.error .feedback-icon-wrap { border-color: #ff4d5a; color: #ff4d5a; }
+        .feedback-popup.success .feedback-icon-wrap { color: #2ecc71; }
+        .feedback-popup.error .feedback-icon-wrap { color: #ff4d5a; }
         @keyframes feedbackPop {
             0% { transform: translate(-50%, 50%) scale(0.5); opacity: 0; }
             100% { transform: translate(-50%, 50%) scale(1); opacity: 1; }
         }
-        /* ─── Animation type "Apple Pay" : la coche / le triangle se dessine (longueurs de
-             tracé fixes, calculées une fois pour toutes — fiable, pas de bug de tracé),
-             puis pulse en vert (succès) ou tremble en rouge (échec) ─── */
-        .feedback-draw-path {
-            animation: feedbackDraw 0.55s cubic-bezier(0.65, 0, 0.35, 1) 0.32s both;
+        /* ─── Animation type "Apple Pay", en 3 temps calmes et bien séparés :
+             1) le rond se dessine (le cercle du contour)
+             2) la coche / le triangle se dessinent à l'intérieur
+             3) pulse vert (succès) ou léger tremblement rouge (échec)
+             Longueurs de tracé fixes, calculées une fois pour toutes — fiable, pas de bug. ─── */
+        .feedback-ring {
+            position: absolute;
+            inset: 0;
+            width: 100%; height: 100%;
         }
-        @keyframes feedbackDraw {
-            to { stroke-dashoffset: 0; }
+        .feedback-ring circle {
+            fill: none;
+            stroke: currentColor;
+            stroke-width: 3.5;
+            stroke-dasharray: 232.5;
+            stroke-dashoffset: 232.5;
+            animation: feedbackDraw 0.5s cubic-bezier(0.65, 0, 0.35, 1) 0.1s both;
+        }
+        .feedback-icon-svg {
+            position: relative;
+            width: 46px; height: 46px;
+            overflow: visible;
+            z-index: 1;
+        }
+        .feedback-draw-path {
+            animation: feedbackDraw 0.4s cubic-bezier(0.65, 0, 0.35, 1) 0.55s both;
+        }
+        .feedback-draw-path-fast {
+            animation: feedbackDraw 0.18s ease 0.92s both;
         }
         .feedback-dot-pop {
             transform-box: fill-box;
             transform-origin: center;
-            animation: feedbackDotPop 0.25s cubic-bezier(0.34, 1.56, 0.64, 1) 0.82s both;
+            animation: feedbackDotPop 0.2s cubic-bezier(0.34, 1.56, 0.64, 1) 1.08s both;
+        }
+        @keyframes feedbackDraw {
+            to { stroke-dashoffset: 0; }
         }
         @keyframes feedbackDotPop {
             0% { transform: scale(0); }
@@ -1331,11 +1353,11 @@
         }
         .feedback-popup.success .feedback-icon-wrap {
             animation: feedbackPop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both,
-                       feedbackPulseOk 0.6s ease-out 0.82s;
+                       feedbackPulseOk 0.6s ease-out 1.05s;
         }
         .feedback-popup.error .feedback-icon-wrap {
             animation: feedbackPop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both,
-                       feedbackShakeKo 0.5s ease-out 0.82s;
+                       feedbackShakeKo 0.5s ease-out 1.3s;
         }
         @keyframes feedbackPulseOk {
             0% { box-shadow: 0 0 0 0 rgba(46,204,113,0.55); }
@@ -2073,11 +2095,14 @@ function closeOverlayAnimated(overlay) {
 function showFeedbackPopup(type, message, title, options = {}) {
     const overlay = document.createElement('div');
     overlay.className = 'tv-overlay fullscreen';
-    // Longueurs de tracé fixes (viewBox 24x24, calculées une fois pour toutes) : le contour
-    // se dessine toujours à l'identique, sans calcul JS au runtime — donc plus de bug possible.
-    const icon = type === 'success'
-        ? `<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle class="feedback-draw-path" cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.6" stroke-dasharray="56.55" stroke-dashoffset="56.55"/><path class="feedback-draw-path" d="M8 12.3L10.5 14.8L16 9.2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="11.4" stroke-dashoffset="11.4"/></svg>`
-        : `<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path class="feedback-draw-path" d="M12 3.5L2.5 20H21.5L12 3.5Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" stroke-dasharray="57.1" stroke-dashoffset="57.1"/><path class="feedback-draw-path" d="M12 9.5V14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-dasharray="4.5" stroke-dashoffset="4.5"/><circle class="feedback-dot-pop" cx="12" cy="17" r="1.1" fill="currentColor"/></svg>`;
+    // L'icône du popup se construit en 2 couches : un anneau (le rond) qui se dessine en
+    // premier, puis la coche / le triangle qui se dessinent par-dessus, directement dans ce
+    // même rond. Longueurs de tracé fixes, calculées une fois pour toutes.
+    const ring = `<svg class="feedback-ring" viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg"><circle cx="40" cy="40" r="37"/></svg>`;
+    const iconSvg = type === 'success'
+        ? `<svg class="feedback-icon-svg" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path class="feedback-draw-path" d="M4.5 12.5L9.5 17.5L19.5 6" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="22.31" stroke-dashoffset="22.31"/></svg>`
+        : `<svg class="feedback-icon-svg" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path class="feedback-draw-path" d="M12 3.5L2.5 20H21.5L12 3.5Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" stroke-dasharray="57.1" stroke-dashoffset="57.1"/><path class="feedback-draw-path feedback-draw-path-fast" d="M12 9.5V14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-dasharray="4.5" stroke-dashoffset="4.5"/><circle class="feedback-dot-pop" cx="12" cy="17" r="1.1" fill="currentColor"/></svg>`;
+    const icon = ring + iconSvg;
     const loginBtnHtml = options.showLoginBtn
         ? `<button class="btn btn-primary feedback-login-btn" style="margin-bottom:10px;width:100%;justify-content:center;border-radius:999px;font-family:'Poppins', sans-serif;">Se connecter</button>`
         : '';
