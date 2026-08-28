@@ -534,7 +534,6 @@
   #settings-btn.open { color:var(--red-h); }
   #subtitles-btn.open { color:var(--red-h); }
   #download-btn.open { color:var(--red-h); }
-  #cast-btn.open { color:var(--red-h); }
   /* ── MODE VERROUILLÉ ── cache tous les contrôles (comme embed-mode), quel que
      soit l'état .cv (survol souris) ou la présence de la carte "À suivre". Le
      curseur est masqué en continu et seul #lock-overlay reste interactif, pour
@@ -1088,21 +1087,51 @@
   .menu-item.active { color:var(--red); }
   .menu-label { font-size:0.7rem; color:rgba(255,255,255,0.38); padding:6px 16px 2px; text-transform:uppercase; letter-spacing:0.08em; }
 
-  /* ── PANNEAU CAST (AirPlay / Chromecast) ──
-     Panneau latéral plein-hauteur ouvert depuis la droite, exactement comme
-     Sources / Sous-titres / Téléchargement / Watch Party : structure
-     .settings-scrim + .settings-panel (voir plus bas). */
-  #cast-panel .settings-content { display:flex; flex-direction:column; }
+  /* ── MENU CAST (AirPlay / Chromecast) ──
+     Popup ancrée au-dessus du bouton "Diffuser", à gauche du PiP. Même
+     vocabulaire visuel que les panneaux Paramètres / Sources : fond verre
+     noir, bordures 1px blanches très faibles, accent rouge sur l'actif. */
+  .cast-wrap { position:relative; display:flex; align-items:center; }
+  #cast-menu {
+    position:absolute; bottom:calc(100% + 14px); right:0; z-index:210;
+    width:272px; max-width:min(272px, 80vw);
+    background:rgba(9,9,9,0.98); border:1px solid rgba(255,255,255,0.1);
+    border-radius:14px; overflow:hidden;
+    backdrop-filter:blur(20px);
+    box-shadow:0 18px 46px rgba(0,0,0,0.6);
+    opacity:0; transform:translateY(10px) scale(0.97); transform-origin:bottom right;
+    pointer-events:none;
+    transition:opacity 0.2s, transform 0.24s cubic-bezier(0.22,1,0.36,1);
+  }
+  #cast-menu.open { opacity:1; transform:translateY(0) scale(1); pointer-events:all; }
+
+  .cast-head {
+    display:flex; align-items:center; justify-content:space-between; gap:10px;
+    padding:13px 16px; border-bottom:1px solid rgba(255,255,255,0.08);
+  }
+  .cast-head-title { font-size:0.95rem; font-weight:700; letter-spacing:-0.01em; }
+  .cast-scan {
+    display:flex; align-items:center; gap:7px; flex-shrink:0;
+    font-size:0.65rem; color:rgba(255,255,255,0.38);
+    text-transform:uppercase; letter-spacing:0.07em; font-weight:600;
+  }
+  .cast-scan-dot { width:7px; height:7px; border-radius:50%; background:rgba(255,255,255,0.22); flex-shrink:0; }
+  .cast-scan.searching .cast-scan-dot { background:var(--red); animation:castPulse 1.3s ease-in-out infinite; }
+  .cast-scan.found .cast-scan-dot { background:#4ade80; box-shadow:0 0 7px rgba(74,222,128,0.75); }
+  @keyframes castPulse {
+    0%,100% { opacity:0.25; transform:scale(0.75); }
+    50%     { opacity:1;    transform:scale(1.2); }
+  }
 
   .cast-list { padding:7px; max-height:238px; overflow-y:auto; overflow-x:hidden; }
   .cast-list::-webkit-scrollbar { width:5px; }
   .cast-list::-webkit-scrollbar-thumb { background:rgba(255,255,255,0.15); border-radius:6px; }
 
   .cast-row {
-    display:flex; align-items:center; justify-content:center; gap:12px; width:100%;
+    display:flex; align-items:center; gap:12px; width:100%;
     padding:11px 12px; border-radius:11px; cursor:pointer;
     background:none; border:1px solid transparent; color:rgba(255,255,255,0.86);
-    font-family:'Outfit',sans-serif; font-size:0.9rem; text-align:center;
+    font-family:'Outfit',sans-serif; font-size:0.9rem; text-align:left;
     transition:background 0.15s, border-color 0.15s, color 0.15s;
   }
   .cast-row:hover { background:rgba(255,255,255,0.06); color:#fff; }
@@ -1110,7 +1139,7 @@
   .cast-row.active { background:rgba(220,38,38,0.14); border-color:rgba(220,38,38,0.5); color:#fff; }
   .cast-row svg { width:20px; height:20px; flex-shrink:0; }
   .cast-row.active svg { color:var(--red-h); }
-  .cast-row-txt { display:flex; flex-direction:column; align-items:center; gap:2px; min-width:0; flex:1; text-align:center; }
+  .cast-row-txt { display:flex; flex-direction:column; gap:2px; min-width:0; flex:1; }
   .cast-row-name { font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .cast-row-sub {
     font-size:0.72rem; color:rgba(255,255,255,0.42);
@@ -1122,19 +1151,9 @@
     background:var(--red); color:#fff; padding:3px 9px; border-radius:20px; flex-shrink:0;
   }
 
-  .cast-list.is-empty {
-    flex:1; display:flex; align-items:center; justify-content:center;
-    max-height:none; padding:24px;
-  }
-  .cast-empty { text-align:center; color:rgba(255,255,255,0.4); font-size:0.86rem; line-height:1.55; max-width:280px; }
-  .cast-empty svg { width:42px; height:42px; margin-bottom:16px; opacity:0.32; }
-  .cast-empty strong { display:block; color:rgba(255,255,255,0.78); font-weight:700; font-size:1.02rem; margin-bottom:8px; }
-  .cast-empty p { margin:0; }
-  .cast-empty-note {
-    display:block; margin-top:16px; padding-top:14px;
-    border-top:1px solid rgba(255,255,255,0.08);
-    font-size:0.76rem; color:rgba(255,255,255,0.32); line-height:1.5;
-  }
+  .cast-empty { padding:22px 18px; text-align:center; color:rgba(255,255,255,0.38); font-size:0.82rem; line-height:1.5; }
+  .cast-empty svg { width:26px; height:26px; margin-bottom:9px; opacity:0.4; }
+  .cast-empty strong { display:block; color:rgba(255,255,255,0.62); font-weight:600; font-size:0.87rem; margin-bottom:4px; }
 
   .cast-stop {
     display:flex; align-items:center; justify-content:center; gap:8px;
@@ -2184,10 +2203,20 @@
           <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
         </button>
 
-        <!-- cast (AirPlay / Chromecast) — le panneau lui-même est une sidebar plus bas, comme Sources / Sous-titres / Téléchargement -->
-        <button class="ctrl-btn" id="cast-btn" onclick="handleCtrlClick(this, toggleCastMenu)" title="Diffuser" data-i18n-title="cast_btn_title">
-          <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M2 16.1A5 5 0 0 1 5.9 20"/><path d="M2 12.05A9 9 0 0 1 9.95 20"/><path d="M2 8V6a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-6"/><line x1="2" y1="20" x2="2.01" y2="20"/></svg>
-        </button>
+        <!-- cast (AirPlay / Chromecast) — contenu du menu rendu par renderCastMenu() -->
+        <div class="cast-wrap">
+          <button class="ctrl-btn" id="cast-btn" onclick="handleCtrlClick(this, toggleCastMenu)" title="Diffuser" data-i18n-title="cast_btn_title">
+            <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M2 16.1A5 5 0 0 1 5.9 20"/><path d="M2 12.05A9 9 0 0 1 9.95 20"/><path d="M2 8V6a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-6"/><line x1="2" y1="20" x2="2.01" y2="20"/></svg>
+          </button>
+          <div id="cast-menu">
+            <div class="cast-head">
+              <span class="cast-head-title" id="cast-menu-title">Diffuser</span>
+              <span class="cast-scan" id="cast-scan"><span class="cast-scan-dot"></span><span id="cast-scan-txt"></span></span>
+            </div>
+            <div class="cast-list" id="cast-list"></div>
+            <div class="cast-foot" id="cast-foot"></div>
+          </div>
+        </div>
 
         <!-- pip -->
         <button class="ctrl-btn" onclick="handleCtrlClick(this, togglePiP)" title="Picture-in-Picture" data-i18n-title="pip_btn_title">
@@ -2342,21 +2371,6 @@
       </button>
     </div>
     <div class="settings-content" id="watchparty-panel-content"></div>
-  </div>
-
-  <!-- CAST SIDEBAR (AirPlay / Chromecast) -->
-  <div class="settings-scrim" id="cast-scrim" onclick="toggleCastMenu()"></div>
-  <div class="settings-panel" id="cast-panel">
-    <div class="settings-header">
-      <span id="cast-menu-title" data-i18n="cast_menu_title">Diffuser</span>
-      <button class="settings-close" onclick="toggleCastMenu()">
-        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-      </button>
-    </div>
-    <div class="settings-content">
-      <div class="cast-list" id="cast-list"></div>
-      <div class="cast-foot" id="cast-foot"></div>
-    </div>
   </div>
 
   <!-- POPUP fin de Watch Party (côté invité) -->
@@ -2777,7 +2791,6 @@ const timeDsp = document.getElementById('time-display');
 const volSlider = document.getElementById('vol-slider');
 
 let hls = null, hideTimer = null, scrubbing = false;
-let castPendingScrubTime = null;
 let currentStreamUrl = null;    // URL brute du flux en lecture (source directe, non-blob)
 let currentStreamIsHLS = false;
 let currentStreamTitle = '';
@@ -2972,6 +2985,9 @@ const I18N = {
   pip_btn_title: { fr: 'Picture-in-Picture', en: 'Picture-in-Picture' },
   cast_btn_title: { fr: 'Diffuser (AirPlay / Chromecast)', en: 'Cast (AirPlay / Chromecast)' },
   cast_menu_title: { fr: 'Diffuser', en: 'Cast' },
+  cast_scan_searching: { fr: 'Recherche', en: 'Scanning' },
+  cast_scan_found: { fr: 'Détecté', en: 'Found' },
+  cast_scan_none: { fr: 'Aucun', en: 'None' },
   cast_chromecast: { fr: 'Chromecast', en: 'Chromecast' },
   cast_airplay: { fr: 'AirPlay', en: 'AirPlay' },
   cast_remote_device: { fr: 'Appareil compatible', en: 'Compatible device' },
@@ -5820,21 +5836,11 @@ function selectNativeAudioTrackByLang(videoEl, langCode) {
 }
 
 // ── PLAYBACK ──
-function togglePlay() {
-  if (wpGuestBlocked()) return;
-  if (castRemoteActive()) { castRemotePlayerController.playOrPause(); return; }
-  if (video.paused) video.play(); else video.pause();
-}
+function togglePlay() { if (wpGuestBlocked()) return; if (video.paused) video.play(); else video.pause(); }
 
 function seekFlash(s) {
   if (wpGuestBlocked()) return;
-  if (castRemoteActive()) {
-    const dur = castRemotePlayer.duration || 0;
-    castRemotePlayer.currentTime = Math.max(0, Math.min((castRemotePlayer.currentTime || 0) + s, dur));
-    castRemotePlayerController.seek();
-  } else {
-    video.currentTime = Math.max(0, Math.min(video.currentTime + s, video.duration || 0));
-  }
+  video.currentTime = Math.max(0, Math.min(video.currentTime + s, video.duration || 0));
   const id = s < 0 ? 'flash-rw' : 'flash-fw';
   const el = document.getElementById(id);
   el.classList.add('show');
@@ -5907,9 +5913,8 @@ function updateVolUI() {
 // ── TIME TOGGLE ──
 function toggleTimeMode() { showRemaining = !showRemaining; updateTimeDisplay(); }
 
-function updateTimeDisplay(curOverride, durOverride) {
-  const cur = curOverride != null ? curOverride : video.currentTime;
-  const dur = durOverride != null ? durOverride : video.duration;
+function updateTimeDisplay() {
+  const cur = video.currentTime, dur = video.duration;
   const display = (showRemaining && isFinite(dur))
     ? `−${fmt(dur-cur)} / ${fmt(dur)}`
     : `${fmt(cur)} / ${fmt(dur)}`;
@@ -5949,46 +5954,34 @@ const castState = {
 };
 
 function castIsOpen() {
-  const m = document.getElementById('cast-panel');
+  const m = document.getElementById('cast-menu');
   return !!m && m.classList.contains('open');
 }
 
-// ── CAST SIDEBAR (AirPlay / Chromecast) — même logique que les autres panneaux latéraux ──
 function toggleCastMenu() {
-  const panel = document.getElementById('cast-panel');
-  const scrim = document.getElementById('cast-scrim');
-  const btn = document.getElementById('cast-btn');
-  if (!panel) return;
-  const was = panel.classList.contains('open');
-  if (!was) {
-    document.getElementById('settings-panel').classList.remove('open');
-    document.getElementById('settings-scrim').classList.remove('open');
-    document.getElementById('settings-btn').classList.remove('open');
-    document.getElementById('sources-panel').classList.remove('open');
-    document.getElementById('sources-scrim').classList.remove('open');
-    document.getElementById('sources-btn').classList.remove('open');
-    document.getElementById('subtitles-panel').classList.remove('open');
-    document.getElementById('subtitles-scrim').classList.remove('open');
-    document.getElementById('subtitles-btn').classList.remove('open');
-    document.getElementById('download-panel').classList.remove('open');
-    document.getElementById('download-scrim').classList.remove('open');
-    document.getElementById('download-btn').classList.remove('open');
-    document.getElementById('watchparty-panel').classList.remove('open');
-    document.getElementById('watchparty-scrim').classList.remove('open');
-    document.getElementById('watchparty-btn').classList.remove('open');
-    castState.note = '';
-    renderCastMenu();
-    panel.classList.add('open'); scrim.classList.add('open'); btn.classList.add('open');
-  } else {
-    closeCastMenu();
-  }
+  const menu = document.getElementById('cast-menu');
+  if (!menu) return;
+  if (menu.classList.contains('open')) { closeCastMenu(); return; }
+  closeMenus();               // referme paramètres / sources / sous-titres / téléchargement
+  castState.note = '';
+  renderCastMenu();
+  menu.classList.add('open');
 }
 
 function closeCastMenu() {
-  document.getElementById('cast-panel')?.classList.remove('open');
-  document.getElementById('cast-scrim')?.classList.remove('open');
-  document.getElementById('cast-btn')?.classList.remove('open');
+  document.getElementById('cast-menu')?.classList.remove('open');
 }
+
+// Un clic hors du bouton et hors du menu referme celui-ci (closeMenus() du
+// lecteur ne connaît que les panneaux latéraux, on garde notre propre garde).
+document.addEventListener('click', e => {
+  if (!castIsOpen()) return;
+  if (e.target.closest('.cast-wrap')) return;
+  closeCastMenu();
+});
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && castIsOpen()) closeCastMenu();
+});
 
 function castRowHTML(icon, name, sub, opts) {
   opts = opts || {};
@@ -6004,13 +5997,25 @@ function castRowHTML(icon, name, sub, opts) {
 
 function renderCastMenu() {
   const list = document.getElementById('cast-list');
+  const scan = document.getElementById('cast-scan');
+  const scanTxt = document.getElementById('cast-scan-txt');
   const foot = document.getElementById('cast-foot');
   const titleEl = document.getElementById('cast-menu-title');
   if (!list) return;
 
   if (titleEl) titleEl.textContent = tr('cast_menu_title');
 
+  const anyDevice = castState.devices || castState.connected ||
+                    castState.airplay || castState.airplayOn || castState.remote;
   const casting = castState.connected || castState.airplayOn;
+
+  // pastille d'état de la recherche
+  if (scan && scanTxt) {
+    scan.classList.remove('searching', 'found');
+    if (anyDevice) { scan.classList.add('found'); scanTxt.textContent = tr('cast_scan_found'); }
+    else if (castState.scanning) { scan.classList.add('searching'); scanTxt.textContent = tr('cast_scan_searching'); }
+    else { scanTxt.textContent = tr('cast_scan_none'); }
+  }
 
   let html = '';
 
@@ -6047,21 +6052,12 @@ function renderCastMenu() {
   }
 
   const emptyState = !html;
-  const unsupported = !castState.sdkReady && !window.WebKitPlaybackTargetAvailabilityEvent && !castState.remote;
   if (emptyState) {
-    // Un seul bloc centré : icône + titre + conseil, et le message "navigateur
-    // incompatible" en complément juste en dessous si besoin (plus de pastille
-    // de scan séparée, plus de pied de panneau distinct).
-    const extra = castState.note ? castState.note : (unsupported ? tr('cast_foot_unsupported') : '');
-    list.classList.add('is-empty');
     html = `<div class="cast-empty">
         ${CAST_ICON_SCREEN}
         <strong>${tr('cast_none_title')}</strong>
-        <p>${tr('cast_none_sub')}</p>
-        ${extra ? `<span class="cast-empty-note">${extra}</span>` : ''}
+        ${tr('cast_none_sub')}
       </div>`;
-  } else {
-    list.classList.remove('is-empty');
   }
 
   if (casting) {
@@ -6071,9 +6067,14 @@ function renderCastMenu() {
   list.innerHTML = html;
 
   if (foot) {
-    foot.classList.toggle('warn', !!castState.note && !emptyState);
-    // Le message est désormais intégré au bloc centré quand la liste est vide.
-    const txt = emptyState ? '' : (castState.note ? castState.note : tr('cast_foot_hint'));
+    const unsupported = !castState.sdkReady && !window.WebKitPlaybackTargetAvailabilityEvent && !castState.remote;
+    foot.classList.toggle('warn', !!castState.note);
+    // L'état vide porte déjà le conseil "même Wi-Fi" : on n'affiche le pied
+    // que s'il apporte autre chose (message d'erreur, navigateur incompatible).
+    const txt = castState.note ? castState.note
+              : unsupported ? tr('cast_foot_unsupported')
+              : emptyState ? ''
+              : tr('cast_foot_hint');
     foot.textContent = txt;
     foot.style.display = txt ? '' : 'none';
   }
@@ -6136,19 +6137,6 @@ function castLoadMedia() {
     // plutôt que de laisser tourner deux fois le même flux.
     try { video.pause(); } catch (err) {}
     castState.note = '';
-    castSetupRemotePlayer();
-    // Filet de sécurité : certains récepteurs (notamment en HLS) ignorent
-    // parfois le currentTime demandé au chargement — on revérifie une fois
-    // la lecture bien démarrée côté TV et on re-seek si besoin.
-    if (isFinite(t) && t > 1) {
-      setTimeout(() => {
-        if (!castRemotePlayer || !castRemotePlayer.isMediaLoaded) return;
-        if (Math.abs((castRemotePlayer.currentTime || 0) - t) > 3) {
-          castRemotePlayer.currentTime = t;
-          castRemotePlayerController.seek();
-        }
-      }, 1200);
-    }
     castRefresh();
     closeCastMenu();
   }, () => {
@@ -6157,10 +6145,6 @@ function castLoadMedia() {
 }
 
 function castStop() {
-  const wasConnected = castState.connected;
-  const resumeAt = (wasConnected && castRemotePlayer && castRemotePlayer.isMediaLoaded)
-    ? castRemotePlayer.currentTime : null;
-  const wasPlaying = (wasConnected && castRemotePlayer) ? !castRemotePlayer.isPaused : false;
   try {
     if (castState.sdkReady) cast.framework.CastContext.getInstance().endCurrentSession(true);
   } catch (err) {}
@@ -6168,14 +6152,6 @@ function castStop() {
     // Safari : le sélecteur AirPlay sert aussi à revenir sur l'appareil local.
     if (castState.airplayOn) video.webkitShowPlaybackTargetPicker();
   } catch (err) {}
-  // On reprend la vidéo locale exactement là où la diffusion s'est arrêtée,
-  // plutôt que de la laisser en pause au tout début.
-  if (wasConnected && isFinite(resumeAt) && resumeAt > 0) {
-    try {
-      video.currentTime = resumeAt;
-      if (wasPlaying) video.play().catch(() => {});
-    } catch (err) {}
-  }
   castState.note = '';
   castRefresh();
 }
@@ -6193,7 +6169,6 @@ function castStartRemote() {
 }
 
 // ── Détection ──
-let castWasConnected = false;
 function castApplyChromecastState(state) {
   const S = cast.framework.CastState;
   castState.scanning = false;
@@ -6204,67 +6179,7 @@ function castApplyChromecastState(state) {
   try { name = cast.framework.CastContext.getInstance().getCurrentSession()?.getCastDevice()?.friendlyName || ''; }
   catch (err) {}
   castState.deviceName = name;
-
-  // La diffusion vient de s'arrêter (TV éteinte, session coupée depuis le
-  // téléviseur, etc.) : on reprend la vidéo locale là où on en était sur le
-  // récepteur, au lieu de la laisser en pause au tout début.
-  if (castWasConnected && !castState.connected) {
-    const resumeAt = (castRemotePlayer && castRemotePlayer.isMediaLoaded) ? castRemotePlayer.currentTime : null;
-    const wasPlaying = castRemotePlayer ? !castRemotePlayer.isPaused : false;
-    if (isFinite(resumeAt) && resumeAt > 0) {
-      try {
-        video.currentTime = resumeAt;
-        if (wasPlaying) video.play().catch(() => {});
-      } catch (err) {}
-    }
-  }
-  castWasConnected = castState.connected;
-
   castRefresh();
-}
-
-// ══════════════ CAST — pilotage à distance (lecture/pause/progression) ══════════════
-// Pendant une diffusion, la vidéo locale reste en pause en arrière-plan : les
-// contrôles du lecteur (lecture/pause, avance/recul, barre de progression)
-// doivent donc agir sur le récepteur (TV) via le RemotePlayer du SDK, sinon
-// ils n'ont aucun effet visible — c'était le bug signalé.
-let castRemotePlayer = null;
-let castRemotePlayerController = null;
-
-function castRemoteActive() {
-  return !!(castState.connected && castRemotePlayer && castRemotePlayerController && castRemotePlayer.isMediaLoaded);
-}
-
-function castSetupRemotePlayer() {
-  if (castRemotePlayer) return;
-  if (!(window.cast && cast.framework)) return;
-  try {
-    castRemotePlayer = new cast.framework.RemotePlayer();
-    castRemotePlayerController = new cast.framework.RemotePlayerController(castRemotePlayer);
-    const evt = cast.framework.RemotePlayerEventType;
-    castRemotePlayerController.addEventListener(evt.IS_PAUSED_CHANGED, castUpdatePlayPauseUI);
-    castRemotePlayerController.addEventListener(evt.IS_MEDIA_LOADED_CHANGED, castUpdatePlayPauseUI);
-    castRemotePlayerController.addEventListener(evt.CURRENT_TIME_CHANGED, castUpdateProgressUI);
-    castRemotePlayerController.addEventListener(evt.DURATION_CHANGED, castUpdateProgressUI);
-  } catch (err) {}
-}
-
-function castUpdatePlayPauseUI() {
-  if (!castRemoteActive()) return;
-  updatePlayPauseUI(castRemotePlayer.isPaused);
-}
-
-function castUpdateProgressUI() {
-  if (!castRemoteActive() || scrubbing) return;   // ne pas écraser un glissement en cours
-  const ct = castRemotePlayer.currentTime || 0;
-  const dur = castRemotePlayer.duration || 0;
-  const pct = dur ? (ct/dur)*100 : 0;
-  document.getElementById('progress-fill').style.width = pct+'%';
-  document.getElementById('progress-thumb').style.left = pct+'%';
-  // Pas d'info de tampon distant exposée par le SDK : la barre "bufferisée"
-  // suit simplement la position de lecture, comme sur un flux en direct.
-  document.getElementById('progress-buf').style.width = pct+'%';
-  updateTimeDisplay(ct, dur);
 }
 
 function castInitChromecast() {
@@ -6277,7 +6192,6 @@ function castInitChromecast() {
       autoJoinPolicy: chrome.cast.AutoJoinPolicy.ORIGIN_SCOPED,
     });
     castState.sdkReady = true;
-    castSetupRemotePlayer();
     ctx.addEventListener(
       cast.framework.CastContextEventType.CAST_STATE_CHANGED,
       e => castApplyChromecastState(e.castState)
@@ -6368,9 +6282,6 @@ function fmt(s) {
 }
 
 function updateProgress() {
-  // Pendant une diffusion, la vidéo locale est volontairement en pause :
-  // c'est castUpdateProgressUI qui pilote la barre/le temps dans ce cas.
-  if (castRemoteActive()) return;
   const { currentTime:ct, duration:dur, buffered } = video;
   const pct = dur ? (ct/dur)*100 : 0;
   document.getElementById('progress-fill').style.width = pct+'%';
@@ -6423,13 +6334,6 @@ function startScrub(e) {
   const mv = ev => doScrub(ev.touches ? ev.touches[0] : ev);
   const up = () => {
     scrubbing = false;
-    // En diffusion, on n'envoie le saut réel au récepteur qu'ici (relâchement),
-    // pour ne pas spammer le Chromecast d'une commande à chaque pixel glissé.
-    if (castRemoteActive() && castPendingScrubTime != null) {
-      castRemotePlayer.currentTime = castPendingScrubTime;
-      castRemotePlayerController.seek();
-      castPendingScrubTime = null;
-    }
     document.removeEventListener('mousemove', mv); document.removeEventListener('mouseup', up);
     document.removeEventListener('touchmove', mv); document.removeEventListener('touchend', up);
   };
@@ -6440,40 +6344,28 @@ function startScrub(e) {
 function doScrub(e) {
   const r = document.getElementById('progress-wrap').getBoundingClientRect();
   const x = Math.max(0, Math.min((e.clientX||e.pageX)-r.left, r.width));
-  if (castRemoteActive()) {
-    const dur = castRemotePlayer.duration || 0;
-    if (!dur) return;
-    const target = (x/r.width)*dur;
-    castPendingScrubTime = target;
-    // Aperçu visuel immédiat de la barre/temps sans envoyer de commande réseau.
-    const pct = (target/dur)*100;
-    document.getElementById('progress-fill').style.width = pct+'%';
-    document.getElementById('progress-thumb').style.left = pct+'%';
-    updateTimeDisplay(target, dur);
-  } else if (video.duration) {
-    video.currentTime = (x/r.width)*video.duration;
-  }
+  if (video.duration) video.currentTime = (x/r.width)*video.duration;
 }
 
 // ── VIDEO EVENTS ──
-function updatePlayPauseUI(paused) {
-  pw.classList.toggle('paused', paused);
-  document.getElementById('play-icon').style.display = paused ? '' : 'none';
-  document.getElementById('pause-icon').style.display = paused ? 'none' : '';
-  document.getElementById('cc-play').style.display = paused ? '' : 'none';
-  document.getElementById('cc-pause').style.display = paused ? 'none' : '';
+video.addEventListener('play', () => {
+  pw.classList.remove('paused');
+  document.getElementById('play-icon').style.display='none';
+  document.getElementById('pause-icon').style.display='';
+  document.getElementById('cc-play').style.display='none';
+  document.getElementById('cc-pause').style.display='';
   const ppBtn = document.getElementById('play-pause-btn');
-  if (ppBtn) {
-    const key = paused ? 'play_btn_title' : 'pause_btn_title';
-    ppBtn.setAttribute('data-i18n-title', key);
-    ppBtn.setAttribute('title', tr(key));
-  }
-}
-// Pendant une diffusion Chromecast, c'est le récepteur distant qui pilote
-// l'icône (voir castUpdatePlayPauseUI) : le lecteur local reste volontairement
-// en pause en arrière-plan et ne doit pas écraser cet affichage.
-video.addEventListener('play', () => { if (!castState.connected) updatePlayPauseUI(false); });
-video.addEventListener('pause', () => { if (!castState.connected) updatePlayPauseUI(true); });
+  if (ppBtn) { ppBtn.setAttribute('data-i18n-title', 'pause_btn_title'); ppBtn.setAttribute('title', tr('pause_btn_title')); }
+});
+video.addEventListener('pause', () => {
+  pw.classList.add('paused');
+  document.getElementById('play-icon').style.display='';
+  document.getElementById('pause-icon').style.display='none';
+  document.getElementById('cc-play').style.display='';
+  document.getElementById('cc-pause').style.display='none';
+  const ppBtn = document.getElementById('play-pause-btn');
+  if (ppBtn) { ppBtn.setAttribute('data-i18n-title', 'play_btn_title'); ppBtn.setAttribute('title', tr('play_btn_title')); }
+});
 video.addEventListener('timeupdate', updateProgress);
 video.addEventListener('timeupdate', maybeShowUpNext);
 video.addEventListener('ended', handleVideoEnded);
@@ -6596,9 +6488,6 @@ function closeMenus() {
   document.getElementById('download-panel').classList.remove('open');
   document.getElementById('download-scrim').classList.remove('open');
   document.getElementById('download-btn').classList.remove('open');
-  document.getElementById('cast-panel').classList.remove('open');
-  document.getElementById('cast-scrim').classList.remove('open');
-  document.getElementById('cast-btn').classList.remove('open');
   document.getElementById('nav-mid').classList.remove('open');
 }
 document.addEventListener('click', e => {
@@ -6607,10 +6496,9 @@ document.addEventListener('click', e => {
   if (e.target.closest('#episodes-panel')) return;
   if (e.target.closest('#subtitles-panel')) return;
   if (e.target.closest('#download-panel')) return;
-  if (e.target.closest('#cast-panel')) return;
   if (e.target.closest('#ab-overlay')) return;
   if (e.target.closest('#nolang-overlay')) return;
-  if (!e.target.closest('.ctrl-btn') && !e.target.closest('.nav-btn') && !e.target.closest('.menu-popup') && !e.target.closest('.settings-panel') && !e.target.closest('#sources-panel') && !e.target.closest('#sources-btn') && !e.target.closest('#episodes-panel') && !e.target.closest('#subtitles-panel') && !e.target.closest('#subtitles-btn') && !e.target.closest('#download-panel') && !e.target.closest('#download-btn') && !e.target.closest('#cast-panel') && !e.target.closest('#cast-btn')) closeMenus();
+  if (!e.target.closest('.ctrl-btn') && !e.target.closest('.nav-btn') && !e.target.closest('.menu-popup') && !e.target.closest('.settings-panel') && !e.target.closest('#sources-panel') && !e.target.closest('#sources-btn') && !e.target.closest('#episodes-panel') && !e.target.closest('#subtitles-panel') && !e.target.closest('#subtitles-btn') && !e.target.closest('#download-panel') && !e.target.closest('#download-btn')) closeMenus();
 });
 
 // ── SETTINGS SIDEBAR (gear pivote d'un cran à l'ouverture) ──
@@ -6632,9 +6520,6 @@ function toggleSettings() {
     document.getElementById('watchparty-panel').classList.remove('open');
     document.getElementById('watchparty-scrim').classList.remove('open');
     document.getElementById('watchparty-btn').classList.remove('open');
-    document.getElementById('cast-panel').classList.remove('open');
-    document.getElementById('cast-scrim').classList.remove('open');
-    document.getElementById('cast-btn').classList.remove('open');
     panel.classList.add('open'); scrim.classList.add('open'); btn.classList.add('open');
   } else {
     panel.classList.remove('open');
@@ -6662,9 +6547,6 @@ function toggleSourcesPanel() {
     document.getElementById('watchparty-panel').classList.remove('open');
     document.getElementById('watchparty-scrim').classList.remove('open');
     document.getElementById('watchparty-btn').classList.remove('open');
-    document.getElementById('cast-panel').classList.remove('open');
-    document.getElementById('cast-scrim').classList.remove('open');
-    document.getElementById('cast-btn').classList.remove('open');
     panel.classList.add('open'); scrim.classList.add('open'); btn.classList.add('open');
   } else {
     panel.classList.remove('open');
@@ -6679,7 +6561,6 @@ document.getElementById('episodes-panel').addEventListener('click', e => e.stopP
 document.getElementById('subtitles-panel').addEventListener('click', e => e.stopPropagation());
 document.getElementById('download-panel').addEventListener('click', e => e.stopPropagation());
 document.getElementById('watchparty-panel').addEventListener('click', e => e.stopPropagation());
-document.getElementById('cast-panel').addEventListener('click', e => e.stopPropagation());
 
 // ── SOUS-TITRES SIDEBAR (même logique que le panneau Sources, indépendant) ──
 function toggleSubtitlesPanel() {
@@ -6700,9 +6581,6 @@ function toggleSubtitlesPanel() {
     document.getElementById('watchparty-panel').classList.remove('open');
     document.getElementById('watchparty-scrim').classList.remove('open');
     document.getElementById('watchparty-btn').classList.remove('open');
-    document.getElementById('cast-panel').classList.remove('open');
-    document.getElementById('cast-scrim').classList.remove('open');
-    document.getElementById('cast-btn').classList.remove('open');
     panel.classList.add('open'); scrim.classList.add('open'); btn.classList.add('open');
     renderSubtitlesPanel();
   } else {
@@ -7311,9 +7189,6 @@ function toggleDownloadPanel() {
     document.getElementById('watchparty-panel').classList.remove('open');
     document.getElementById('watchparty-scrim').classList.remove('open');
     document.getElementById('watchparty-btn').classList.remove('open');
-    document.getElementById('cast-panel').classList.remove('open');
-    document.getElementById('cast-scrim').classList.remove('open');
-    document.getElementById('cast-btn').classList.remove('open');
     panel.classList.add('open'); scrim.classList.add('open'); btn.classList.add('open');
   } else {
     panel.classList.remove('open');
@@ -7426,9 +7301,6 @@ function toggleWatchPartyPanel() {
     document.getElementById('download-panel').classList.remove('open');
     document.getElementById('download-scrim').classList.remove('open');
     document.getElementById('download-btn').classList.remove('open');
-    document.getElementById('cast-panel').classList.remove('open');
-    document.getElementById('cast-scrim').classList.remove('open');
-    document.getElementById('cast-btn').classList.remove('open');
     panel.classList.add('open'); scrim.classList.add('open'); btn.classList.add('open');
     wpJoinErrorMsg = null;
     wpPseudoErrorMsg = null;
