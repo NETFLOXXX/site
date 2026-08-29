@@ -1900,13 +1900,18 @@
     cursor:pointer; transition:background 0.2s, transform 0.15s; text-align:center;
   }
   #ab-modal button.ab-action:active { transform:scale(0.98); }
-  #ab-modal button.ab-primary { background:var(--red); color:#fff; }
+  #ab-modal button.ab-primary {
+    padding:16px 16px; font-size:1rem; font-weight:700; background:var(--red); color:#fff;
+  }
   #ab-modal button.ab-primary:hover { background:var(--red-h); }
   #ab-modal button.ab-ghost {
-    background:none; color:rgba(255,255,255,0.4); padding:10px; font-size:0.82rem;
-    border-top:1px solid rgba(255,255,255,0.07); border-radius:0; margin-top:4px; padding-top:14px;
+    background:none; color:rgba(255,255,255,0.55); padding:12px; font-size:0.95rem; font-weight:700;
+    border:1px solid transparent; border-top:1px solid rgba(255,255,255,0.07); border-radius:12px; margin-top:4px; padding-top:16px;
+    transition: border-color 0.2s, color 0.2s;
   }
-  #ab-modal button.ab-ghost:hover { color:rgba(255,255,255,0.7); }
+  #ab-modal button.ab-ghost:hover { color:rgba(255,255,255,0.75); border-color:rgba(255,255,255,0.3); }
+  #ab-modal button.ab-ghost:focus,
+  #ab-modal button.ab-ghost:focus-visible { outline:none; }
 
   /* ── POPUP "AUCUN LECTEUR DANS LA LANGUE CHOISIE" ── */
   #nolang-overlay {
@@ -2632,11 +2637,11 @@
     <div class="ab-note" data-i18n="ab_note">Un adblocker est conseillé pour limiter les pubs, mais il ne les supprimera pas toutes à 100%. Pour les connaisseurs, nous conseillons aussi de mettre votre DNS sur dns.adguard.com, qui bloque une bonne partie des pubs directement au niveau du réseau.</div>
     <div class="ab-note-mobile">
       <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path stroke-linecap="round" stroke-linejoin="round" d="M12 16v-4m0-4h.01"/></svg>
-      <span data-i18n="ab_note_mobile">Sur mobile, l'installation d'un adblocker n'est possible qu'avec <strong>Firefox</strong>.</span>
+      <span id="ab-note-mobile-text" data-i18n="ab_note_mobile">Sur mobile, l'installation d'un adblocker n'est possible qu'avec <strong>Firefox</strong>.</span>
     </div>
 
     <div class="ab-btns">
-      <button class="ab-action ab-primary" onclick="openAdblockInstallLink()" data-i18n="ab_btn_install">Installer un adblocker</button>
+      <button id="ab-install-btn" class="ab-action ab-primary" onclick="openAdblockInstallLink()" data-i18n="ab_btn_install">Installer un adblocker</button>
       <button class="ab-action ab-ghost" onclick="confirmAdblockAndProceed()" data-i18n="ab_btn_proceed">J'ai compris</button>
     </div>
   </div>
@@ -3164,7 +3169,9 @@ const I18N = {
   ab_p2: { fr: 'Si une pub s\'ouvre : <strong>ne cliquez sur rien</strong>, fermez simplement l\'onglet ou la fenêtre et revenez sur le site.', en: 'If an ad opens: <strong>don\'t click on anything</strong>, just close the tab or window and come back to the site.' },
   ab_note: { fr: 'Un adblocker est conseillé pour limiter les pubs, mais il ne les supprimera pas toutes à 100%. Pour les connaisseurs, nous conseillons aussi de mettre votre DNS sur dns.adguard.com, qui bloque une bonne partie des pubs directement au niveau du réseau.', en: 'An adblocker is recommended to cut down on ads, though it won\'t block 100% of them. For advanced users, we also recommend setting your DNS to dns.adguard.com, which blocks a good share of ads at the network level.' },
   ab_note_mobile: { fr: 'Sur mobile, l\'installation d\'un adblocker n\'est possible qu\'avec <strong>Firefox</strong>.', en: 'On mobile, installing an adblocker is only possible with <strong>Firefox</strong>.' },
+  ab_note_mobile_nonff: { fr: 'À noter que sur mobile, l\'installation d\'un adblocker n\'est possible qu\'avec <strong>Firefox</strong>.', en: 'Note that on mobile, installing an adblocker is only possible with <strong>Firefox</strong>.' },
   ab_btn_install: { fr: 'Installer un adblocker', en: 'Install an adblocker' },
+  ab_btn_install_firefox: { fr: 'Ouvrir sur Firefox', en: 'Open in Firefox' },
   ab_btn_proceed: { fr: 'J\'ai compris', en: 'Got it' },
   sub_only_netflox: { fr: 'Les sous-titres externes (OpenSubtitles) sont disponibles uniquement pour le lecteur NETFLOX.', en: 'External subtitles (OpenSubtitles) are only available for the NETFLOX player.' },
   sub_change_source_hint: { fr: 'Changez de source depuis le panneau « Sources » pour y accéder.', en: 'Switch source from the "Sources" panel to access them.' },
@@ -9005,30 +9012,73 @@ function goToNextSourceAfterError() {
 // ── POPUP AVERTISSEMENT "AUTRES LECTEURS" (pubs) ──
 let abProceedCallback = null;
 let abPopupAlreadyShown = false; // reste à false tant que la page n'est pas rechargée
+let abVideoWasPlaying = false;
+
+function isMobileUA() {
+  const ua = navigator.userAgent || '';
+  return /Mobile|Android|iPhone|iPad|iPod/i.test(ua) || /FxiOS/i.test(ua);
+}
 
 function isMobileFirefox() {
   const ua = navigator.userAgent || '';
   const isFirefox = /Firefox/i.test(ua) && !/Seamonkey/i.test(ua);
-  const isMobile = /Mobile|Android|iPhone|iPad|iPod/i.test(ua) || /FxiOS/i.test(ua);
-  return isFirefox && isMobile;
+  return isFirefox && isMobileUA();
+}
+
+function isIOSDevice() {
+  const ua = navigator.userAgent || '';
+  return /iPhone|iPad|iPod/i.test(ua);
+}
+
+function getFirefoxStoreLink() {
+  return isIOSDevice()
+    ? 'https://apps.apple.com/fr/app/firefox-navigateur-internet/id989804926'
+    : 'https://play.google.com/store/apps/details?id=org.mozilla.firefox&hl=fr';
 }
 
 function openAdblockInstallLink() {
-  const url = isMobileFirefox()
-    ? 'https://addons.mozilla.org/fr/firefox/addon/adblock-plus/'
-    : 'https://getadblock.com/fr/';
+  let url;
+  if (isMobileUA() && !isMobileFirefox()) {
+    url = getFirefoxStoreLink();
+  } else if (isMobileFirefox()) {
+    url = 'https://addons.mozilla.org/fr/firefox/addon/adblock-plus/';
+  } else {
+    url = 'https://getadblock.com/fr/';
+  }
   window.open(url, '_blank', 'noopener,noreferrer');
+}
+
+// Sur mobile hors Firefox, l'installation d'un adblocker n'est pas possible :
+// on propose d'installer Firefox (lien App Store / Play Store selon l'appareil)
+// et on adapte le texte d'avertissement.
+function setupAdblockMobileUI() {
+  const installBtn = document.getElementById('ab-install-btn');
+  const noteText = document.getElementById('ab-note-mobile-text');
+  if (!installBtn || !noteText) return;
+
+  if (isMobileUA() && !isMobileFirefox()) {
+    installBtn.setAttribute('data-i18n', 'ab_btn_install_firefox');
+    const btnVal = tr('ab_btn_install_firefox');
+    if (btnVal) installBtn.innerHTML = btnVal;
+
+    noteText.setAttribute('data-i18n', 'ab_note_mobile_nonff');
+    const val = tr('ab_note_mobile_nonff');
+    if (val) noteText.innerHTML = val;
+  }
 }
 
 function openAdblockPopup(onProceed) {
   if (abPopupAlreadyShown) { onProceed(); return; }
   abProceedCallback = onProceed;
+  abVideoWasPlaying = !!video && !video.paused;
+  if (abVideoWasPlaying) { try { video.pause(); } catch (e) {} }
   document.getElementById('ab-overlay').classList.add('open');
 }
 
 function confirmAdblockAndProceed() {
   abPopupAlreadyShown = true;
   document.getElementById('ab-overlay').classList.remove('open');
+  if (abVideoWasPlaying) { try { video.play().catch(() => {}); } catch (e) {} abVideoWasPlaying = false; }
   if (typeof abProceedCallback === 'function') {
     abProceedCallback();
     abProceedCallback = null;
@@ -9107,6 +9157,7 @@ document.querySelectorAll('#load-lang-toggle .lang-pref-btn').forEach(btn => {
 
 // init
 applyStaticI18N();
+setupAdblockMobileUI();
 updateVolUI();
 </script>
 </body>
