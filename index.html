@@ -15,6 +15,15 @@
     <meta property="og:image" content="https://i.ibb.co/VYfvTC6F/untilted-1752571740-trimmy.png">
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="NETFLOX">
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "NETFLOX",
+      "url": "https://netfloxxx.github.io/site/",
+      "description": "Voici le site officiel du géant américain NETFLOX. Tu sais le site de streaming qui fait TOU DOUM... Sur ce site, tu pourras streamer tes contenus favoris, tu peux y accéder quand tu veux, où tu veux, et sur n'importe quelle plateforme !"
+    }
+    </script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -385,10 +394,31 @@
         }
         .movie-card:hover { transform: scale(1.07); z-index: 5; }
 
+        /* Petite apparition en fondu/zoom pour chaque affiche qui vient d'arriver */
+        .movie-card { animation: cardFadeIn 0.45s ease both; }
+        @keyframes cardFadeIn {
+            from { opacity: 0; transform: scale(0.92) translateY(8px); }
+            to   { opacity: 1; transform: scale(1) translateY(0); }
+        }
+
+        /* Squelette gris animé affiché le temps que TMDB réponde */
+        .skeleton-card {
+            background: linear-gradient(100deg, #262626 30%, #383838 50%, #262626 70%);
+            background-size: 200% 100%;
+            animation: skeletonShimmer 1.4s ease-in-out infinite;
+            cursor: default;
+            pointer-events: none;
+        }
+        .skeleton-card:hover { transform: none; }
+        @keyframes skeletonShimmer {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
         .card-overlay {
             position: absolute;
             inset: 0;
-            background: linear-gradient(transparent 50%, rgba(0,0,0,0.85));
+            background: linear-gradient(transparent 6%, rgba(0,0,0,0.99));
             opacity: 0;
             display: flex;
             flex-direction: column;
@@ -397,8 +427,33 @@
             transition: opacity 0.3s;
         }
         .movie-card:hover .card-overlay { opacity: 1; }
+
         .card-title { font-weight: bold; font-size: 15px; }
-        .card-meta { font-size: 12px; color: #ccc; margin-top: 3px; }
+        .card-title-wrap { min-height: 30px; display: flex; align-items: center; }
+        .card-title-logo {
+            max-height: 56px;
+            max-width: 100%;
+            object-fit: contain;
+            display: block;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.7));
+            animation: logoFadeIn 0.35s ease;
+        }
+        @keyframes logoFadeIn {
+            from { opacity: 0; transform: scale(0.88); }
+            to   { opacity: 1; transform: scale(1); }
+        }
+        .card-meta { font-size: 13px; font-weight: 600; color: #ccc; margin-top: 8px; }
+        .card-description {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 11.5px;
+            line-height: 1.4;
+            color: #ddd;
+            margin-top: 6px;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
 
         /* ─── RANDOM BTN ─── */
         #randomBtn {
@@ -635,8 +690,23 @@
             color: #888;
             transition: background 0.3s, color 0.3s;
             flex-shrink: 0;
+            position: relative;
         }
         .load-more-card:hover { background: #e50914; color: white; }
+
+        /* Petit spinner affiché sur le "+" pendant le chargement du lot suivant */
+        .load-more-card.loading { color: transparent; cursor: default; pointer-events: none; }
+        .load-more-card.loading::after {
+            content: '';
+            position: absolute;
+            width: 30px;
+            height: 30px;
+            border: 3px solid rgba(255,255,255,0.25);
+            border-top-color: #e50914;
+            border-radius: 50%;
+            animation: loadMoreSpin 0.7s linear infinite;
+        }
+        @keyframes loadMoreSpin { to { transform: rotate(360deg); } }
 
         /* ─── SYSTÈME "VOUS NE SAVEZ PAS QUOI REGARDER" ─── */
         .random-popup {
@@ -1433,6 +1503,102 @@
         footer hr { border: none; border-top: 1px solid #333; width: 80%; margin: 0 auto 25px; }
         footer p { font-size: 14px; line-height: 1.7; max-width: 700px; margin: 0 auto; font-style: italic; }
 
+        /* ─── SOUTIEN (Ko-fi) ─── */
+        .support-cta { margin-top: 35px; }
+        .support-cta-text {
+            font-style: normal !important;
+            font-size: 14px !important;
+            color: #aaa !important;
+            margin-bottom: 16px !important;
+        }
+        #lama-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            background: #ff0000;
+            color: #fff;
+            border: none;
+            border-radius: 50px;
+            padding: 14px 24px;
+            font-size: 16px;
+            font-weight: bold;
+            font-family: 'Montserrat', sans-serif;
+            cursor: pointer;
+            box-shadow: 0 4px 14px rgba(0,0,0,0.3);
+            transition: transform 0.2s ease;
+        }
+        #lama-btn:hover { transform: scale(1.05); }
+
+        /* Fond assombri derrière le popup Ko-fi */
+        #kofi-overlay-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.6);
+            z-index: 9998;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.5s ease;
+        }
+        #kofi-overlay-bg.show { opacity: 1; pointer-events: auto; }
+
+        /* Popup Ko-fi centré au milieu de l'écran */
+        #kofi-popup {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, calc(-50% + 40px)) scale(0.94);
+            opacity: 0;
+            width: 100%;
+            max-width: 500px;
+            height: 85vh;
+            max-height: 750px;
+            background: #fff;
+            border-radius: 16px;
+            z-index: 9999;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.35);
+            transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.5s ease;
+            padding-bottom: 10px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            box-sizing: border-box;
+            pointer-events: none;
+        }
+        #kofi-popup.show {
+            transform: translate(-50%, -50%) scale(1);
+            opacity: 1;
+            pointer-events: auto;
+        }
+        #kofi-popup-header {
+            display: flex;
+            justify-content: flex-end;
+            padding: 8px 12px 0 0;
+            flex-shrink: 0;
+        }
+        #kofi-close-btn {
+            background: none;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            color: #333;
+        }
+        #kofiframe {
+            border: none;
+            width: 100%;
+            padding: 4px;
+            background: #f9f9f9;
+            flex: 1 1 0;
+            min-height: 0;
+            display: block;
+            box-sizing: border-box;
+        }
+        @media (max-width: 520px) {
+            #kofi-popup { max-width: 92%; height: 85vh; max-height: none; }
+        }
+
         /* ─── SCROLLBAR ─── */
         ::-webkit-scrollbar { width: 8px; height: 8px; }
         ::-webkit-scrollbar-track { background: #333; border-radius: 10px; }
@@ -1656,8 +1822,10 @@
     </section>
 
     <section class="section">
-        <h2 class="section-title">Saga</h2>
-        <div class="row" id="saga-movies"></div>
+        <h2 class="section-title">Sagas incontournables</h2>
+        <div class="row" id="saga-movies">
+            <div class="load-more-card" data-target="saga-movies">+</div>
+        </div>
     </section>
 
     <section class="section" id="series">
@@ -1719,7 +1887,25 @@
     Nous ne sommes pas responsables du contenu hébergé par ces services tiers.<br>
     En cas de problème avec la justice, veuillez contacter directement les hébergeurs des contenus concernés.
     </p>
+
+    <div class="support-cta">
+        <p class="support-cta-text">Vous aimez NETFLOX&nbsp;? Un petit coup de pouce fait toujours plaisir.</p>
+        <button id="lama-btn" onclick="openKofiPopup()">
+            🦙 Achète-moi un lama
+        </button>
+    </div>
 </footer>
+
+<!-- Fond assombri Ko-fi -->
+<div id="kofi-overlay-bg" onclick="closeKofiPopup()"></div>
+
+<!-- Popup Ko-fi -->
+<div id="kofi-popup">
+    <div id="kofi-popup-header">
+        <button id="kofi-close-btn" onclick="closeKofiPopup()">✕</button>
+    </div>
+    <iframe id="kofiframe" src="https://ko-fi.com/netflox/?hidefeed=true&widget=true&embed=true&preview=true" title="netflox"></iframe>
+</div>
 
 <!-- ══════════ SCRIPTS ══════════ -->
 <script src="https://cdn.jsdelivr.net/npm/fuse.js/dist/fuse.min.js"></script>
@@ -1807,6 +1993,10 @@ function removeAccents(str) {
     return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 }
 
+function escapeHtml(str) {
+    return (str || '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
 function dedupe(arr) {
     const seen = new Set();
     return arr.filter(item => {
@@ -1842,24 +2032,86 @@ function createCard(item, type) {
     if (poster) card.style.backgroundImage = `url('${poster}')`;
     else card.style.background = '#2a2a2a';
 
+    const metaLabel = type === 'tv' ? 'Série' : type === 'collection' ? 'Saga' : 'Film';
+    const metaText = type === 'collection' ? metaLabel : `${year} • ${metaLabel}`;
+    const description = (item.overview || '').trim();
+
     card.innerHTML = `
         <div class="card-overlay">
-            <div class="card-title">${title}</div>
-            <div class="card-meta">${year}${type === 'tv' ? ' • Série' : ' • Film'}</div>
+            <div class="card-title-wrap"><div class="card-title">${escapeHtml(title)}</div></div>
+            <div class="card-meta">${metaText}</div>
+            ${description ? `<div class="card-description">${escapeHtml(description)}</div>` : ''}
         </div>`;
+
+    // Au survol, on tente de récupérer le logo officiel du titre (image transparente TMDB)
+    // pour le mettre à la place du titre écrit ; sinon on garde simplement le texte.
+    if (type === 'movie' || type === 'tv') {
+        let logoRequested = false;
+        card.addEventListener('mouseenter', async () => {
+            if (logoRequested) return;
+            logoRequested = true;
+            const logo = await getTitleLogo(item.id, type);
+            if (!logo) return;
+            const wrap = card.querySelector('.card-title-wrap');
+            if (!wrap) return;
+            // Certains logos TMDB n'existent qu'en toute petite résolution d'origine : dans ce cas
+            // on force une taille d'affichage plus grande pour qu'on puisse le voir correctement.
+            // Les logos déjà assez grands ne sont pas touchés (juste bornés par le CSS habituel).
+            const isTinySource = logo.height && logo.height < 56;
+            const sizeStyle = isTinySource ? ' style="height:68px;width:auto;max-width:100%;"' : '';
+            wrap.innerHTML = `<img class="card-title-logo" src="${BASE_IMG}w300${logo.path}" alt="${escapeHtml(title)}"${sizeStyle}>`;
+        });
+    }
 
     card.addEventListener('click', () => openPopup({ ...item, type }));
     return card;
 }
 
+// Récupère (et met en cache) le chemin du logo transparent officiel d'un film/série, si TMDB en a un.
+const logoCache = new Map();
+async function getTitleLogo(id, type) {
+    const key = `${type}-${id}`;
+    if (logoCache.has(key)) return logoCache.get(key);
+    let logo = null;
+    try {
+        const data = await tmdb(`/${type}/${id}/images`);
+        const logos = data.logos || [];
+        const best = logos.find(l => l.iso_639_1 === 'fr')
+            || logos.find(l => l.iso_639_1 === 'en')
+            || logos.find(l => !l.iso_639_1)
+            || logos[0];
+        if (best) logo = { path: best.file_path, width: best.width, height: best.height };
+    } catch (e) { /* pas de logo dispo : on garde le texte */ }
+    logoCache.set(key, logo);
+    return logo;
+}
+
 function populateRow(containerId, items, type) {
     const container = document.getElementById(containerId);
     if (!container) return;
+    clearRowSkeletons(container);
     const loadMoreBtn = container.querySelector('.load-more-card');
     dedupe(items).slice(0, 20).forEach(item => {
         const cardType = type === 'mixed' ? item.type : type;
         container.insertBefore(createCard(item, cardType), loadMoreBtn || null);
     });
+}
+
+// Affiche des cartes grises animées le temps que les données TMDB arrivent.
+function showRowSkeletons(rowIds, count = 6) {
+    rowIds.forEach(rowId => {
+        const row = document.getElementById(rowId);
+        if (!row) return;
+        const btn = row.querySelector('.load-more-card');
+        for (let i = 0; i < count; i++) {
+            const sk = document.createElement('div');
+            sk.className = 'movie-card skeleton-card';
+            row.insertBefore(sk, btn || null);
+        }
+    });
+}
+function clearRowSkeletons(container) {
+    container.querySelectorAll('.skeleton-card').forEach(sk => sk.remove());
 }
 
 // ─── HERO CAROUSEL ───
@@ -1949,6 +2201,9 @@ async function loadAllSections() {
     const movieIds = Object.keys(movieBuilders);
     const seriesIds = Object.keys(seriesBuilders);
 
+    // Squelettes affichés immédiatement, avant même la réponse de TMDB.
+    showRowSkeletons([...movieIds, ...seriesIds, 'saga-movies']);
+
     const [movieResults, seriesResults] = await Promise.all([
         Promise.all(movieIds.map(id => fetchPages(movieBuilders[id], 10))),
         Promise.all(seriesIds.map(id => fetchPages(seriesBuilders[id], 10))),
@@ -1972,6 +2227,109 @@ async function loadAllSections() {
     seriesIds.forEach((id, i) => populateRow(id, pickUnique(seriesResults[i], 'tv'), 'tv'));
 
     initLoadMoreButtons();
+    initSagaRow();
+}
+
+// ─── SAGAS (collections) ───
+// Pas de liste figée : on part des films les plus populaires/connus sur TMDB (même logique
+// de filtre "notoriété" que les autres rangées, via vote_count.gte) et on regarde à quelle
+// saga (collection) chacun appartient. Une saga déjà vue n'est jamais reprise.
+// Filtrage : on ignore les sagas trop petites (1-2 films) qui n'ont rien d'une "vraie" saga.
+// Tri : les sagas avec le plus de films sortis passent en premier (Star Wars avant Spider-Man
+// par ex.), avec un mélange aléatoire uniquement entre sagas à nombre de films égal, pour
+// varier l'ordre sans jamais faire passer une petite saga devant une plus grosse.
+// "Voir plus" avance dans les pages TMDB triées par popularité ; le bouton disparaît quand
+// on a vraiment atteint la fin des pages disponibles (ce n'est donc pas infini).
+const SAGA_VOTE_MIN = 1000;   // seuil élevé = on ne garde que des films vraiment connus
+const SAGA_MIN_PARTS = 3;     // on écarte les sagas de moins de 3 films
+const SAGA_BATCH = 10;        // nombre de sagas révélées à chaque clic sur "+"
+const SAGA_POOL_TARGET = SAGA_BATCH * 3; // stock minimum avant de trier, pour laisser une vraie
+                                          // chance aux grosses sagas d'être repérées avant affichage
+let sagaPage = 1;
+let sagaExhausted = false;
+const sagaShownIds = new Set(); // sagas déjà rencontrées (affichées ou en attente)
+let sagaPending = [];            // sagas repérées, en attente d'affichage, avec leur nombre de films
+
+// Alimente le stock de sagas en attente jusqu'à en avoir assez pour proposer un lot complet.
+async function growSagaPool() {
+    // Objectif élargi (pas juste SAGA_BATCH) pour que le tri "plus de films d'abord" ait de quoi
+    // comparer : sinon la 1ère saga découverte gagne par défaut même si une plus grosse existe.
+    const target = sagaPage === 1 ? SAGA_POOL_TARGET : SAGA_BATCH;
+    while (sagaPending.length < target && !sagaExhausted) {
+        // Tri par nombre de votes total (fiabilité/notoriété dans la durée), plutôt que par
+        // popularité du moment qui favorise les films en tendance actuellement (ex: Avengers).
+        const data = await tmdb(`/discover/movie?sort_by=vote_count.desc&page=${sagaPage}&vote_count.gte=${SAGA_VOTE_MIN}`);
+        const movies = data.results || [];
+        if (!movies.length || sagaPage >= (data.total_pages || sagaPage)) sagaExhausted = true;
+        if (!movies.length) break;
+        sagaPage++;
+
+        // /discover ne renvoie pas la saga d'un film : il faut le détail de chaque film.
+        const details = await Promise.all(movies.map(m => tmdb(`/movie/${m.id}`)));
+        const newCollections = [];
+        details.forEach(d => {
+            const coll = d.belongs_to_collection;
+            if (coll && coll.poster_path && !sagaShownIds.has(coll.id)) {
+                sagaShownIds.add(coll.id);
+                newCollections.push(coll);
+            }
+        });
+        if (!newCollections.length) continue;
+
+        // Le nombre de films d'une saga n'est connu qu'en récupérant le détail de la collection.
+        const collDetails = await Promise.all(newCollections.map(c => tmdb(`/collection/${c.id}`)));
+        collDetails.forEach(cd => {
+            const partsCount = (cd.parts || []).filter(p => p.release_date).length; // films déjà sortis
+            if (partsCount >= SAGA_MIN_PARTS && cd.poster_path) {
+                sagaPending.push({
+                    id: cd.id, name: cd.name, poster_path: cd.poster_path,
+                    backdrop_path: cd.backdrop_path, type: 'collection', partsCount
+                });
+            }
+        });
+    }
+}
+
+// Sagas avec le plus de films d'abord ; mélange aléatoire uniquement entre sagas à égalité.
+function sortSagasKnownFirst(items) {
+    const groups = new Map();
+    items.forEach(item => {
+        if (!groups.has(item.partsCount)) groups.set(item.partsCount, []);
+        groups.get(item.partsCount).push(item);
+    });
+    return [...groups.keys()].sort((a, b) => b - a).flatMap(k => shuffleArray(groups.get(k)));
+}
+
+function nextSagaBatch() {
+    const batch = sortSagasKnownFirst(sagaPending).slice(0, SAGA_BATCH);
+    const batchIds = new Set(batch.map(b => b.id));
+    sagaPending = sagaPending.filter(item => !batchIds.has(item.id));
+    return batch;
+}
+
+async function revealMoreSagas(btn) {
+    const container = document.getElementById('saga-movies');
+    if (!container) return;
+    await growSagaPool();
+    const items = nextSagaBatch();
+    clearRowSkeletons(container);
+    items.forEach(item => container.insertBefore(createCard(item, 'collection'), btn || null));
+    if (sagaExhausted && !sagaPending.length && btn) btn.remove();
+}
+
+// Ajoute un petit spinner sur le bouton "+" le temps du chargement du lot suivant.
+async function handleSagaLoadMoreClick(btn) {
+    if (btn.classList.contains('loading')) return;
+    btn.classList.add('loading');
+    await revealMoreSagas(btn);
+    btn.classList.remove('loading');
+}
+
+async function initSagaRow() {
+    const container = document.getElementById('saga-movies');
+    const btn = container?.querySelector('.load-more-card');
+    if (btn) btn.addEventListener('click', () => handleSagaLoadMoreClick(btn));
+    await revealMoreSagas(btn);
 }
 
 // ─── VOIR PLUS (générique pour toutes les sections) ───
@@ -1999,8 +2357,16 @@ function initLoadMoreButtons() {
         const rowId = btn.dataset.target;
         if (!rowConfig[rowId]) return;
         rowPages[rowId] = 1;
-        btn.addEventListener('click', () => loadMoreRow(rowId, btn));
+        btn.addEventListener('click', () => handleLoadMoreClick(rowId, btn));
     });
+}
+
+// Ajoute un petit spinner sur le bouton "+" le temps du chargement du lot suivant.
+async function handleLoadMoreClick(rowId, btn) {
+    if (btn.classList.contains('loading')) return;
+    btn.classList.add('loading');
+    await loadMoreRow(rowId, btn);
+    btn.classList.remove('loading');
 }
 
 async function loadMoreRow(rowId, btn) {
@@ -2011,25 +2377,35 @@ async function loadMoreRow(rowId, btn) {
     const container = document.getElementById(rowId);
 
     let items = [];
+    let exhausted = false;
+
     if (config.type === 'mixed') {
         const [mv, tv] = await Promise.all(config.endpoints(page).map(tmdb));
         items = dedupe([...(mv.results || []).map(m => ({ ...m, type: 'movie' })),
                          ...(tv.results || []).map(s => ({ ...s, type: 'tv' }))]);
         items.slice(0, 20).forEach(item => container.insertBefore(createCard(item, item.type), btn));
+        exhausted = (!mv.results || !mv.results.length) && (!tv.results || !tv.results.length)
+            || (page >= (mv.total_pages || page) && page >= (tv.total_pages || page));
     } else if (config.type === 'trending') {
         const data = await tmdb(config.endpoint(page));
         items = dedupe((data.results || []).filter(i => i.media_type === 'movie' || i.media_type === 'tv'));
         items.slice(0, 20).forEach(item => container.insertBefore(createCard(item, item.media_type), btn));
+        exhausted = !data.results || !data.results.length || page >= (data.total_pages || page);
     } else {
         const data = await tmdb(config.endpoint(page));
         items = dedupe(data.results || []);
         items.slice(0, 20).forEach(item => container.insertBefore(createCard(item, config.type), btn));
+        exhausted = !data.results || !data.results.length || page >= (data.total_pages || page);
     }
+
+    // Plus aucun résultat (ou dernière page TMDB atteinte) : on retire le bouton "+".
+    if (exhausted && btn) btn.remove();
 }
 
 // ─── OPEN POPUP (dispatche selon type) ───
 async function openPopup(item, fullscreen = false, isRandom = false) {
     if (item.type === 'movie') await openMoviePopup(item, fullscreen, isRandom);
+    else if (item.type === 'collection') await openCollectionPopup(item, fullscreen);
     else await openTvPopup(item, fullscreen, isRandom);
 }
 
@@ -2141,6 +2517,55 @@ async function openTvPopup(item, fullscreen = false, isRandom = false) {
 
     overlay.querySelectorAll('.season-thumb').forEach(thumb => {
         thumb.addEventListener('click', () => openSeasonPopup(thumb.dataset.id, thumb.dataset.season, show.name));
+    });
+}
+
+// ─── POPUP SAGA (collection) ───
+async function openCollectionPopup(item, fullscreen = false) {
+    const coll = await tmdb(`/collection/${item.id}`);
+
+    const backdrop = coll.backdrop_path ? `${BASE_IMG}w1280${coll.backdrop_path}` : '';
+    const parts = (coll.parts || [])
+        .filter(p => p.poster_path)
+        .sort((a, b) => (a.release_date || '9999').localeCompare(b.release_date || '9999'));
+
+    const filmsHTML = parts.map(p => `
+        <div class="season-thumb" data-id="${p.id}" style="flex:0 0 150px;">
+            <img src="${BASE_IMG}w300${p.poster_path}"/>
+            <div style="margin-top:8px;text-align:center;font-weight:600;font-size:14px;">
+                ${p.title}${p.release_date ? ` (${p.release_date.slice(0, 4)})` : ''}
+            </div>
+        </div>`).join('');
+
+    const overlay = document.createElement('div');
+    overlay.className = 'tv-overlay' + (fullscreen ? ' fullscreen' : '');
+    overlay.innerHTML = `
+        <div class="tv-popup${fullscreen ? ' fullscreen' : ''}" style="${backdrop ? `background-image:url('${backdrop}');background-size:cover;background-position:center;` : ''}">
+            <span class="close-btn">&times;</span>
+            <div style="background:rgba(0,0,0,0.85);border-radius:12px;padding:24px;">
+                <div class="tv-content">
+                    <div class="popup-left">
+                        ${coll.poster_path ? `<img src="${BASE_IMG}w342${coll.poster_path}"/>` : ''}
+                    </div>
+                    <div class="popup-right">
+                        <h2>${coll.name}</h2>
+                        <span class="type-badge">Saga</span>
+                        <div style="color:#ccc;font-size:14px;margin-bottom:12px;">${parts.length} film${parts.length > 1 ? 's' : ''}</div>
+                        <p style="line-height:1.6;margin-bottom:18px;">${coll.overview || 'Aucun résumé disponible.'}</p>
+                    </div>
+                </div>
+
+                <div style="margin-top:20px;">
+                    <h3 style="font-family:'Bebas Neue',sans-serif;font-size:1.8rem;color:#fff;margin-bottom:15px;border-bottom:2px solid #e50914;padding-bottom:5px;display:inline-block;">Films de la saga</h3>
+                    <div style="display:flex;gap:15px;flex-wrap:wrap;padding:10px 0;">${filmsHTML}</div>
+                </div>
+            </div>
+        </div>`;
+
+    attachOverlay(overlay);
+
+    overlay.querySelectorAll('.season-thumb').forEach(thumb => {
+        thumb.addEventListener('click', () => openPopup({ id: thumb.dataset.id, type: 'movie' }, true));
     });
 }
 
@@ -2939,6 +3364,20 @@ if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
         navigator.serviceWorker.register('sw.js').catch(() => {});
     });
+}
+
+// ─── SOUTIEN (Ko-fi) ───
+function openKofiPopup() {
+    document.getElementById('kofi-overlay-bg').classList.add('show');
+    document.getElementById('kofi-popup').classList.add('show');
+    openOverlayCount++;
+    document.body.style.overflow = 'hidden';
+}
+function closeKofiPopup() {
+    document.getElementById('kofi-overlay-bg').classList.remove('show');
+    document.getElementById('kofi-popup').classList.remove('show');
+    openOverlayCount = Math.max(0, openOverlayCount - 1);
+    if (openOverlayCount === 0) document.body.style.overflow = '';
 }
 </script>
 
