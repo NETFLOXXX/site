@@ -6035,7 +6035,7 @@ function loadMedia(url, title, audioLangOverride, resumeTime) {
         // plutôt que d'afficher directement la popup générique d'erreur.
         const httpStatus = (d.response && d.response.code) || (d.networkDetails && d.networkDetails.status);
         if (isFinepulfe && httpStatus === 403) {
-          handleFinepulfeExtensionRequired();
+          handleFinepulfeExtensionRequired({ url, title, audioLangOverride, resumeTime });
         } else {
           handleSourceFailure();
         }
@@ -10204,14 +10204,86 @@ function refreshExtensionButtonsUI() {
   }
 }
 
+// ── DÉTECTION DE L'EXTENSION NETFLOX ──
+// Aucune convention "officielle" n'a été précisée par le site : on couvre
+// donc plusieurs façons standards qu'une extension a de signaler sa présence
+// à la page (variable globale, attribut DOM, événement personnalisé), pour
+// maximiser les chances que ça fonctionne dès que l'extension réelle
+// s'exécute. Si l'extension utilise un autre mécanisme, il suffit de
+// l'ajouter ici (ou de faire en sorte qu'elle pose l'un de ces marqueurs).
+let netfloxExtensionSignalReceived = false;
+window.addEventListener('netflox-extension-ready', () => { netfloxExtensionSignalReceived = true; });
+document.addEventListener('netflox-extension-ready', () => { netfloxExtensionSignalReceived = true; });
+
+function isNetfloxExtensionInstalled() {
+  return !!(
+    netfloxExtensionSignalReceived ||
+    window.NETFLOX_EXTENSION_INSTALLED ||
+    window.netfloxExtension ||
+    document.documentElement.hasAttribute('data-netflox-extension') ||
+    (document.body && document.body.hasAttribute('data-netflox-extension'))
+  );
+}
+
+// ── SURVEILLANCE DU RETOUR SUR L'ONGLET (après avoir cliqué "Installer l'extension") ──
+// Dès que la popup s'ouvre, on surveille le retour de l'utilisateur sur cet
+// onglet (changement d'onglet -> extension store -> retour ici). À ce
+// retour : si l'extension est détectée, on ferme la popup toute seule et on
+// relance directement le flux finepulfe ; sinon, on ferme la popup et on
+// bascule sur la popup générique "petit problème technique" (5s -> source
+// suivante), exactement comme pour n'importe quelle autre erreur de lecture.
+let extRetryInfo = null;
+let extVisibilityHandlerBound = false;
+
+function armExtensionReturnWatcher(retryInfo) {
+  extRetryInfo = retryInfo || null;
+  if (extVisibilityHandlerBound) return;
+  extVisibilityHandlerBound = true;
+  document.addEventListener('visibilitychange', onExtensionReturnCheck);
+  window.addEventListener('focus', onExtensionReturnCheck);
+}
+
+function disarmExtensionReturnWatcher() {
+  if (!extVisibilityHandlerBound) return;
+  extVisibilityHandlerBound = false;
+  document.removeEventListener('visibilitychange', onExtensionReturnCheck);
+  window.removeEventListener('focus', onExtensionReturnCheck);
+  extRetryInfo = null;
+}
+
+function onExtensionReturnCheck() {
+  if (document.visibilityState !== 'visible') return;
+  if (!document.getElementById('ext-overlay').classList.contains('open')) return;
+
+  const retryInfo = extRetryInfo;
+  disarmExtensionReturnWatcher();
+  document.getElementById('ext-overlay').classList.remove('open');
+  extPopupPending = false;
+  if (typeof extPopupResolve === 'function') {
+    const resolve = extPopupResolve;
+    extPopupResolve = null;
+    resolve();
+  }
+
+  if (isNetfloxExtensionInstalled() && retryInfo) {
+    // Extension détectée au retour : on relance directement le flux
+    // finepulfe, sans passer par la popup d'erreur générique.
+    loadMedia(retryInfo.url, retryInfo.title, retryInfo.audioLangOverride, retryInfo.resumeTime);
+  } else {
+    // Toujours pas détectée : bascule automatique sur la source suivante,
+    // via la popup "petit problème technique" habituelle.
+    handleSourceFailure();
+  }
+}
+
 // Affichage/fermeture de la popup, intégrés à la même file d'attente que la
-// popup "petit problème technique" : une fois fermée ("J'ai compris"), on
-// bascule automatiquement sur la source suivante, puisque finepulfe ne
-// fonctionnera de toute façon pas sans l'extension.
+// popup "petit problème technique". Deux façons de la quitter :
+// - manuellement ("J'ai compris") -> bascule immédiate sur la source suivante ;
+// - automatiquement, au retour sur l'onglet (voir armExtensionReturnWatcher).
 let extPopupPending = false;
 let extPopupResolve = null;
 
-function handleFinepulfeExtensionRequired() {
+function handleFinepulfeExtensionRequired(retryInfo) {
   if (pw.classList.contains('embed-mode')) return; // un embed gère ses propres erreurs
   if (extPopupPending) return; // déjà en train de gérer ce popup
   extPopupPending = true;
@@ -10220,6 +10292,7 @@ function handleFinepulfeExtensionRequired() {
     return new Promise(resolve => {
       extPopupResolve = resolve;
       showExtensionRequiredPopup();
+      armExtensionReturnWatcher(retryInfo);
     });
   });
 }
@@ -10230,6 +10303,7 @@ function showExtensionRequiredPopup() {
 }
 
 function closeExtensionRequiredPopup() {
+  disarmExtensionReturnWatcher();
   document.getElementById('ext-overlay').classList.remove('open');
   extPopupPending = false;
   goToNextSourceAfterError();
