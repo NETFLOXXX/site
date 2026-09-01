@@ -1117,7 +1117,7 @@
     text-decoration:none; transition:color 0.15s;
   }
   .cast-guide-link:hover { color:#fff; }
-  .cast-guide-link svg { width:12px; height:12px; flex-shrink:0; }
+  .cast-guide-link svg { width:12px; height:12px; flex-shrink:0; margin-bottom:0; opacity:0.85; }
 
   .cast-stop {
     display:flex; align-items:center; justify-content:center; gap:8px;
@@ -1810,47 +1810,38 @@
   #pip-overlay button:hover { background:var(--red); border-color:var(--red); }
   #pip-overlay button:active { transform:scale(0.96); }
 
-  /* ── OVERLAY "diffusion en cours" (AirPlay / Chromecast) ──
-     Pendant une diffusion, le <video> local reste volontairement en pause en
-     arrière-plan : sans cet overlay, l'écran qui lance la diffusion affiche un
-     cadre noir vide. On affiche à la place l'affiche du contenu + le nom de
-     l'appareil, comme le fait Netflix. */
-  #cast-overlay {
-    position:absolute; inset:0; z-index:64; display:none;
-    flex-direction:column; align-items:center; justify-content:center; gap:14px;
-    text-align:center; padding:20px; overflow:hidden;
+  /* ── pastille "diffusion en cours" (AirPlay / Chromecast) ──
+     Contrairement à un premier essai, la vidéo LOCALE continue de jouer
+     normalement pendant la diffusion (on peut regarder sur le PC en même
+     temps que sur le récepteur) : on affiche juste un petit badge discret,
+     cliquable pour rouvrir le menu de diffusion (et l'arrêter si besoin),
+     qui ne bloque jamais les contrôles du lecteur (pointer-events limités
+     au badge lui-même, z-index sous celui du bouton retour). */
+  #cast-badge {
+    position:absolute; top:20px; left:50%; transform:translateX(-50%);
+    z-index:40; display:none; align-items:center; gap:8px;
+    padding:7px 14px 7px 8px; border-radius:999px; cursor:pointer;
+    background:rgba(18,18,18,0.75); border:1px solid rgba(255,255,255,0.14);
+    backdrop-filter:blur(10px); box-shadow:0 6px 20px rgba(0,0,0,0.4);
+    max-width:calc(100% - 32px); transition:background 0.15s, transform 0.15s;
   }
-  #cast-overlay.show { display:flex; }
-  #cast-overlay-bg {
-    position:absolute; inset:0; background-size:cover; background-position:center;
-    filter:blur(28px) brightness(0.38); transform:scale(1.15); z-index:0;
+  #cast-badge.show { display:inline-flex; }
+  #cast-badge:hover { background:rgba(30,30,30,0.88); }
+  #cast-badge:active { transform:translateX(-50%) scale(0.97); }
+  #cast-badge-icon {
+    width:24px; height:24px; border-radius:50%; flex-shrink:0;
+    background:rgba(220,38,38,0.2); color:#fff;
+    display:flex; align-items:center; justify-content:center;
+    animation:castBadgePulse 2.4s ease-in-out infinite;
   }
-  #cast-overlay-scrim {
-    position:absolute; inset:0; z-index:1;
-    background:radial-gradient(circle at 50% 42%, rgba(220,38,38,0.16), transparent 60%), rgba(0,0,0,0.35);
+  #cast-badge-icon svg { width:13px; height:13px; }
+  @keyframes castBadgePulse {
+    0%,100% { box-shadow:0 0 0 0 rgba(220,38,38,0.4); }
+    50% { box-shadow:0 0 0 6px rgba(220,38,38,0); }
   }
-  #cast-overlay-icon {
-    position:relative; z-index:2; width:60px; height:60px; border-radius:50%;
-    background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.16);
-    display:flex; align-items:center; justify-content:center; color:#fff;
-    box-shadow:0 10px 30px rgba(0,0,0,0.5);
-    animation:castOverlayPulse 2.4s ease-in-out infinite;
-  }
-  #cast-overlay-icon svg { width:26px; height:26px; }
-  @keyframes castOverlayPulse {
-    0%,100% { box-shadow:0 10px 30px rgba(0,0,0,0.5), 0 0 0 0 rgba(220,38,38,0.35); }
-    50% { box-shadow:0 10px 30px rgba(0,0,0,0.5), 0 0 0 12px rgba(220,38,38,0); }
-  }
-  #cast-overlay-title {
-    position:relative; z-index:2; font-size:1.02rem; font-weight:700; letter-spacing:-0.01em;
-    max-width:90%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
-  }
-  #cast-overlay-sub {
-    position:relative; z-index:2; font-size:0.84rem; color:rgba(255,255,255,0.6); max-width:300px; line-height:1.45;
-  }
-  #cast-overlay-hint {
-    position:relative; z-index:2; font-size:0.74rem; color:rgba(255,255,255,0.35); max-width:280px; line-height:1.4;
-  }
+  #cast-badge-text { display:flex; flex-direction:column; align-items:flex-start; line-height:1.25; overflow:hidden; }
+  #cast-badge-title { font-size:0.76rem; font-weight:700; color:#fff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:220px; }
+  #cast-badge-sub { font-size:0.65rem; color:rgba(255,255,255,0.5); white-space:nowrap; }
 
   #player-wrap:fullscreen { max-width:100%; border-radius:0; }
   #player-wrap:-webkit-full-screen { max-width:100%; border-radius:0; }
@@ -2307,15 +2298,15 @@
     </button>
   </div>
 
-  <!-- OVERLAY "diffusion en cours" — remplace le cadre vide laissé par la
-       vidéo locale pendant une diffusion AirPlay / Chromecast. -->
-  <div id="cast-overlay">
-    <div id="cast-overlay-bg"></div>
-    <div id="cast-overlay-scrim"></div>
-    <div id="cast-overlay-icon"></div>
-    <h3 id="cast-overlay-title"></h3>
-    <p id="cast-overlay-sub"></p>
-    <p id="cast-overlay-hint" data-i18n="cast_overlay_hint">Utilise les commandes du lecteur pour piloter la lecture à distance.</p>
+  <!-- Pastille "diffusion en cours" — non bloquante : la vidéo locale continue
+       de jouer normalement, on regarde à la fois sur le PC et sur le
+       récepteur. Cliquer dessus rouvre le menu de diffusion. -->
+  <div id="cast-badge" onclick="toggleCastMenu()">
+    <div id="cast-badge-icon"></div>
+    <div id="cast-badge-text">
+      <span id="cast-badge-title"></span>
+      <span id="cast-badge-sub"></span>
+    </div>
   </div>
 
   <button id="back-btn" onclick="goBack()">
@@ -3336,15 +3327,14 @@ const I18N = {
   cast_error: { fr: 'Impossible de lancer la diffusion sur cet appareil.', en: 'Could not start casting on this device.' },
   cast_embed_unsupported: { fr: 'Cette source est un lecteur externe : elle ne peut pas être diffusée.', en: 'This source is an external player: it cannot be cast.' },
   cast_embed_switch_stopped: { fr: 'Diffusion arrêtée : cette source ne peut pas être diffusée.', en: 'Casting stopped: this source cannot be cast.' },
-  cast_overlay_sub: { fr: 'Diffusion en cours sur {device}', en: 'Casting to {device}' },
-  cast_overlay_hint: { fr: 'Utilise les commandes du lecteur pour piloter la lecture à distance.', en: 'Use the player controls to control remote playback.' },
+  cast_badge_title: { fr: 'Diffusion en cours', en: 'Casting' },
   cast_leave_confirm_title: { fr: 'Arrêter la diffusion ?', en: 'Stop casting?' },
   cast_leave_confirm_sub: { fr: "Revenir en arrière mettra fin à la diffusion en cours sur l'appareil connecté.", en: 'Going back will stop the current cast on the connected device.' },
   cast_leave_btn: { fr: 'Arrêter la diffusion', en: 'Stop casting' },
   cast_source_locked: { fr: 'La source est verrouillée pendant la diffusion.', en: 'Source is locked while casting.' },
   cast_source_locked_msg: { fr: "Impossible de changer de source pendant la diffusion. Arrête la diffusion pour en changer.", en: "You can't change source while casting. Stop casting to change it." },
-  cast_guide_airplay: { fr: 'Un souci ? Consulter le guide AirPlay', en: 'Having trouble? View the AirPlay guide' },
-  cast_guide_chromecast: { fr: 'Un souci ? Consulter le guide Chromecast', en: 'Having trouble? View the Chromecast guide' },
+  cast_guide_airplay: { fr: 'Un souci pour te connecter ? Consulter le guide AirPlay', en: 'Trouble connecting? View the AirPlay guide' },
+  cast_guide_chromecast: { fr: 'Un souci pour te connecter ? Consulter le guide Chromecast', en: 'Trouble connecting? View the Chromecast guide' },
   fullscreen_enter_title: { fr: 'Plein écran', en: 'Fullscreen' },
   fullscreen_exit_title: { fr: 'Quitter le plein écran', en: 'Exit fullscreen' },
   watchparty_btn_title: { fr: 'Watch Party', en: 'Watch Party' },
@@ -6669,34 +6659,25 @@ function castRefresh() {
   if (castIsOpen()) renderCastMenu();
 }
 
-// Affiche/masque l'écran local pendant une diffusion : sans ça, l'écran qui
-// diffuse reste noir puisque le <video> local est volontairement en pause.
-// On y reprend l'affiche + le titre déjà affichés dans le lecteur, plus le
-// nom de l'appareil connecté.
+// Affiche/masque le badge de diffusion : la vidéo locale continue de jouer
+// normalement (on peut regarder sur le PC en même temps que sur le
+// récepteur), donc pas d'overlay bloquant — juste un petit badge discret
+// avec le nom de l'appareil, cliquable pour rouvrir le menu de diffusion.
 function castUpdateOverlay(casting) {
-  const overlay = document.getElementById('cast-overlay');
-  if (!overlay) return;
-  if (!casting) { overlay.classList.remove('show'); return; }
+  const badge = document.getElementById('cast-badge');
+  if (!badge) return;
+  if (!casting) { badge.classList.remove('show'); return; }
 
-  const icon = document.getElementById('cast-overlay-icon');
+  const icon = document.getElementById('cast-badge-icon');
   if (icon) icon.innerHTML = castState.airplayOn ? CAST_ICON_AIRPLAY : CAST_ICON_CHROMECAST;
 
-  const bg = document.getElementById('cast-overlay-bg');
-  if (bg) {
-    const posterImg = document.querySelector('#title-poster img');
-    bg.style.backgroundImage = posterImg ? `url("${posterImg.src}")` : 'none';
-  }
+  const deviceName = castState.airplayOn ? tr('cast_airplay') : (castState.deviceName || tr('cast_chromecast'));
+  const titleEl = document.getElementById('cast-badge-title');
+  if (titleEl) titleEl.textContent = tr('cast_badge_title');
+  const subEl = document.getElementById('cast-badge-sub');
+  if (subEl) subEl.textContent = deviceName;
 
-  const titleEl = document.getElementById('cast-overlay-title');
-  if (titleEl) titleEl.textContent = document.getElementById('media-title')?.textContent || currentStreamTitle || 'Netflox';
-
-  const subEl = document.getElementById('cast-overlay-sub');
-  if (subEl) {
-    const deviceName = castState.airplayOn ? tr('cast_airplay') : (castState.deviceName || tr('cast_chromecast'));
-    subEl.textContent = trWith('cast_overlay_sub', { device: deviceName });
-  }
-
-  overlay.classList.add('show');
+  badge.classList.add('show');
 }
 
 function castSetNote(msg) {
@@ -6794,9 +6775,9 @@ function castLoadMedia(explicitStartTime) {
   if (isFinite(t) && t > 0) req.currentTime = t;
 
   session.loadMedia(req).then(() => {
-    // La lecture continue sur le téléviseur : on met le lecteur local en pause
-    // plutôt que de laisser tourner deux fois le même flux.
-    try { video.pause(); } catch (err) {}
+    // La vidéo locale continue de jouer normalement : on peut regarder sur
+    // le PC en même temps que sur le récepteur. Les commandes du lecteur
+    // (lecture/pause/avance) pilotent la diffusion à distance.
     castState.note = '';
     castSetupRemotePlayer();
     // Filet de sécurité : certains récepteurs (notamment en HLS) ignorent
@@ -7281,7 +7262,7 @@ document.addEventListener('click', e => {
   if (e.target.closest('#cast-panel')) return;
   if (e.target.closest('#ab-overlay')) return;
   if (e.target.closest('#nolang-overlay')) return;
-  if (!e.target.closest('.ctrl-btn') && !e.target.closest('.nav-btn') && !e.target.closest('.menu-popup') && !e.target.closest('.settings-panel') && !e.target.closest('#sources-panel') && !e.target.closest('#sources-btn') && !e.target.closest('#episodes-panel') && !e.target.closest('#subtitles-panel') && !e.target.closest('#subtitles-btn') && !e.target.closest('#download-panel') && !e.target.closest('#download-btn') && !e.target.closest('#cast-panel') && !e.target.closest('#cast-btn')) closeMenus();
+  if (!e.target.closest('.ctrl-btn') && !e.target.closest('.nav-btn') && !e.target.closest('.menu-popup') && !e.target.closest('.settings-panel') && !e.target.closest('#sources-panel') && !e.target.closest('#sources-btn') && !e.target.closest('#episodes-panel') && !e.target.closest('#subtitles-panel') && !e.target.closest('#subtitles-btn') && !e.target.closest('#download-panel') && !e.target.closest('#download-btn') && !e.target.closest('#cast-panel') && !e.target.closest('#cast-btn') && !e.target.closest('#cast-badge')) closeMenus();
 });
 
 // clic en dehors du bloc "Traduire vers une autre langue" (mais potentiellement encore
