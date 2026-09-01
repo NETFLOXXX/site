@@ -1109,15 +1109,19 @@
     border-top:1px solid rgba(255,255,255,0.08);
     font-size:0.76rem; color:rgba(255,255,255,0.32); line-height:1.5;
   }
-  /* petit lien discret vers le guide officiel (AirPlay/Chromecast selon la
-     plateforme), affiché uniquement quand aucun appareil n'est détecté. */
+  /* petit texte + lien discret vers le guide officiel (AirPlay/Chromecast
+     selon la plateforme), affichés uniquement quand aucun appareil n'est
+     détecté. Le texte et le lien sont séparés sur deux lignes courtes
+     exprès : un label trop long qui retombe à la ligne fait "flotter"
+     l'icône au milieu du bloc au lieu de rester alignée avec le texte. */
+  .cast-empty p.cast-guide-prefix { margin:14px 0 6px; font-size:0.72rem; color:rgba(255,255,255,0.32); }
   .cast-guide-link {
-    display:inline-flex; align-items:center; gap:5px; margin-top:10px;
-    font-size:0.72rem; font-weight:600; color:rgba(255,255,255,0.4);
-    text-decoration:none; transition:color 0.15s;
+    display:inline-flex; align-items:center; gap:5px;
+    font-size:0.72rem; font-weight:600; color:rgba(255,255,255,0.5);
+    text-decoration:none; transition:color 0.15s; white-space:nowrap;
   }
   .cast-guide-link:hover { color:#fff; }
-  .cast-guide-link svg { width:12px; height:12px; flex-shrink:0; margin-bottom:0; opacity:0.85; }
+  .cast-guide-link svg { width:12px; height:12px; flex-shrink:0; opacity:0.85; }
 
   .cast-stop {
     display:flex; align-items:center; justify-content:center; gap:8px;
@@ -1810,39 +1814,6 @@
   #pip-overlay button:hover { background:var(--red); border-color:var(--red); }
   #pip-overlay button:active { transform:scale(0.96); }
 
-  /* ── pastille "diffusion en cours" (AirPlay / Chromecast) ──
-     Contrairement à un premier essai, la vidéo LOCALE continue de jouer
-     normalement pendant la diffusion (on peut regarder sur le PC en même
-     temps que sur le récepteur) : on affiche juste un petit badge discret,
-     cliquable pour rouvrir le menu de diffusion (et l'arrêter si besoin),
-     qui ne bloque jamais les contrôles du lecteur (pointer-events limités
-     au badge lui-même, z-index sous celui du bouton retour). */
-  #cast-badge {
-    position:absolute; top:20px; left:50%; transform:translateX(-50%);
-    z-index:40; display:none; align-items:center; gap:8px;
-    padding:7px 14px 7px 8px; border-radius:999px; cursor:pointer;
-    background:rgba(18,18,18,0.75); border:1px solid rgba(255,255,255,0.14);
-    backdrop-filter:blur(10px); box-shadow:0 6px 20px rgba(0,0,0,0.4);
-    max-width:calc(100% - 32px); transition:background 0.15s, transform 0.15s;
-  }
-  #cast-badge.show { display:inline-flex; }
-  #cast-badge:hover { background:rgba(30,30,30,0.88); }
-  #cast-badge:active { transform:translateX(-50%) scale(0.97); }
-  #cast-badge-icon {
-    width:24px; height:24px; border-radius:50%; flex-shrink:0;
-    background:rgba(220,38,38,0.2); color:#fff;
-    display:flex; align-items:center; justify-content:center;
-    animation:castBadgePulse 2.4s ease-in-out infinite;
-  }
-  #cast-badge-icon svg { width:13px; height:13px; }
-  @keyframes castBadgePulse {
-    0%,100% { box-shadow:0 0 0 0 rgba(220,38,38,0.4); }
-    50% { box-shadow:0 0 0 6px rgba(220,38,38,0); }
-  }
-  #cast-badge-text { display:flex; flex-direction:column; align-items:flex-start; line-height:1.25; overflow:hidden; }
-  #cast-badge-title { font-size:0.76rem; font-weight:700; color:#fff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:220px; }
-  #cast-badge-sub { font-size:0.65rem; color:rgba(255,255,255,0.5); white-space:nowrap; }
-
   #player-wrap:fullscreen { max-width:100%; border-radius:0; }
   #player-wrap:-webkit-full-screen { max-width:100%; border-radius:0; }
 
@@ -2296,17 +2267,6 @@
     <button onclick="togglePiP()">
       <span data-i18n="pip_overlay_return">Revenir au lecteur</span>
     </button>
-  </div>
-
-  <!-- Pastille "diffusion en cours" — non bloquante : la vidéo locale continue
-       de jouer normalement, on regarde à la fois sur le PC et sur le
-       récepteur. Cliquer dessus rouvre le menu de diffusion. -->
-  <div id="cast-badge" onclick="toggleCastMenu()">
-    <div id="cast-badge-icon"></div>
-    <div id="cast-badge-text">
-      <span id="cast-badge-title"></span>
-      <span id="cast-badge-sub"></span>
-    </div>
   </div>
 
   <button id="back-btn" onclick="goBack()">
@@ -3071,7 +3031,6 @@ const timeDsp = document.getElementById('time-display');
 const volSlider = document.getElementById('vol-slider');
 
 let hls = null, hideTimer = null, scrubbing = false;
-let castPendingScrubTime = null;
 let currentStreamUrl = null;    // URL brute du flux en lecture (source directe, non-blob)
 let currentStreamIsHLS = false;
 let currentStreamTitle = '';
@@ -3327,14 +3286,14 @@ const I18N = {
   cast_error: { fr: 'Impossible de lancer la diffusion sur cet appareil.', en: 'Could not start casting on this device.' },
   cast_embed_unsupported: { fr: 'Cette source est un lecteur externe : elle ne peut pas être diffusée.', en: 'This source is an external player: it cannot be cast.' },
   cast_embed_switch_stopped: { fr: 'Diffusion arrêtée : cette source ne peut pas être diffusée.', en: 'Casting stopped: this source cannot be cast.' },
-  cast_badge_title: { fr: 'Diffusion en cours', en: 'Casting' },
   cast_leave_confirm_title: { fr: 'Arrêter la diffusion ?', en: 'Stop casting?' },
   cast_leave_confirm_sub: { fr: "Revenir en arrière mettra fin à la diffusion en cours sur l'appareil connecté.", en: 'Going back will stop the current cast on the connected device.' },
   cast_leave_btn: { fr: 'Arrêter la diffusion', en: 'Stop casting' },
   cast_source_locked: { fr: 'La source est verrouillée pendant la diffusion.', en: 'Source is locked while casting.' },
   cast_source_locked_msg: { fr: "Impossible de changer de source pendant la diffusion. Arrête la diffusion pour en changer.", en: "You can't change source while casting. Stop casting to change it." },
-  cast_guide_airplay: { fr: 'Un souci pour te connecter ? Consulter le guide AirPlay', en: 'Trouble connecting? View the AirPlay guide' },
-  cast_guide_chromecast: { fr: 'Un souci pour te connecter ? Consulter le guide Chromecast', en: 'Trouble connecting? View the Chromecast guide' },
+  cast_guide_prefix: { fr: 'Un souci pour te connecter ?', en: 'Trouble connecting?' },
+  cast_guide_airplay: { fr: 'Consulter le guide AirPlay', en: 'View the AirPlay guide' },
+  cast_guide_chromecast: { fr: 'Consulter le guide Chromecast', en: 'View the Chromecast guide' },
   fullscreen_enter_title: { fr: 'Plein écran', en: 'Fullscreen' },
   fullscreen_exit_title: { fr: 'Quitter le plein écran', en: 'Exit fullscreen' },
   watchparty_btn_title: { fr: 'Watch Party', en: 'Watch Party' },
@@ -6083,13 +6042,16 @@ function loadMedia(url, title, audioLangOverride, resumeTime) {
   currentStreamUrl = url;
   currentStreamIsHLS = isHLS;
   currentStreamTitle = title || currentStreamTitle;
-  // Diffusion AirPlay/Chromecast déjà active : on la fait immédiatement
-  // suivre sur ce nouveau contenu (film suivant, changement d'épisode, etc.)
-  // au lieu de laisser l'ancien flux continuer sur le récepteur — c'était le
-  // bug signalé. resumeTime vaut null pour un tout nouveau contenu (on
-  // repart donc de 0 côté récepteur, comme localement).
+  // Diffusion Chromecast déjà active : on la fait immédiatement suivre sur ce
+  // nouveau contenu (film suivant, changement d'épisode, etc.) au lieu de
+  // laisser l'ancien flux continuer sur le récepteur — c'était le bug
+  // signalé. resumeTime vaut null pour un tout nouveau contenu (on repart
+  // donc de 0 côté récepteur, comme localement). Entouré d'un try/catch :
+  // un souci de diffusion ne doit jamais empêcher le changement de contenu
+  // local de se dérouler normalement.
   if (castState.connected) {
-    castLoadMedia(resumeTime != null && isFinite(resumeTime) ? resumeTime : 0);
+    try { castLoadMedia(resumeTime != null && isFinite(resumeTime) ? resumeTime : 0); }
+    catch (err) { console.error('[cast] échec de la synchronisation après changement de contenu', err); }
   }
   // Reprend au temps donné (ex: bascule FR/EN sur un même flux finepulfe en
   // pleine Watch Party) plutôt que de repartir du début.
@@ -6371,21 +6333,19 @@ function selectNativeAudioTrackByLang(videoEl, langCode) {
 }
 
 // ── PLAYBACK ──
+// La vidéo locale reste TOUJOURS la source de vérité, même pendant une
+// diffusion : on peut donc continuer à la regarder et à la piloter
+// normalement sur le PC pendant qu'elle est diffusée sur la TV/l'appareil
+// connecté (elle n'est plus jamais mise en pause ni redirigée vers un
+// contrôleur distant).
 function togglePlay() {
   if (wpGuestBlocked()) return;
-  if (castRemoteActive()) { castRemotePlayerController.playOrPause(); return; }
   if (video.paused) video.play(); else video.pause();
 }
 
 function seekFlash(s) {
   if (wpGuestBlocked()) return;
-  if (castRemoteActive()) {
-    const dur = castRemotePlayer.duration || 0;
-    castRemotePlayer.currentTime = Math.max(0, Math.min((castRemotePlayer.currentTime || 0) + s, dur));
-    castRemotePlayerController.seek();
-  } else {
-    video.currentTime = Math.max(0, Math.min(video.currentTime + s, video.duration || 0));
-  }
+  video.currentTime = Math.max(0, Math.min(video.currentTime + s, video.duration || 0));
   const id = s < 0 ? 'flash-rw' : 'flash-fw';
   const el = document.getElementById(id);
   el.classList.add('show');
@@ -6623,6 +6583,7 @@ function renderCastMenu() {
         <strong>${tr('cast_none_title')}</strong>
         <p>${tr('cast_none_sub')}</p>
         ${extra ? `<span class="cast-empty-note">${extra}</span>` : ''}
+        <p class="cast-guide-prefix">${tr('cast_guide_prefix')}</p>
         <a class="cast-guide-link" href="${guide.url}" target="_blank" rel="noopener">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
           <span>${guide.label}</span>
@@ -6655,29 +6616,7 @@ function castRefresh() {
   const btn = document.getElementById('cast-btn');
   const casting = castState.connected || castState.airplayOn;
   if (btn) btn.classList.toggle('casting', casting);
-  castUpdateOverlay(casting);
   if (castIsOpen()) renderCastMenu();
-}
-
-// Affiche/masque le badge de diffusion : la vidéo locale continue de jouer
-// normalement (on peut regarder sur le PC en même temps que sur le
-// récepteur), donc pas d'overlay bloquant — juste un petit badge discret
-// avec le nom de l'appareil, cliquable pour rouvrir le menu de diffusion.
-function castUpdateOverlay(casting) {
-  const badge = document.getElementById('cast-badge');
-  if (!badge) return;
-  if (!casting) { badge.classList.remove('show'); return; }
-
-  const icon = document.getElementById('cast-badge-icon');
-  if (icon) icon.innerHTML = castState.airplayOn ? CAST_ICON_AIRPLAY : CAST_ICON_CHROMECAST;
-
-  const deviceName = castState.airplayOn ? tr('cast_airplay') : (castState.deviceName || tr('cast_chromecast'));
-  const titleEl = document.getElementById('cast-badge-title');
-  if (titleEl) titleEl.textContent = tr('cast_badge_title');
-  const subEl = document.getElementById('cast-badge-sub');
-  if (subEl) subEl.textContent = deviceName;
-
-  badge.classList.add('show');
 }
 
 function castSetNote(msg) {
@@ -6735,75 +6674,88 @@ function castSyncSubtitles() {
 }
 
 function castLoadMedia(explicitStartTime) {
-  if (!castState.sdkReady) return;
-  const session = cast.framework.CastContext.getInstance().getCurrentSession();
-  if (!session) return;
-  if (pw.classList.contains('embed-mode')) { castSetNote(tr('cast_embed_unsupported')); return; }
-  if (!currentStreamUrl) { castSetNote(tr('cast_no_media')); return; }
+  // Ce chargement peut être déclenché automatiquement (changement de film/
+  // épisode pendant une diffusion active) : une erreur ici ne doit JAMAIS
+  // empêcher la suite de loadMedia() de s'exécuter, sous peine de casser
+  // aussi la lecture locale — d'où le try/catch qui englobe toute la fonction.
+  try {
+    if (!castState.sdkReady) return;
+    const session = cast.framework.CastContext.getInstance().getCurrentSession();
+    if (!session) return;
+    if (pw.classList.contains('embed-mode')) { castSetNote(tr('cast_embed_unsupported')); return; }
+    if (!currentStreamUrl) { castSetNote(tr('cast_no_media')); return; }
 
-  const contentType = currentStreamIsHLS ? 'application/x-mpegurl' : 'video/mp4';
-  const info = new chrome.cast.media.MediaInfo(currentStreamUrl, contentType);
-  info.streamType = chrome.cast.media.StreamType.BUFFERED;
-  const meta = new chrome.cast.media.GenericMediaMetadata();
-  meta.title = currentStreamTitle
-            || document.getElementById('media-title')?.textContent
-            || 'Netflox';
-  info.metadata = meta;
+    const contentType = currentStreamIsHLS ? 'application/x-mpegurl' : 'video/mp4';
+    const info = new chrome.cast.media.MediaInfo(currentStreamUrl, contentType);
+    info.streamType = chrome.cast.media.StreamType.BUFFERED;
+    const meta = new chrome.cast.media.GenericMediaMetadata();
+    meta.title = currentStreamTitle
+              || document.getElementById('media-title')?.textContent
+              || 'Netflox';
+    info.metadata = meta;
 
-  // Piste de sous-titres actuellement affichée localement (si activée) —
-  // embarquée seulement si elle reste dans une taille raisonnable pour un
-  // message Cast (limite ~64 Ko côté protocole).
-  let activeTrackIds = null;
-  if (!subtitlesDisabled && activeCues.length) {
-    const vtt = cuesToVTT(activeCues);
-    if (vtt.length < 60000) {
-      const track = new chrome.cast.media.Track(1, chrome.cast.media.TrackType.TEXT);
-      track.trackContentId = 'data:text/vtt;base64,' + btoa(unescape(encodeURIComponent(vtt)));
-      track.trackContentType = 'text/vtt';
-      track.subtype = chrome.cast.media.TextTrackType.SUBTITLES;
-      track.name = preferredLang === 'en' ? 'Subtitles' : 'Sous-titres';
-      track.language = preferredLang === 'en' ? 'en-US' : 'fr-FR';
-      info.tracks = [track];
-      activeTrackIds = [1];
-    }
-  }
-
-  const req = new chrome.cast.media.LoadRequest(info);
-  req.autoplay = true;
-  if (activeTrackIds) req.activeTrackIds = activeTrackIds;
-  const t = (explicitStartTime != null && isFinite(explicitStartTime)) ? explicitStartTime : video.currentTime;
-  if (isFinite(t) && t > 0) req.currentTime = t;
-
-  session.loadMedia(req).then(() => {
-    // La vidéo locale continue de jouer normalement : on peut regarder sur
-    // le PC en même temps que sur le récepteur. Les commandes du lecteur
-    // (lecture/pause/avance) pilotent la diffusion à distance.
-    castState.note = '';
-    castSetupRemotePlayer();
-    // Filet de sécurité : certains récepteurs (notamment en HLS) ignorent
-    // parfois le currentTime demandé au chargement — on revérifie une fois
-    // la lecture bien démarrée côté TV et on re-seek si besoin.
-    if (isFinite(t) && t > 1) {
-      setTimeout(() => {
-        if (!castRemotePlayer || !castRemotePlayer.isMediaLoaded) return;
-        if (Math.abs((castRemotePlayer.currentTime || 0) - t) > 3) {
-          castRemotePlayer.currentTime = t;
-          castRemotePlayerController.seek();
+    // Piste de sous-titres actuellement affichée localement (si activée) —
+    // embarquée seulement si elle reste dans une taille raisonnable pour un
+    // message Cast (limite ~64 Ko côté protocole). Isolée dans son propre
+    // try/catch : un souci sur les sous-titres ne doit jamais empêcher la
+    // diffusion elle-même de démarrer.
+    let activeTrackIds = null;
+    try {
+      if (!subtitlesDisabled && activeCues.length) {
+        const vtt = cuesToVTT(activeCues);
+        if (vtt.length < 60000) {
+          const track = new chrome.cast.media.Track(1, chrome.cast.media.TrackType.TEXT);
+          track.trackContentId = 'data:text/vtt;base64,' + btoa(unescape(encodeURIComponent(vtt)));
+          track.trackContentType = 'text/vtt';
+          track.subtype = chrome.cast.media.TextTrackType.SUBTITLES;
+          track.name = preferredLang === 'en' ? 'Subtitles' : 'Sous-titres';
+          track.language = preferredLang === 'en' ? 'en-US' : 'fr-FR';
+          info.tracks = [track];
+          activeTrackIds = [1];
         }
-      }, 1200);
+      }
+    } catch (subErr) {
+      activeTrackIds = null;
     }
-    castRefresh();
-    closeCastMenu();
-  }, () => {
-    castSetNote(tr('cast_error'));
-  });
+
+    const req = new chrome.cast.media.LoadRequest(info);
+    req.autoplay = true;
+    if (activeTrackIds) req.activeTrackIds = activeTrackIds;
+    const t = (explicitStartTime != null && isFinite(explicitStartTime)) ? explicitStartTime : video.currentTime;
+    if (isFinite(t) && t > 0) req.currentTime = t;
+
+    session.loadMedia(req).then(() => {
+      // La vidéo locale continue de jouer normalement, indépendamment de la
+      // diffusion : on peut regarder sur le PC en même temps que sur le
+      // récepteur.
+      castState.note = '';
+      castSetupRemotePlayer();
+      // Filet de sécurité : certains récepteurs (notamment en HLS) ignorent
+      // parfois le currentTime demandé au chargement — on revérifie une fois
+      // la lecture bien démarrée côté TV et on re-seek si besoin.
+      if (isFinite(t) && t > 1) {
+        setTimeout(() => {
+          try {
+            if (!castRemotePlayer || !castRemotePlayer.isMediaLoaded) return;
+            if (Math.abs((castRemotePlayer.currentTime || 0) - t) > 3) {
+              castRemotePlayer.currentTime = t;
+              castRemotePlayerController.seek();
+            }
+          } catch (err) {}
+        }, 1200);
+      }
+      castRefresh();
+      closeCastMenu();
+    }, () => {
+      castSetNote(tr('cast_error'));
+    });
+  } catch (err) {
+    console.error('[cast] échec du chargement du média sur le récepteur', err);
+    try { castSetNote(tr('cast_error')); } catch (e2) {}
+  }
 }
 
 function castStop() {
-  const wasConnected = castState.connected;
-  const resumeAt = (wasConnected && castRemotePlayer && castRemotePlayer.isMediaLoaded)
-    ? castRemotePlayer.currentTime : null;
-  const wasPlaying = (wasConnected && castRemotePlayer) ? !castRemotePlayer.isPaused : false;
   try {
     if (castState.sdkReady) cast.framework.CastContext.getInstance().endCurrentSession(true);
   } catch (err) {}
@@ -6811,19 +6763,13 @@ function castStop() {
     // Safari : le sélecteur AirPlay sert aussi à revenir sur l'appareil local.
     if (castState.airplayOn) video.webkitShowPlaybackTargetPicker();
   } catch (err) {}
-  // On reprend la vidéo locale exactement là où la diffusion s'est arrêtée,
-  // plutôt que de la laisser en pause au tout début.
-  if (wasConnected && isFinite(resumeAt) && resumeAt > 0) {
-    try {
-      video.currentTime = resumeAt;
-      if (wasPlaying) video.play().catch(() => {});
-    } catch (err) {}
-  }
+  // La vidéo locale n'a jamais été mise en pause pendant la diffusion (elle
+  // joue en parallèle) : rien à reprendre ici, elle continue simplement.
   castState.note = '';
-  // Retour visuel immédiat (overlay/bouton) sans attendre l'aller-retour
-  // asynchrone de endCurrentSession()/webkitShowPlaybackTargetPicker() : les
-  // événements réels (castApplyChromecastState /
-  // webkitcurrentplaybacktargetiswirelesschanged) confirmeront ensuite l'état.
+  // Retour visuel immédiat (bouton) sans attendre l'aller-retour asynchrone
+  // de endCurrentSession()/webkitShowPlaybackTargetPicker() : les événements
+  // réels (castApplyChromecastState / webkitcurrentplaybacktargetiswirelesschanged)
+  // confirmeront ensuite l'état.
   castState.connected = false;
   castState.connecting = false;
   castState.airplayOn = false;
@@ -6854,30 +6800,19 @@ function castApplyChromecastState(state) {
   try { name = cast.framework.CastContext.getInstance().getCurrentSession()?.getCastDevice()?.friendlyName || ''; }
   catch (err) {}
   castState.deviceName = name;
-
-  // La diffusion vient de s'arrêter (TV éteinte, session coupée depuis le
-  // téléviseur, etc.) : on reprend la vidéo locale là où on en était sur le
-  // récepteur, au lieu de la laisser en pause au tout début.
-  if (castWasConnected && !castState.connected) {
-    const resumeAt = (castRemotePlayer && castRemotePlayer.isMediaLoaded) ? castRemotePlayer.currentTime : null;
-    const wasPlaying = castRemotePlayer ? !castRemotePlayer.isPaused : false;
-    if (isFinite(resumeAt) && resumeAt > 0) {
-      try {
-        video.currentTime = resumeAt;
-        if (wasPlaying) video.play().catch(() => {});
-      } catch (err) {}
-    }
-  }
+  // La vidéo locale joue en parallèle sans jamais être mise en pause : rien
+  // à reprendre côté local quand la diffusion s'arrête (TV éteinte, session
+  // coupée depuis le téléviseur, etc.), elle continue simplement sa route.
   castWasConnected = castState.connected;
 
   castRefresh();
 }
 
-// ══════════════ CAST — pilotage à distance (lecture/pause/progression) ══════════════
-// Pendant une diffusion, la vidéo locale reste en pause en arrière-plan : les
-// contrôles du lecteur (lecture/pause, avance/recul, barre de progression)
-// doivent donc agir sur le récepteur (TV) via le RemotePlayer du SDK, sinon
-// ils n'ont aucun effet visible — c'était le bug signalé.
+// ══════════════ CAST — état du récepteur (pour la synchro sous-titres/reprise) ══════════════
+// Remarque : la vidéo locale n'est jamais mise en pause pendant une diffusion
+// et les contrôles du lecteur agissent toujours sur elle uniquement — ce
+// RemotePlayer sert seulement à connaître la position du récepteur (filet de
+// sécurité de castLoadMedia, castSyncSubtitles), pas à piloter l'UI locale.
 let castRemotePlayer = null;
 let castRemotePlayerController = null;
 
@@ -6891,30 +6826,7 @@ function castSetupRemotePlayer() {
   try {
     castRemotePlayer = new cast.framework.RemotePlayer();
     castRemotePlayerController = new cast.framework.RemotePlayerController(castRemotePlayer);
-    const evt = cast.framework.RemotePlayerEventType;
-    castRemotePlayerController.addEventListener(evt.IS_PAUSED_CHANGED, castUpdatePlayPauseUI);
-    castRemotePlayerController.addEventListener(evt.IS_MEDIA_LOADED_CHANGED, castUpdatePlayPauseUI);
-    castRemotePlayerController.addEventListener(evt.CURRENT_TIME_CHANGED, castUpdateProgressUI);
-    castRemotePlayerController.addEventListener(evt.DURATION_CHANGED, castUpdateProgressUI);
   } catch (err) {}
-}
-
-function castUpdatePlayPauseUI() {
-  if (!castRemoteActive()) return;
-  updatePlayPauseUI(castRemotePlayer.isPaused);
-}
-
-function castUpdateProgressUI() {
-  if (!castRemoteActive() || scrubbing) return;   // ne pas écraser un glissement en cours
-  const ct = castRemotePlayer.currentTime || 0;
-  const dur = castRemotePlayer.duration || 0;
-  const pct = dur ? (ct/dur)*100 : 0;
-  document.getElementById('progress-fill').style.width = pct+'%';
-  document.getElementById('progress-thumb').style.left = pct+'%';
-  // Pas d'info de tampon distant exposée par le SDK : la barre "bufferisée"
-  // suit simplement la position de lecture, comme sur un flux en direct.
-  document.getElementById('progress-buf').style.width = pct+'%';
-  updateTimeDisplay(ct, dur);
 }
 
 function castInitChromecast() {
@@ -7018,9 +6930,7 @@ function fmt(s) {
 }
 
 function updateProgress() {
-  // Pendant une diffusion, la vidéo locale est volontairement en pause :
-  // c'est castUpdateProgressUI qui pilote la barre/le temps dans ce cas.
-  if (castRemoteActive()) return;
+  // La barre de progression reflète toujours la vidéo locale, casting ou non.
   const { currentTime:ct, duration:dur, buffered } = video;
   const pct = dur ? (ct/dur)*100 : 0;
   document.getElementById('progress-fill').style.width = pct+'%';
@@ -7073,13 +6983,6 @@ function startScrub(e) {
   const mv = ev => doScrub(ev.touches ? ev.touches[0] : ev);
   const up = () => {
     scrubbing = false;
-    // En diffusion, on n'envoie le saut réel au récepteur qu'ici (relâchement),
-    // pour ne pas spammer le Chromecast d'une commande à chaque pixel glissé.
-    if (castRemoteActive() && castPendingScrubTime != null) {
-      castRemotePlayer.currentTime = castPendingScrubTime;
-      castRemotePlayerController.seek();
-      castPendingScrubTime = null;
-    }
     document.removeEventListener('mousemove', mv); document.removeEventListener('mouseup', up);
     document.removeEventListener('touchmove', mv); document.removeEventListener('touchend', up);
   };
@@ -7090,17 +6993,7 @@ function startScrub(e) {
 function doScrub(e) {
   const r = document.getElementById('progress-wrap').getBoundingClientRect();
   const x = Math.max(0, Math.min((e.clientX||e.pageX)-r.left, r.width));
-  if (castRemoteActive()) {
-    const dur = castRemotePlayer.duration || 0;
-    if (!dur) return;
-    const target = (x/r.width)*dur;
-    castPendingScrubTime = target;
-    // Aperçu visuel immédiat de la barre/temps sans envoyer de commande réseau.
-    const pct = (target/dur)*100;
-    document.getElementById('progress-fill').style.width = pct+'%';
-    document.getElementById('progress-thumb').style.left = pct+'%';
-    updateTimeDisplay(target, dur);
-  } else if (video.duration) {
+  if (video.duration) {
     video.currentTime = (x/r.width)*video.duration;
   }
 }
@@ -7119,11 +7012,9 @@ function updatePlayPauseUI(paused) {
     ppBtn.setAttribute('title', tr(key));
   }
 }
-// Pendant une diffusion Chromecast, c'est le récepteur distant qui pilote
-// l'icône (voir castUpdatePlayPauseUI) : le lecteur local reste volontairement
-// en pause en arrière-plan et ne doit pas écraser cet affichage.
-video.addEventListener('play', () => { if (!castState.connected) updatePlayPauseUI(false); });
-video.addEventListener('pause', () => { if (!castState.connected) updatePlayPauseUI(true); });
+// La vidéo locale pilote toujours l'icône lecture/pause, casting ou non.
+video.addEventListener('play', () => updatePlayPauseUI(false));
+video.addEventListener('pause', () => updatePlayPauseUI(true));
 video.addEventListener('timeupdate', updateProgress);
 video.addEventListener('timeupdate', maybeShowUpNext);
 video.addEventListener('ended', handleVideoEnded);
@@ -7262,7 +7153,7 @@ document.addEventListener('click', e => {
   if (e.target.closest('#cast-panel')) return;
   if (e.target.closest('#ab-overlay')) return;
   if (e.target.closest('#nolang-overlay')) return;
-  if (!e.target.closest('.ctrl-btn') && !e.target.closest('.nav-btn') && !e.target.closest('.menu-popup') && !e.target.closest('.settings-panel') && !e.target.closest('#sources-panel') && !e.target.closest('#sources-btn') && !e.target.closest('#episodes-panel') && !e.target.closest('#subtitles-panel') && !e.target.closest('#subtitles-btn') && !e.target.closest('#download-panel') && !e.target.closest('#download-btn') && !e.target.closest('#cast-panel') && !e.target.closest('#cast-btn') && !e.target.closest('#cast-badge')) closeMenus();
+  if (!e.target.closest('.ctrl-btn') && !e.target.closest('.nav-btn') && !e.target.closest('.menu-popup') && !e.target.closest('.settings-panel') && !e.target.closest('#sources-panel') && !e.target.closest('#sources-btn') && !e.target.closest('#episodes-panel') && !e.target.closest('#subtitles-panel') && !e.target.closest('#subtitles-btn') && !e.target.closest('#download-panel') && !e.target.closest('#download-btn') && !e.target.closest('#cast-panel') && !e.target.closest('#cast-btn')) closeMenus();
 });
 
 // clic en dehors du bloc "Traduire vers une autre langue" (mais potentiellement encore
