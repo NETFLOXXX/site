@@ -835,22 +835,22 @@
      pour ne pas les recouvrir. */
   body.wp-room-active #player-wrap { z-index:500; }
 
-  /* ── confirmations quitter / fermer la Watch Party ── */
-  #wp-leave-overlay, #wp-hostclose-overlay {
+  /* ── confirmations quitter / fermer la Watch Party — et arrêter une diffusion ── */
+  #wp-leave-overlay, #wp-hostclose-overlay, #cast-leave-overlay {
     display:none; position:fixed; inset:0; z-index:960;
     background:rgba(0,0,0,0.6); backdrop-filter:blur(3px);
     align-items:center; justify-content:center; opacity:0; transition:opacity 0.25s ease;
   }
-  #wp-leave-overlay.show, #wp-hostclose-overlay.show { display:flex; }
-  #wp-leave-overlay.show.in, #wp-hostclose-overlay.show.in { opacity:1; }
-  #wp-leave-card, #wp-hostclose-card {
+  #wp-leave-overlay.show, #wp-hostclose-overlay.show, #cast-leave-overlay.show { display:flex; }
+  #wp-leave-overlay.show.in, #wp-hostclose-overlay.show.in, #cast-leave-overlay.show.in { opacity:1; }
+  #wp-leave-card, #wp-hostclose-card, #cast-leave-card {
     width:100%; max-width:460px; margin:0 20px; background:#141414; border:1px solid rgba(255,255,255,0.1);
     border-radius:18px; padding:26px 28px; text-align:center;
     transform:translateY(14px) scale(0.97); transition:transform 0.3s cubic-bezier(0.22,1,0.36,1);
   }
-  #wp-leave-overlay.show.in #wp-leave-card, #wp-hostclose-overlay.show.in #wp-hostclose-card { transform:translateY(0) scale(1); }
-  #wp-leave-card h3, #wp-hostclose-card h3 { font-size:1.05rem; font-weight:700; margin-bottom:8px; }
-  #wp-leave-card p, #wp-hostclose-card p { color:rgba(255,255,255,0.55); font-size:0.85rem; line-height:1.5; margin-bottom:18px; }
+  #wp-leave-overlay.show.in #wp-leave-card, #wp-hostclose-overlay.show.in #wp-hostclose-card, #cast-leave-overlay.show.in #cast-leave-card { transform:translateY(0) scale(1); }
+  #wp-leave-card h3, #wp-hostclose-card h3, #cast-leave-card h3 { font-size:1.05rem; font-weight:700; margin-bottom:8px; }
+  #wp-leave-card p, #wp-hostclose-card p, #cast-leave-card p { color:rgba(255,255,255,0.55); font-size:0.85rem; line-height:1.5; margin-bottom:18px; }
   .wp-confirm-btns { display:flex; gap:8px; }
   .wp-confirm-btns button { flex:1; border:none; border-radius:10px; padding:11px 10px; font-family:'Outfit',sans-serif; font-weight:600; font-size:0.8rem; cursor:pointer; transition:background 0.15s; white-space:nowrap; }
   .wp-btn-ghost { background:rgba(255,255,255,0.08); color:#fff; }
@@ -1109,6 +1109,15 @@
     border-top:1px solid rgba(255,255,255,0.08);
     font-size:0.76rem; color:rgba(255,255,255,0.32); line-height:1.5;
   }
+  /* petit lien discret vers le guide officiel (AirPlay/Chromecast selon la
+     plateforme), affiché uniquement quand aucun appareil n'est détecté. */
+  .cast-guide-link {
+    display:inline-flex; align-items:center; gap:5px; margin-top:10px;
+    font-size:0.72rem; font-weight:600; color:rgba(255,255,255,0.4);
+    text-decoration:none; transition:color 0.15s;
+  }
+  .cast-guide-link:hover { color:#fff; }
+  .cast-guide-link svg { width:12px; height:12px; flex-shrink:0; }
 
   .cast-stop {
     display:flex; align-items:center; justify-content:center; gap:8px;
@@ -1801,6 +1810,48 @@
   #pip-overlay button:hover { background:var(--red); border-color:var(--red); }
   #pip-overlay button:active { transform:scale(0.96); }
 
+  /* ── OVERLAY "diffusion en cours" (AirPlay / Chromecast) ──
+     Pendant une diffusion, le <video> local reste volontairement en pause en
+     arrière-plan : sans cet overlay, l'écran qui lance la diffusion affiche un
+     cadre noir vide. On affiche à la place l'affiche du contenu + le nom de
+     l'appareil, comme le fait Netflix. */
+  #cast-overlay {
+    position:absolute; inset:0; z-index:64; display:none;
+    flex-direction:column; align-items:center; justify-content:center; gap:14px;
+    text-align:center; padding:20px; overflow:hidden;
+  }
+  #cast-overlay.show { display:flex; }
+  #cast-overlay-bg {
+    position:absolute; inset:0; background-size:cover; background-position:center;
+    filter:blur(28px) brightness(0.38); transform:scale(1.15); z-index:0;
+  }
+  #cast-overlay-scrim {
+    position:absolute; inset:0; z-index:1;
+    background:radial-gradient(circle at 50% 42%, rgba(220,38,38,0.16), transparent 60%), rgba(0,0,0,0.35);
+  }
+  #cast-overlay-icon {
+    position:relative; z-index:2; width:60px; height:60px; border-radius:50%;
+    background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.16);
+    display:flex; align-items:center; justify-content:center; color:#fff;
+    box-shadow:0 10px 30px rgba(0,0,0,0.5);
+    animation:castOverlayPulse 2.4s ease-in-out infinite;
+  }
+  #cast-overlay-icon svg { width:26px; height:26px; }
+  @keyframes castOverlayPulse {
+    0%,100% { box-shadow:0 10px 30px rgba(0,0,0,0.5), 0 0 0 0 rgba(220,38,38,0.35); }
+    50% { box-shadow:0 10px 30px rgba(0,0,0,0.5), 0 0 0 12px rgba(220,38,38,0); }
+  }
+  #cast-overlay-title {
+    position:relative; z-index:2; font-size:1.02rem; font-weight:700; letter-spacing:-0.01em;
+    max-width:90%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+  }
+  #cast-overlay-sub {
+    position:relative; z-index:2; font-size:0.84rem; color:rgba(255,255,255,0.6); max-width:300px; line-height:1.45;
+  }
+  #cast-overlay-hint {
+    position:relative; z-index:2; font-size:0.74rem; color:rgba(255,255,255,0.35); max-width:280px; line-height:1.4;
+  }
+
   #player-wrap:fullscreen { max-width:100%; border-radius:0; }
   #player-wrap:-webkit-full-screen { max-width:100%; border-radius:0; }
 
@@ -2254,6 +2305,17 @@
     <button onclick="togglePiP()">
       <span data-i18n="pip_overlay_return">Revenir au lecteur</span>
     </button>
+  </div>
+
+  <!-- OVERLAY "diffusion en cours" — remplace le cadre vide laissé par la
+       vidéo locale pendant une diffusion AirPlay / Chromecast. -->
+  <div id="cast-overlay">
+    <div id="cast-overlay-bg"></div>
+    <div id="cast-overlay-scrim"></div>
+    <div id="cast-overlay-icon"></div>
+    <h3 id="cast-overlay-title"></h3>
+    <p id="cast-overlay-sub"></p>
+    <p id="cast-overlay-hint" data-i18n="cast_overlay_hint">Utilise les commandes du lecteur pour piloter la lecture à distance.</p>
   </div>
 
   <button id="back-btn" onclick="goBack()">
@@ -2740,6 +2802,18 @@
     <div class="wp-confirm-btns">
       <button class="wp-btn-ghost" onclick="wpCancelHostClose()" data-i18n="btn_cancel">Annuler</button>
       <button class="wp-btn-danger" onclick="wpConfirmHostClose()" data-i18n="watchparty_end_btn">Terminer la Watch Party</button>
+    </div>
+  </div>
+</div>
+
+<!-- Confirmation "retour" pendant une diffusion AirPlay / Chromecast -->
+<div id="cast-leave-overlay" onclick="if(event.target===this) castCancelStopConfirm()">
+  <div id="cast-leave-card">
+    <h3 data-i18n="cast_leave_confirm_title">Arrêter la diffusion ?</h3>
+    <p data-i18n="cast_leave_confirm_sub">Revenir en arrière mettra fin à la diffusion en cours sur l'appareil connecté.</p>
+    <div class="wp-confirm-btns">
+      <button class="wp-btn-ghost" onclick="castCancelStopConfirm()" data-i18n="btn_cancel">Annuler</button>
+      <button class="wp-btn-danger" onclick="castConfirmStopConfirm()" data-i18n="cast_leave_btn">Arrêter la diffusion</button>
     </div>
   </div>
 </div>
@@ -3261,6 +3335,16 @@ const I18N = {
   cast_no_media: { fr: 'Lance d\'abord une vidéo pour pouvoir la diffuser.', en: 'Start a video first to be able to cast it.' },
   cast_error: { fr: 'Impossible de lancer la diffusion sur cet appareil.', en: 'Could not start casting on this device.' },
   cast_embed_unsupported: { fr: 'Cette source est un lecteur externe : elle ne peut pas être diffusée.', en: 'This source is an external player: it cannot be cast.' },
+  cast_embed_switch_stopped: { fr: 'Diffusion arrêtée : cette source ne peut pas être diffusée.', en: 'Casting stopped: this source cannot be cast.' },
+  cast_overlay_sub: { fr: 'Diffusion en cours sur {device}', en: 'Casting to {device}' },
+  cast_overlay_hint: { fr: 'Utilise les commandes du lecteur pour piloter la lecture à distance.', en: 'Use the player controls to control remote playback.' },
+  cast_leave_confirm_title: { fr: 'Arrêter la diffusion ?', en: 'Stop casting?' },
+  cast_leave_confirm_sub: { fr: "Revenir en arrière mettra fin à la diffusion en cours sur l'appareil connecté.", en: 'Going back will stop the current cast on the connected device.' },
+  cast_leave_btn: { fr: 'Arrêter la diffusion', en: 'Stop casting' },
+  cast_source_locked: { fr: 'La source est verrouillée pendant la diffusion.', en: 'Source is locked while casting.' },
+  cast_source_locked_msg: { fr: "Impossible de changer de source pendant la diffusion. Arrête la diffusion pour en changer.", en: "You can't change source while casting. Stop casting to change it." },
+  cast_guide_airplay: { fr: 'Un souci ? Consulter le guide AirPlay', en: 'Having trouble? View the AirPlay guide' },
+  cast_guide_chromecast: { fr: 'Un souci ? Consulter le guide Chromecast', en: 'Having trouble? View the Chromecast guide' },
   fullscreen_enter_title: { fr: 'Plein écran', en: 'Fullscreen' },
   fullscreen_exit_title: { fr: 'Quitter le plein écran', en: 'Exit fullscreen' },
   watchparty_btn_title: { fr: 'Watch Party', en: 'Watch Party' },
@@ -4718,12 +4802,18 @@ function escapeHTML(str) {
   }[c]));
 }
 
-// Pendant une Watch Party, une source est "verrouillée" (grisée, non
-// cliquable) sauf si c'est déjà la source active, ou si on bascule entre
-// deux flux finepulfe (FR/EN) — seul cas où le changement reste autorisé.
-// Reprend exactement la même logique que dans selectCloudflareSource().
+// Pendant une Watch Party OU une diffusion AirPlay/Chromecast, une source
+// est "verrouillée" (grisée, non cliquable) sauf si c'est déjà la source
+// active, ou si on bascule entre deux flux finepulfe (FR/EN) — seul cas où
+// le changement reste autorisé. Reprend exactement la même logique que
+// dans selectCloudflareSource().
+function activeSourceLockReason() {
+  if (wpIsHost || wpIsGuest) return 'wp';
+  if (castState.connected || castState.airplayOn) return 'cast';
+  return null;
+}
 function wpSourceIsLocked(source) {
-  if (!(wpIsHost || wpIsGuest)) return false;
+  if (!activeSourceLockReason()) return false;
   if (!source || source.id === currentSourceIndex) return false;
   const current = currentSources[currentSourceIndex];
   const currentIsFinepulfe = current && current.isDirect && wpIsFinepulfeUrl(current.url);
@@ -4923,7 +5013,8 @@ function wpPositionLockTip(tip, anchorEl) {
 }
 function wpShowLockTip(anchorEl) {
   const tip = wpGetLockTipEl();
-  tip.querySelector('span').textContent = tr('watchparty_source_locked_msg');
+  const reason = activeSourceLockReason();
+  tip.querySelector('span').textContent = reason === 'cast' ? tr('cast_source_locked_msg') : tr('watchparty_source_locked_msg');
   tip.classList.add('show');
   wpPositionLockTip(tip, anchorEl);
 }
@@ -5033,12 +5124,13 @@ function selectCloudflareSource(id, opts) {
 
   const changed = id !== currentSourceIndex;
 
-  // Watch Party en cours : la source est verrouillée pour TOUT LE MONDE
-  // (hôte comme invité), sauf bascule FR/EN sur un flux finepulfe — qui
-  // n'est pas un vrai changement de source, juste de piste audio.
-  // (bypassLock : sélection auto au chargement d'un contenu, ou repli
-  // automatique sur la source suivante après une erreur de lecture.)
-  if (changed && !opts.bypassLock && (wpIsHost || wpIsGuest)) {
+  // Watch Party ou diffusion en cours : la source est verrouillée pour
+  // TOUT LE MONDE (hôte comme invité, ou l'appareil qui diffuse), sauf
+  // bascule FR/EN sur un flux finepulfe — qui n'est pas un vrai changement
+  // de source, juste de piste audio. (bypassLock : sélection auto au
+  // chargement d'un contenu, ou repli automatique sur la source suivante
+  // après une erreur de lecture.)
+  if (changed && !opts.bypassLock && activeSourceLockReason()) {
     const current = currentSources[currentSourceIndex];
     const currentIsFinepulfe = current && current.isDirect && wpIsFinepulfeUrl(current.url);
     const targetIsFinepulfe = source.isDirect && wpIsFinepulfeUrl(source.url);
@@ -5082,7 +5174,8 @@ let wpSourceLockToastTimer = null;
 function wpShowSourceLockedNotice() {
   const el = document.getElementById('wp-source-lock-toast');
   if (!el) return;
-  el.textContent = tr('watchparty_source_locked');
+  const reason = activeSourceLockReason();
+  el.textContent = reason === 'cast' ? tr('cast_source_locked') : tr('watchparty_source_locked');
   el.classList.add('show');
   clearTimeout(wpSourceLockToastTimer);
   wpSourceLockToastTimer = setTimeout(() => el.classList.remove('show'), 2800);
@@ -5944,6 +6037,14 @@ function showVideoPlayer() {
 }
 
 function showEmbedPlayer(url, resumeTime) {
+  // Un lecteur externe (iframe) ne peut pas être diffusé : si une diffusion
+  // AirPlay/Chromecast est en cours, on l'arrête proprement au lieu de
+  // laisser l'ancien contenu continuer sur le récepteur pendant qu'un autre
+  // contenu s'affiche localement.
+  if (castState.connected || castState.airplayOn) {
+    castStop();
+    showActionToast(tr('cast_embed_switch_stopped'));
+  }
   // Un embed ne doit jamais laisser le <video> / HLS actif derrière l'iframe.
   hideSourceErrorPopup();
   hideUpNextCard();
@@ -5992,6 +6093,14 @@ function loadMedia(url, title, audioLangOverride, resumeTime) {
   currentStreamUrl = url;
   currentStreamIsHLS = isHLS;
   currentStreamTitle = title || currentStreamTitle;
+  // Diffusion AirPlay/Chromecast déjà active : on la fait immédiatement
+  // suivre sur ce nouveau contenu (film suivant, changement d'épisode, etc.)
+  // au lieu de laisser l'ancien flux continuer sur le récepteur — c'était le
+  // bug signalé. resumeTime vaut null pour un tout nouveau contenu (on
+  // repart donc de 0 côté récepteur, comme localement).
+  if (castState.connected) {
+    castLoadMedia(resumeTime != null && isFinite(resumeTime) ? resumeTime : 0);
+  }
   // Reprend au temps donné (ex: bascule FR/EN sur un même flux finepulfe en
   // pleine Watch Party) plutôt que de repartir du début.
   const applyResumeTime = () => {
@@ -6163,6 +6272,10 @@ previewVideo.addEventListener('error', hidePreviewSpinner);
 function goBack() {
   if (wpIsHost) { wpPendingGoBack = true; wpOpenHostCloseModal(); return; }
   if (wpIsGuest) { wpPendingGoBack = true; wpOpenLeaveModal(); return; }
+  // Diffusion AirPlay/Chromecast en cours : "Retour" ne doit jamais la
+  // laisser tourner en arrière-plan sans qu'on puisse plus l'arrêter — on
+  // demande confirmation, comme pour quitter/fermer une Watch Party.
+  if (castState.connected || castState.airplayOn) { castPendingGoBack = true; castOpenStopConfirm(); return; }
   // Invité arrivé via un lien (?wp=CODE) dont la Watch Party est déjà
   // terminée (par ex. l'hôte l'a fermée) : wpIsHost/wpIsGuest sont déjà
   // retombés à false ici, donc il n'y a plus rien à confirmer. Il n'a "chez
@@ -6170,6 +6283,31 @@ function goBack() {
   // lieu de retomber sur l'écran de chargement interne (vide/cassé pour lui).
   if (wpArrivedViaLink) { window.location.href = 'https://netfloxxx.github.io/site'; return; }
   performGoBack();
+}
+
+// ── confirmation "retour" pendant une diffusion ──
+let castPendingGoBack = false;
+function castOpenStopConfirm() {
+  const overlay = document.getElementById('cast-leave-overlay');
+  if (!overlay) return;
+  overlay.classList.add('show');
+  requestAnimationFrame(() => requestAnimationFrame(() => overlay.classList.add('in')));
+}
+function castCancelStopConfirm() {
+  const overlay = document.getElementById('cast-leave-overlay');
+  if (!overlay) return;
+  overlay.classList.remove('in');
+  setTimeout(() => overlay.classList.remove('show'), 250);
+  castPendingGoBack = false;
+}
+function castConfirmStopConfirm() {
+  const wasPendingGoBack = castPendingGoBack;
+  castCancelStopConfirm();
+  castStop();
+  if (wasPendingGoBack) {
+    if (wpArrivedViaLink) { window.location.href = 'https://netfloxxx.github.io/site'; return; }
+    performGoBack();
+  }
 }
 
 function performGoBack() {
@@ -6425,6 +6563,18 @@ function castRowHTML(icon, name, sub, opts) {
     </button>`;
 }
 
+// Choisit le guide officiel le plus pertinent selon la plateforme : AirPlay
+// sur Safari/iOS (seule techno disponible côté Apple), Chromecast partout
+// ailleurs (Chrome/Edge/Android). Affiché en petit sous "Aucun appareil
+// détecté" pour orienter vers l'aide officielle plutôt que de laisser
+// l'utilisateur bloqué sans piste.
+function castGuideLink() {
+  const isAppleContext = !!window.WebKitPlaybackTargetAvailabilityEvent || isIOSDevice();
+  return isAppleContext
+    ? { url: 'https://support.apple.com/fr-fr/102587', label: tr('cast_guide_airplay') }
+    : { url: 'https://support.google.com/chromecast/answer/10109908?hl=fr', label: tr('cast_guide_chromecast') };
+}
+
 function renderCastMenu() {
   const list = document.getElementById('cast-list');
   const foot = document.getElementById('cast-foot');
@@ -6476,12 +6626,17 @@ function renderCastMenu() {
     // incompatible" en complément juste en dessous si besoin (plus de pastille
     // de scan séparée, plus de pied de panneau distinct).
     const extra = castState.note ? castState.note : (unsupported ? tr('cast_foot_unsupported') : '');
+    const guide = castGuideLink();
     list.classList.add('is-empty');
     html = `<div class="cast-empty">
         ${CAST_ICON_SCREEN}
         <strong>${tr('cast_none_title')}</strong>
         <p>${tr('cast_none_sub')}</p>
         ${extra ? `<span class="cast-empty-note">${extra}</span>` : ''}
+        <a class="cast-guide-link" href="${guide.url}" target="_blank" rel="noopener">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          <span>${guide.label}</span>
+        </a>
       </div>`;
   } else {
     list.classList.remove('is-empty');
@@ -6508,8 +6663,40 @@ function renderCastMenu() {
 // Re-render uniquement si le menu est ouvert (évite le travail inutile).
 function castRefresh() {
   const btn = document.getElementById('cast-btn');
-  if (btn) btn.classList.toggle('casting', castState.connected || castState.airplayOn);
+  const casting = castState.connected || castState.airplayOn;
+  if (btn) btn.classList.toggle('casting', casting);
+  castUpdateOverlay(casting);
   if (castIsOpen()) renderCastMenu();
+}
+
+// Affiche/masque l'écran local pendant une diffusion : sans ça, l'écran qui
+// diffuse reste noir puisque le <video> local est volontairement en pause.
+// On y reprend l'affiche + le titre déjà affichés dans le lecteur, plus le
+// nom de l'appareil connecté.
+function castUpdateOverlay(casting) {
+  const overlay = document.getElementById('cast-overlay');
+  if (!overlay) return;
+  if (!casting) { overlay.classList.remove('show'); return; }
+
+  const icon = document.getElementById('cast-overlay-icon');
+  if (icon) icon.innerHTML = castState.airplayOn ? CAST_ICON_AIRPLAY : CAST_ICON_CHROMECAST;
+
+  const bg = document.getElementById('cast-overlay-bg');
+  if (bg) {
+    const posterImg = document.querySelector('#title-poster img');
+    bg.style.backgroundImage = posterImg ? `url("${posterImg.src}")` : 'none';
+  }
+
+  const titleEl = document.getElementById('cast-overlay-title');
+  if (titleEl) titleEl.textContent = document.getElementById('media-title')?.textContent || currentStreamTitle || 'Netflox';
+
+  const subEl = document.getElementById('cast-overlay-sub');
+  if (subEl) {
+    const deviceName = castState.airplayOn ? tr('cast_airplay') : (castState.deviceName || tr('cast_chromecast'));
+    subEl.textContent = trWith('cast_overlay_sub', { device: deviceName });
+  }
+
+  overlay.classList.add('show');
 }
 
 function castSetNote(msg) {
@@ -6533,7 +6720,40 @@ function castStartChromecast() {
   });
 }
 
-function castLoadMedia() {
+// ── Sous-titres → WebVTT (pour la diffusion Chromecast) ──
+// Les sous-titres du lecteur sont stockés sous forme de cues déjà parsées
+// (activeCues), jamais en <track> natif. Pour les diffuser, on les
+// réencode en WebVTT puis on les embarque en data URI dans la requête de
+// chargement Cast : le récepteur peut décoder une data URI localement, sans
+// avoir besoin de faire une requête réseau vers l'appareil qui diffuse (ce
+// qu'un blob: local ne permettrait pas).
+function castVTTTimestamp(sec) {
+  if (!isFinite(sec) || sec < 0) sec = 0;
+  const h = Math.floor(sec / 3600);
+  const m = Math.floor((sec % 3600) / 60);
+  const s = Math.floor(sec % 60);
+  const ms = Math.round((sec - Math.floor(sec)) * 1000);
+  return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}.${String(ms).padStart(3,'0')}`;
+}
+function cuesToVTT(cues) {
+  let out = 'WEBVTT\n\n';
+  cues.forEach((c, i) => {
+    out += `${i + 1}\n${castVTTTimestamp(c.start)} --> ${castVTTTimestamp(c.end)}\n${c.text || ''}\n\n`;
+  });
+  return out;
+}
+
+// Recharge le média sur le récepteur pour y embarquer la piste de sous-titres
+// à jour : chrome.cast ne permet pas d'ajouter une piste après coup à un
+// média déjà chargé, elle doit être déclarée dès le chargement — on relance
+// donc castLoadMedia() en conservant la position de lecture en cours.
+function castSyncSubtitles() {
+  if (!castState.connected) return;
+  const t = castRemoteActive() ? castRemotePlayer.currentTime : video.currentTime;
+  castLoadMedia(isFinite(t) ? t : 0);
+}
+
+function castLoadMedia(explicitStartTime) {
   if (!castState.sdkReady) return;
   const session = cast.framework.CastContext.getInstance().getCurrentSession();
   if (!session) return;
@@ -6549,9 +6769,28 @@ function castLoadMedia() {
             || 'Netflox';
   info.metadata = meta;
 
+  // Piste de sous-titres actuellement affichée localement (si activée) —
+  // embarquée seulement si elle reste dans une taille raisonnable pour un
+  // message Cast (limite ~64 Ko côté protocole).
+  let activeTrackIds = null;
+  if (!subtitlesDisabled && activeCues.length) {
+    const vtt = cuesToVTT(activeCues);
+    if (vtt.length < 60000) {
+      const track = new chrome.cast.media.Track(1, chrome.cast.media.TrackType.TEXT);
+      track.trackContentId = 'data:text/vtt;base64,' + btoa(unescape(encodeURIComponent(vtt)));
+      track.trackContentType = 'text/vtt';
+      track.subtype = chrome.cast.media.TextTrackType.SUBTITLES;
+      track.name = preferredLang === 'en' ? 'Subtitles' : 'Sous-titres';
+      track.language = preferredLang === 'en' ? 'en-US' : 'fr-FR';
+      info.tracks = [track];
+      activeTrackIds = [1];
+    }
+  }
+
   const req = new chrome.cast.media.LoadRequest(info);
   req.autoplay = true;
-  const t = video.currentTime;
+  if (activeTrackIds) req.activeTrackIds = activeTrackIds;
+  const t = (explicitStartTime != null && isFinite(explicitStartTime)) ? explicitStartTime : video.currentTime;
   if (isFinite(t) && t > 0) req.currentTime = t;
 
   session.loadMedia(req).then(() => {
@@ -6600,6 +6839,13 @@ function castStop() {
     } catch (err) {}
   }
   castState.note = '';
+  // Retour visuel immédiat (overlay/bouton) sans attendre l'aller-retour
+  // asynchrone de endCurrentSession()/webkitShowPlaybackTargetPicker() : les
+  // événements réels (castApplyChromecastState /
+  // webkitcurrentplaybacktargetiswirelesschanged) confirmeront ensuite l'état.
+  castState.connected = false;
+  castState.connecting = false;
+  castState.airplayOn = false;
   castRefresh();
 }
 
@@ -7469,6 +7715,7 @@ async function selectSubtitleFile(code, fileId) {
     if (success) {
       const langLabel = preferredLang === 'fr' ? toSentenceLower(group.label) : group.label;
       closeSubtitlesPanelWithToast(trWithBold('sub_applied_toast', { lang: langLabel }));
+      castSyncSubtitles(); // pousse le sous-titre chargé sur la diffusion en cours, si active
     }
   }
 }
@@ -7706,6 +7953,7 @@ async function selectTranslatedLanguage(targetCode) {
       const meta = LANG_META[targetCode] || { label: targetCode.toUpperCase() };
       const langLabel = preferredLang === 'fr' ? toSentenceLower(meta.label) : meta.label;
       closeSubtitlesPanelWithToast(trWithBold('sub_translated_applied_toast', { lang: langLabel }));
+      castSyncSubtitles(); // pousse le sous-titre traduit sur la diffusion en cours, si active
     }
   }
 }
@@ -7714,6 +7962,7 @@ function toggleAllSubtitles() {
   if (!activeCues.length) return; // rien à activer/désactiver tant qu'aucun sous-titre n'est chargé
   subtitlesDisabled = !subtitlesDisabled;
   renderSubChoicePane();
+  castSyncSubtitles(); // reflète l'activation/désactivation sur la diffusion en cours, si active
 }
 
 // ── rendu overlay vidéo (appelé sur timeupdate) ──
