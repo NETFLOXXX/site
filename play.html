@@ -633,6 +633,31 @@
   .wp-action-btn.wp-danger:hover { background:rgba(220,38,38,0.14); }
   .wp-conn-error { margin:14px 20px 0; padding:11px 14px; border-radius:10px; background:rgba(220,38,38,0.12); border:1px solid rgba(220,38,38,0.3); color:#fca5a5; font-size:0.78rem; line-height:1.5; }
 
+  /* ── Écrans hauts (17" et +) : le panneau Watch Party est en position:absolute
+     top:0/bottom:0 donc il prend toute la hauteur dispo, mais son contenu garde
+     une hauteur fixe -> gros trou vide en bas sur les écrans plus hauts qu'un
+     14 pouces. Sur 14", il n'y a pas (ou peu) d'espace en trop : ce bloc ne se
+     déclenche qu'au-delà d'un seuil de hauteur, donc le rendu 14" ne bouge pas.
+     Ajuste "850px" si le seuil ne tombe pas pile entre tes deux écrans. */
+  @media (min-height:850px) {
+    #watchparty-panel-content {
+      display:flex; flex-direction:column; justify-content:space-evenly;
+      min-height:100%;
+    }
+    #watchparty-panel .wp-hero { padding:28px 24px 12px; }
+    #watchparty-panel .wp-hero-icon { width:64px; height:64px; margin-bottom:18px; }
+    #watchparty-panel .wp-hero-icon svg { width:26px; height:26px; }
+    #watchparty-panel .wp-hero p { font-size:0.95rem; max-width:320px; line-height:1.55; }
+    #watchparty-panel .wp-pseudo-shared { padding:18px 24px 26px; }
+    #watchparty-panel .wp-primary-btn { padding:16px 16px; font-size:1rem; }
+    #watchparty-panel .wp-code-input { padding:14px; font-size:1.15rem; }
+    #watchparty-panel .wp-join-btn { padding:0 22px; font-size:0.92rem; }
+    #watchparty-panel .wp-divider { margin:0 24px; }
+    #watchparty-panel .wp-live-card { padding:20px 22px; }
+    #watchparty-panel .wp-code-display { padding:18px; }
+    #watchparty-panel .wp-code-display .wp-code-value { font-size:1.7rem; }
+  }
+
   /* ══════════════════════════════════════════════════════════════════
      WATCH PARTY — MODE "SALON" (topbar persistante + panneau de chat)
      Ces éléments vivent EN DEHORS de #player-wrap exprès : quand on passe
@@ -2028,6 +2053,18 @@
   }
   #ext-modal .ab-note-mobile span { color:rgba(255,255,255,0.62); }
   #ext-modal .ab-note-mobile strong { color:#fff; font-weight:600; }
+  /* Note "vous avez déjà l'extension ?" — même gabarit visuel que la note
+     mobile ci-dessus, mais neutre (pas rouge) et toujours visible, puisque
+     ça concerne aussi bien PC que mobile. */
+  #ext-modal .ab-note-info {
+    display:flex; align-items:flex-start; gap:9px; text-align:left;
+    font-size:0.78rem; line-height:1.5; color:rgba(255,255,255,0.6);
+    background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.12);
+    border-radius:12px; padding:11px 14px; margin:8px 0 6px;
+  }
+  #ext-modal .ab-note-info svg { width:17px; height:17px; margin-top:1px; color:rgba(255,255,255,0.5); flex-shrink:0; }
+  #ext-modal .ab-note-info span { color:rgba(255,255,255,0.62); }
+  #ext-modal .ab-note-info strong { color:#fff; font-weight:600; }
   #ext-modal .ab-btns { display:flex; flex-direction:column; gap:9px; margin-top:16px; }
   #ext-modal button.ab-action {
     width:100%; border:none; border-radius:12px; padding:13px 16px;
@@ -2818,10 +2855,15 @@
 <div id="ext-overlay">
   <div id="ext-modal">
     <div class="ab-icon ext-icon">
-      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20.5 11H19V7c0-1.1-.9-2-2-2h-4V3.5C13 2.12 11.88 1 10.5 1S8 2.12 8 3.5V5H4c-1.1 0-1.99.9-1.99 2v3.8H3.5c1.49 0 2.7 1.21 2.7 2.7s-1.21 2.7-2.7 2.7H2V20c0 1.1.9 2 2 2h3.8v-1.5c0-1.49 1.21-2.7 2.7-2.7s2.7 1.21 2.7 2.7V22H17c1.1 0 2-.9 2-2v-4h1.5c1.38 0 2.5-1.12 2.5-2.5S21.88 11 20.5 11z"/></svg>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><path d="M20.5 11H19V7c0-1.1-.9-2-2-2h-4V3.5C13 2.12 11.88 1 10.5 1S8 2.12 8 3.5V5H4c-1.1 0-1.99.9-1.99 2v3.8H3.5c1.49 0 2.7 1.21 2.7 2.7s-1.21 2.7-2.7 2.7H2V20c0 1.1.9 2 2 2h3.8v-1.5c0-1.49 1.21-2.7 2.7-2.7s2.7 1.21 2.7 2.7V22H17c1.1 0 2-.9 2-2v-4h1.5c1.38 0 2.5-1.12 2.5-2.5S21.88 11 20.5 11z"/></svg>
     </div>
     <h3 data-i18n="ext_title">Extension NETFLOX requise</h3>
     <p data-i18n="ext_p1">Pour accéder à cette source et profiter d'une meilleure expérience, l'extension NETFLOX doit être installée sur votre navigateur.</p>
+
+    <div class="ab-note-info">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path stroke-linecap="round" stroke-linejoin="round" d="M12 16v-4m0-4h.01"/></svg>
+      <span data-i18n="ext_note_already_installed">Vous possédez déjà l'extension&nbsp;? Veuillez l'activer dans votre navigateur.</span>
+    </div>
 
     <div class="ab-note-mobile" id="ext-note-mobile-wrap" style="display:none;">
       <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path stroke-linecap="round" stroke-linejoin="round" d="M12 16v-4m0-4h.01"/></svg>
@@ -3405,6 +3447,7 @@ const I18N = {
   ext_p1: { fr: 'Pour accéder à cette source et profiter d\'une meilleure expérience, l\'extension NETFLOX doit être installée sur votre navigateur.', en: 'To access this source and enjoy a better experience, the NETFLOX extension needs to be installed on your browser.' },
   ext_note_mobile_nonff: { fr: 'À noter que sur mobile, l\'installation de l\'extension n\'est possible qu\'avec <strong>Firefox</strong> ou <strong>Edge</strong>.', en: 'Note that on mobile, installing the extension is only possible with <strong>Firefox</strong> or <strong>Edge</strong>.' },
   ext_btn_install: { fr: 'Installer l\'extension', en: 'Install the extension' },
+  ext_note_already_installed: { fr: 'Vous possédez déjà l\'extension\u00a0? Veuillez l\'activer dans votre navigateur.', en: 'Already have the extension? Please make sure it\'s enabled in your browser.' },
   ext_btn_install_firefox: { fr: 'Ouvrir dans Firefox', en: 'Open in Firefox' },
   ext_btn_proceed: { fr: 'J\'ai compris', en: 'Got it' },
   sub_only_netflox: { fr: 'Les sous-titres externes (OpenSubtitles) sont disponibles uniquement pour le lecteur NETFLOX.', en: 'External subtitles (OpenSubtitles) are only available for the NETFLOX player.' },
