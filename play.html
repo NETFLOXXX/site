@@ -1419,9 +1419,12 @@
   .src-subrow.wp-locked.wp-locked-shake,
   .src-subtabs .settings-tab.wp-locked.wp-locked-shake { animation:wp-locked-shake .38s ease; }
 
-  /* ── petite bulle expliquant pourquoi la source est verrouillée ── */
+  /* ── petite bulle expliquant pourquoi la source est verrouillée ──
+     (largeur fixée dynamiquement en JS pour épouser exactement celle de
+     l'élément survolé : ligne source, ou barre d'onglets pour "Autres
+     lecteurs" — cf. wpPositionLockTip) */
   .wp-lock-tip {
-    position:fixed; z-index:99999; max-width:250px;
+    position:fixed; z-index:99999; box-sizing:border-box;
     background:rgba(18,18,22,0.97); border:1px solid rgba(248,113,113,0.35);
     color:#fff; font-size:0.78rem; line-height:1.45; padding:10px 13px;
     border-radius:10px; box-shadow:0 10px 28px rgba(0,0,0,0.45);
@@ -2096,6 +2099,52 @@
   #ext-modal button.ab-ghost:focus,
   #ext-modal button.ab-ghost:focus-visible { outline:none; }
 
+  /* ── POPUP "AVERTISSEMENT HÔTE WATCH PARTY SUR SOURCE FINEPULFE" ── */
+  #wp-ext-warn-overlay {
+    position:fixed; inset:0; z-index:2000;
+    background:rgba(0,0,0,0.78); backdrop-filter:blur(10px);
+    display:none; align-items:center; justify-content:center; padding:20px;
+  }
+  #wp-ext-warn-overlay.open { display:flex; }
+  #wp-ext-warn-modal {
+    width:100%; max-width:400px; background:linear-gradient(180deg, #1c1c1c, #131313);
+    border:1px solid rgba(255,255,255,0.1); border-radius:20px;
+    padding:28px 26px 22px; box-shadow:0 30px 70px rgba(0,0,0,0.7);
+    animation:ab-pop 0.3s cubic-bezier(0.34,1.56,0.64,1);
+    font-family:'Outfit',sans-serif; text-align:center;
+  }
+  #wp-ext-warn-modal h3 { font-size:1.15rem; font-weight:700; margin-bottom:12px; letter-spacing:-0.01em; color:#fff; }
+  #wp-ext-warn-modal p { font-size:0.87rem; line-height:1.55; color:rgba(255,255,255,0.6); margin-bottom:4px; }
+  #wp-ext-warn-modal p strong { color:rgba(255,255,255,0.9); font-weight:600; }
+  #wp-ext-warn-modal .ab-icon {
+    width:52px; height:52px; border-radius:50%;
+    background:radial-gradient(circle at 30% 30%, var(--red-h), var(--red));
+    display:flex; align-items:center; justify-content:center;
+    margin:0 auto 16px; box-shadow:0 8px 20px rgba(220,38,38,0.35);
+  }
+  #wp-ext-warn-modal .ab-icon svg { width:26px; height:26px; color:#fff; }
+  #wp-ext-warn-modal .ab-btns { display:flex; flex-direction:column; gap:9px; margin-top:16px; }
+  #wp-ext-warn-modal button.ab-action {
+    width:100%; border:none; border-radius:12px; padding:13px 16px;
+    font-family:'Outfit',sans-serif; font-weight:600; font-size:0.88rem;
+    cursor:pointer; transition:background 0.2s, transform 0.15s; text-align:center;
+  }
+  #wp-ext-warn-modal button.ab-action:active { transform:scale(0.98); }
+  #wp-ext-warn-modal button.ab-primary {
+    padding:16px 16px; font-size:1rem; font-weight:700; background:var(--red); color:#fff;
+  }
+  #wp-ext-warn-modal button.ab-primary:hover { background:var(--red-h); transform:scale(1.03); }
+  #wp-ext-warn-modal button.ab-primary:active { transform:scale(0.98); }
+  #wp-ext-warn-modal button.ab-ghost {
+    background:none; color:rgba(255,255,255,0.55); padding:12px; font-size:0.95rem; font-weight:700;
+    border:1px solid transparent; border-top:1px solid rgba(255,255,255,0.07); border-radius:12px; margin-top:4px; padding-top:16px;
+    transition: color 0.2s, transform 0.15s;
+  }
+  #wp-ext-warn-modal button.ab-ghost:hover { color:rgba(255,255,255,0.75); transform:scale(1.03); }
+  #wp-ext-warn-modal button.ab-ghost:active { transform:scale(0.98); }
+  #wp-ext-warn-modal button.ab-ghost:focus,
+  #wp-ext-warn-modal button.ab-ghost:focus-visible { outline:none; }
+
   /* ── POPUP "AUCUN LECTEUR DANS LA LANGUE CHOISIE" ── */
   #nolang-overlay {
     position:fixed; inset:0; z-index:2000;
@@ -2270,7 +2319,7 @@
 
 <!-- PLAYER -->
 <div id="player-wrap">
-  <video id="video" playsinline x-webkit-airplay="allow"></video>
+  <video id="video" playsinline x-webkit-airplay="allow" disableRemotePlayback></video>
   <iframe id="embed-frame" src="about:blank" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe>
   <div class="overlay-gradient"></div>
   <div class="overlay-top"></div>
@@ -2872,7 +2921,7 @@
     <ul class="ext-benefits" id="ext-benefits">
       <li>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-        <span data-i18n="ext_benefit_1">Films et séries en qualité jusqu'à 1080p</span>
+        <span data-i18n="ext_benefit_1">Films et séries en qualité 1080p minimum</span>
       </li>
       <li>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
@@ -2900,6 +2949,22 @@
       <button id="ext-install-chrome-btn" class="ab-action ab-primary" onclick="openChromeDownloadLink()" data-i18n="ext_btn_install_chrome" style="display:none;">Installer Chrome</button>
       <button id="ext-install-firefox-mac-btn" class="ab-action ab-primary" onclick="openFirefoxMacDownloadLink()" data-i18n="ext_btn_install_firefox_mac" style="display:none;">Installer Firefox</button>
       <button class="ab-action ab-ghost" onclick="closeExtensionRequiredPopup()" data-i18n="ext_btn_proceed">J'ai compris</button>
+    </div>
+  </div>
+</div>
+
+<!-- POPUP "AVERTISSEMENT HÔTE WATCH PARTY SUR SOURCE FINEPULFE" -->
+<div id="wp-ext-warn-overlay">
+  <div id="wp-ext-warn-modal">
+    <div class="ab-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><path d="M20.5 11H19V7c0-1.1-.9-2-2-2h-4V3.5C13 2.12 11.88 1 10.5 1S8 2.12 8 3.5V5H4c-1.1 0-1.99.9-1.99 2v3.8H3.5c1.49 0 2.7 1.21 2.7 2.7s-1.21 2.7-2.7 2.7H2V20c0 1.1.9 2 2 2h3.8v-1.5c0-1.49 1.21-2.7 2.7-2.7s2.7 1.21 2.7 2.7V22H17c1.1 0 2-.9 2-2v-4h1.5c1.38 0 2.5-1.12 2.5-2.5S21.88 11 20.5 11z"/></svg>
+    </div>
+    <h3 data-i18n="wp_ext_warn_title">Extension requise pour tes invités</h3>
+    <p data-i18n="wp_ext_warn_p1">La source actuelle nécessite l'extension NETFLOX. Assure-toi que <strong>tous tes invités l'ont installée et activée</strong>, sinon la lecture ne fonctionnera pas de leur côté.</p>
+
+    <div class="ab-btns">
+      <button class="ab-action ab-primary" onclick="wpConfirmExtWarningAndStart()" data-i18n="wp_ext_warn_proceed">J'ai compris, démarrer</button>
+      <button class="ab-action ab-ghost" onclick="wpCancelExtWarning()" data-i18n="wp_ext_warn_cancel">Annuler</button>
     </div>
   </div>
 </div>
@@ -2983,6 +3048,10 @@
 
 <script>
 const video = document.getElementById('video');
+// Empêche Chrome de gérer nativement le "Remote Playback" (icône cast native
+// du <video>) : on gère nous-mêmes Chromecast/AirPlay/synchronisation, un
+// double pilotage par le navigateur causait des pauses intempestives.
+try { video.disableRemotePlayback = true; } catch (e) {}
 const pw = document.getElementById('player-wrap');
 const loadScreen = document.getElementById('load-screen');
 const gatherScreen = document.getElementById('gather-screen');
@@ -3475,7 +3544,7 @@ const I18N = {
   ab_btn_proceed: { fr: 'J\'ai compris', en: 'Got it' },
   ext_title: { fr: 'Extension NETFLOX requise', en: 'NETFLOX extension required' },
   ext_p1: { fr: 'Pour accéder à cette source et profiter d\'une meilleure expérience, l\'extension NETFLOX doit être installée sur votre navigateur.', en: 'To access this source and enjoy a better experience, the NETFLOX extension needs to be installed on your browser.' },
-  ext_benefit_1: { fr: 'Films et séries en qualité jusqu\'à 1080p', en: 'Movies and shows in quality up to 1080p' },
+  ext_benefit_1: { fr: 'Films et séries en qualité 1080p minimum', en: 'Movies and shows in 1080p quality or higher' },
   ext_benefit_2: { fr: 'Sous-titres et pistes audio en plusieurs langues', en: 'Subtitles and audio tracks in multiple languages' },
   ext_benefit_3: { fr: 'Une expérience de streaming optimisée, fluide et sans compromis', en: 'An optimized streaming experience, smooth and uncompromising' },
   ext_note_mobile_nonff: { fr: 'À noter que sur mobile, l\'installation de l\'extension n\'est possible qu\'avec <strong>Firefox</strong> ou <strong>Edge</strong>.', en: 'Note that on mobile, installing the extension is only possible with <strong>Firefox</strong> or <strong>Edge</strong>.' },
@@ -3487,6 +3556,10 @@ const I18N = {
   ext_btn_install_chrome: { fr: 'Installer Chrome', en: 'Install Chrome' },
   ext_btn_install_firefox_mac: { fr: 'Installer Firefox', en: 'Install Firefox' },
   ext_btn_proceed: { fr: 'J\'ai compris', en: 'Got it' },
+  wp_ext_warn_title: { fr: 'Extension requise pour tes invités', en: 'Extension required for your guests' },
+  wp_ext_warn_p1: { fr: 'La source actuelle nécessite l\'extension NETFLOX. Assure-toi que <strong>tous tes invités l\'ont installée et activée</strong>, sinon la lecture ne fonctionnera pas de leur côté.', en: 'The current source requires the NETFLOX extension. Make sure <strong>all your guests have it installed and enabled</strong>, otherwise playback won\'t work for them.' },
+  wp_ext_warn_proceed: { fr: 'J\'ai compris, démarrer', en: 'Got it, start' },
+  wp_ext_warn_cancel: { fr: 'Annuler', en: 'Cancel' },
   sub_only_netflox: { fr: 'Les sous-titres externes (OpenSubtitles) sont disponibles uniquement pour le lecteur NETFLOX.', en: 'External subtitles (OpenSubtitles) are only available for the NETFLOX player.' },
   sub_change_source_hint: { fr: 'Changez de source depuis le panneau « Sources » pour y accéder.', en: 'Switch source from the "Sources" panel to access them.' },
   sub_settings_unavailable: { fr: 'Réglages disponibles une fois un sous-titre chargé via le lecteur NETFLOX.', en: 'Settings become available once a subtitle is loaded via the NETFLOX player.' },
@@ -5029,11 +5102,19 @@ function wpGetLockTipEl() {
   return wpLockTipEl;
 }
 function wpPositionLockTip(tip, anchorEl) {
+  // Pour l'onglet "Autres lecteurs" (verrouillé en bloc), la bulle prend la
+  // largeur de TOUTE la barre d'onglets (Lecteur NETFLOX + Autres lecteurs),
+  // pas seulement celle du bouton lui-même. Pour une ligne de source normale,
+  // elle prend exactement la largeur de cette ligne/bouton.
+  const tabsBar = anchorEl.closest('.src-subtabs');
+  const widthRef = tabsBar || anchorEl;
+  const wr = widthRef.getBoundingClientRect();
   const r = anchorEl.getBoundingClientRect();
   const margin = 8;
   tip.style.left = '0px'; tip.style.top = '0px'; // reset avant mesure
-  const tw = tip.offsetWidth || 250, th = tip.offsetHeight || 50;
-  let left = r.left;
+  tip.style.width = wr.width + 'px';
+  const tw = tip.offsetWidth || wr.width || 250, th = tip.offsetHeight || 50;
+  let left = wr.left;
   let top = r.top - th - margin;
   if (top < 8) top = r.bottom + margin; // pas assez de place au-dessus -> en dessous
   left = Math.min(Math.max(8, left), window.innerWidth - tw - 8);
@@ -6413,19 +6494,22 @@ function selectNativeAudioTrackByLang(videoEl, langCode) {
 }
 
 // ── PLAYBACK ──
-// La vidéo locale reste TOUJOURS la source de vérité, même pendant une
-// diffusion : on peut donc continuer à la regarder et à la piloter
-// normalement sur le PC pendant qu'elle est diffusée sur la TV/l'appareil
-// connecté (elle n'est plus jamais mise en pause ni redirigée vers un
-// contrôleur distant).
+// La vidéo locale ET l'appareil connecté (Chromecast) restent synchronisés :
+// lecture/pause/avance/recul déclenchés localement s'appliquent aussi sur le
+// récepteur (castSyncPlayPause/castSyncSeek), et inversement une pause/reprise
+// lancée depuis la TV/l'appli Google Home se répercute sur la vidéo locale
+// (cf. l'écouteur IS_PAUSED_CHANGED dans castSetupRemotePlayer).
 function togglePlay() {
   if (wpGuestBlocked()) return;
-  if (video.paused) video.play(); else video.pause();
+  const wantPlay = video.paused;
+  if (wantPlay) video.play(); else video.pause();
+  castSyncPlayPause(wantPlay);
 }
 
 function seekFlash(s) {
   if (wpGuestBlocked()) return;
   video.currentTime = Math.max(0, Math.min(video.currentTime + s, video.duration || 0));
+  castSyncSeek(video.currentTime);
   const id = s < 0 ? 'flash-rw' : 'flash-fw';
   const el = document.getElementById(id);
   el.classList.add('show');
@@ -6764,9 +6848,14 @@ function castLoadMedia(explicitStartTime) {
     if (!session) return;
     if (pw.classList.contains('embed-mode')) { castSetNote(tr('cast_embed_unsupported')); return; }
     if (!currentStreamUrl) { castSetNote(tr('cast_no_media')); return; }
+    // Mémorisé ici : si le contenu local change ENCORE avant la vérification
+    // ci-dessous (ex: double changement d'épisode très rapide), on doit
+    // comparer avec CE contenu-là précisément, pas avec un contenu déjà
+    // remplacé entre-temps.
+    const requestedUrl = currentStreamUrl;
 
     const contentType = currentStreamIsHLS ? 'application/x-mpegurl' : 'video/mp4';
-    const info = new chrome.cast.media.MediaInfo(currentStreamUrl, contentType);
+    const info = new chrome.cast.media.MediaInfo(requestedUrl, contentType);
     info.streamType = chrome.cast.media.StreamType.BUFFERED;
     const meta = new chrome.cast.media.GenericMediaMetadata();
     meta.title = currentStreamTitle
@@ -6804,28 +6893,36 @@ function castLoadMedia(explicitStartTime) {
     const t = (explicitStartTime != null && isFinite(explicitStartTime)) ? explicitStartTime : video.currentTime;
     if (isFinite(t) && t > 0) req.currentTime = t;
 
-    session.loadMedia(req).then(() => {
-      // La vidéo locale continue de jouer normalement, indépendamment de la
-      // diffusion : on peut regarder sur le PC en même temps que sur le
-      // récepteur.
+    const doLoad = () => session.loadMedia(req);
+
+    doLoad().then(() => {
+      // Vidéo locale et récepteur démarrent ensemble, synchronisés (voir
+      // castSyncPlayPause/castSyncSeek et l'écouteur IS_PAUSED_CHANGED).
       castState.note = '';
       castSetupRemotePlayer();
-      // Filet de sécurité : certains récepteurs (notamment en HLS) ignorent
-      // parfois le currentTime demandé au chargement — on revérifie une fois
-      // la lecture bien démarrée côté TV et on re-seek si besoin.
-      if (isFinite(t) && t > 1) {
-        setTimeout(() => {
-          try {
-            if (!castRemotePlayer || !castRemotePlayer.isMediaLoaded) return;
-            if (Math.abs((castRemotePlayer.currentTime || 0) - t) > 3) {
-              castRemotePlayer.currentTime = t;
-              castRemotePlayerController.seek();
-            }
-          } catch (err) {}
-        }, 1200);
-      }
       castRefresh();
       closeCastMenu();
+      // Filet de sécurité : certains récepteurs (surtout en HLS) ignorent
+      // silencieusement un nouveau loadMedia() envoyé pendant qu'un flux
+      // précédent tournait encore — le film/épisode change bien en local
+      // mais le Chromecast continue l'ancien. On vérifie donc peu après que
+      // le récepteur a bien chargé CE contenu précis, et on retente une fois
+      // sinon ; on recale aussi le temps de lecture au passage si besoin.
+      setTimeout(() => {
+        try {
+          if (currentStreamUrl !== requestedUrl) return; // le contenu a déjà changé encore entre-temps
+          if (!castRemotePlayer || !castRemotePlayer.isMediaLoaded) return;
+          const loadedId = castRemotePlayer.mediaInfo && castRemotePlayer.mediaInfo.contentId;
+          if (loadedId !== requestedUrl) {
+            doLoad().catch(() => {});
+            return;
+          }
+          if (isFinite(t) && t > 1 && Math.abs((castRemotePlayer.currentTime || 0) - t) > 3) {
+            castRemotePlayer.currentTime = t;
+            castRemotePlayerController.seek();
+          }
+        } catch (err) {}
+      }, 1200);
     }, () => {
       castSetNote(tr('cast_error'));
     });
@@ -6906,16 +7003,40 @@ function castApplyChromecastState(state) {
   castRefresh();
 }
 
-// ══════════════ CAST — état du récepteur (pour la synchro sous-titres/reprise) ══════════════
-// Remarque : la vidéo locale n'est jamais mise en pause pendant une diffusion
-// et les contrôles du lecteur agissent toujours sur elle uniquement — ce
-// RemotePlayer sert seulement à connaître la position du récepteur (filet de
-// sécurité de castLoadMedia, castSyncSubtitles), pas à piloter l'UI locale.
+// ══════════════ CAST — état du récepteur (synchro lecture/pause/position) ══════════════
+// La vidéo locale ET le récepteur Chromecast restent synchronisés dans les
+// deux sens : une commande locale (lecture/pause/avance/recul) est répercutée
+// sur le récepteur (castSyncPlayPause/castSyncSeek), et une pause/reprise
+// lancée depuis la TV/l'appli Google Home est répercutée sur la vidéo locale
+// (écouteur IS_PAUSED_CHANGED ci-dessous). Le garde anti-boucle évite qu'une
+// mise à jour venant du récepteur ne redéclenche aussitôt une commande vers
+// ce même récepteur.
 let castRemotePlayer = null;
 let castRemotePlayerController = null;
+let castSyncGuardUntil = 0;
+function castSyncGuardActive() { return Date.now() < castSyncGuardUntil; }
+function castSyncGuard(ms) { castSyncGuardUntil = Date.now() + (ms || 600); }
 
 function castRemoteActive() {
   return !!(castState.connected && castRemotePlayer && castRemotePlayerController && castRemotePlayer.isMediaLoaded);
+}
+
+// Aligne l'état lecture/pause du récepteur sur celui demandé localement.
+function castSyncPlayPause(shouldPlay) {
+  if (!castRemoteActive() || castSyncGuardActive()) return;
+  try {
+    const isPaused = !!castRemotePlayer.isPaused;
+    if (shouldPlay === isPaused) castRemotePlayerController.playOrPause();
+  } catch (err) {}
+}
+
+// Aligne la position de lecture du récepteur sur celle de la vidéo locale.
+function castSyncSeek(time) {
+  if (!castRemoteActive() || castSyncGuardActive() || !isFinite(time)) return;
+  try {
+    castRemotePlayer.currentTime = time;
+    castRemotePlayerController.seek();
+  } catch (err) {}
 }
 
 function castSetupRemotePlayer() {
@@ -6924,6 +7045,18 @@ function castSetupRemotePlayer() {
   try {
     castRemotePlayer = new cast.framework.RemotePlayer();
     castRemotePlayerController = new cast.framework.RemotePlayerController(castRemotePlayer);
+    // Pause/reprise lancée depuis la TV, la télécommande ou l'appli Google
+    // Home (donc PAS depuis nos propres boutons) : on répercute l'état sur
+    // la vidéo locale pour que les deux restent bien ensemble.
+    castRemotePlayerController.addEventListener(
+      cast.framework.RemotePlayerEventType.IS_PAUSED_CHANGED,
+      () => {
+        if (!castRemoteActive()) return;
+        castSyncGuard();
+        if (castRemotePlayer.isPaused && !video.paused) video.pause();
+        else if (!castRemotePlayer.isPaused && video.paused) video.play().catch(() => {});
+      }
+    );
   } catch (err) {}
 }
 
@@ -7027,7 +7160,7 @@ function toggleFullscreen() {
 // place d'origine (grâce à un marqueur) à la sortie.
 const FS_RELOCATE_IDS = [
   'wp-leave-overlay', 'wp-hostclose-overlay', 'cast-leave-overlay',
-  'wp-join-prompt-overlay', 'ab-overlay', 'ext-overlay',
+  'wp-join-prompt-overlay', 'ab-overlay', 'ext-overlay', 'wp-ext-warn-overlay',
   'nolang-overlay', 'src-error-overlay', 'recent-overlay'
 ];
 const fsRelocateAnchors = new Map();
@@ -7162,6 +7295,9 @@ function startScrub(e) {
     scrubbing = false;
     document.removeEventListener('mousemove', mv); document.removeEventListener('mouseup', up);
     document.removeEventListener('touchmove', mv); document.removeEventListener('touchend', up);
+    // On ne synchronise le récepteur Cast qu'une fois le glissement terminé
+    // (pas à chaque pixel) pour éviter de le bombarder de commandes de seek.
+    castSyncSeek(video.currentTime);
   };
   document.addEventListener('mousemove', mv); document.addEventListener('mouseup', up);
   document.addEventListener('touchmove', mv, {passive:true}); document.addEventListener('touchend', up);
@@ -8932,6 +9068,14 @@ function startWatchParty() {
       : 'Load a movie or episode first before starting a Watch Party.');
     return;
   }
+  // Source active = finepulfe (nécessite l'extension) : on prévient l'hôte
+  // que ses invités doivent aussi avoir l'extension, sinon la lecture ne
+  // fonctionnera pas pour eux, avant de démarrer réellement le salon.
+  const curSrc = currentSources[currentSourceIndex];
+  if (!wpExtWarnAcknowledged && curSrc && curSrc.isDirect && wpIsFinepulfeUrl(curSrc.url)) {
+    document.getElementById('wp-ext-warn-overlay').classList.add('open');
+    return;
+  }
   wpSavePseudo(pseudo);
   wpWaitReady(() => {
     wpRoomCode = wpGenerateCode();
@@ -8991,6 +9135,20 @@ function startWatchParty() {
     clearInterval(wpPushInterval);
     wpPushInterval = setInterval(() => { if (!video.paused) wpPushStateThrottled(); }, 4000);
   });
+}
+
+// Suite du démarrage après confirmation de l'avertissement "extension requise
+// pour les invités" (source finepulfe) : on relance simplement startWatchParty,
+// qui ne réaffichera pas le popup grâce à wpExtWarnAcknowledged.
+let wpExtWarnAcknowledged = false;
+function wpConfirmExtWarningAndStart() {
+  document.getElementById('wp-ext-warn-overlay').classList.remove('open');
+  wpExtWarnAcknowledged = true;
+  startWatchParty();
+  wpExtWarnAcknowledged = false;
+}
+function wpCancelExtWarning() {
+  document.getElementById('wp-ext-warn-overlay').classList.remove('open');
 }
 
 function wpPushStateThrottled() {
