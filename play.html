@@ -2809,7 +2809,7 @@
     <h3 data-i18n="cast_leave_confirm_title">Arrêter la diffusion ?</h3>
     <p data-i18n="cast_leave_confirm_sub">Revenir en arrière mettra fin à la diffusion en cours sur l'appareil connecté.</p>
     <div class="wp-confirm-btns">
-      <button class="wp-btn-ghost" onclick="castCancelStopConfirm()" data-i18n="btn_cancel">Annuler</button>
+      <button class="wp-btn-ghost" onclick="castCancelStopConfirm()" data-i18n="cast_leave_stay">Rester</button>
       <button class="wp-btn-danger" onclick="castConfirmStopConfirm()" data-i18n="cast_leave_btn">Arrêter la diffusion</button>
     </div>
   </div>
@@ -3357,6 +3357,10 @@ const I18N = {
   cast_leave_confirm_title: { fr: 'Arrêter la diffusion ?', en: 'Stop casting?' },
   cast_leave_confirm_sub: { fr: "Revenir en arrière mettra fin à la diffusion en cours sur l'appareil connecté.", en: 'Going back will stop the current cast on the connected device.' },
   cast_leave_btn: { fr: 'Arrêter la diffusion', en: 'Stop casting' },
+  cast_leave_stay: { fr: 'Rester', en: 'Stay' },
+  cast_connected_device_toast: { fr: 'Diffusion activée vers {device}', en: 'Casting enabled to {device}' },
+  cast_connected_chromecast_toast: { fr: 'Diffusion via Chromecast activée', en: 'Casting via Chromecast enabled' },
+  cast_connected_airplay_toast: { fr: 'Diffusion via AirPlay activée', en: 'Casting via AirPlay enabled' },
   cast_source_locked: { fr: 'La source est verrouillée pendant la diffusion.', en: 'Source is locked while casting.' },
   cast_source_locked_msg: { fr: "Impossible de changer de source pendant la diffusion. Arrête la diffusion pour en changer.", en: "You can't change source while casting. Stop casting to change it." },
   cast_guide_prefix: { fr: 'Un souci pour te connecter ?', en: 'Trouble connecting?' },
@@ -6670,7 +6674,7 @@ function renderCastMenu() {
   }
 
   if (casting) {
-    html += `<button class="cast-stop" onclick="castStop()">${CAST_ICON_STOP}<span>${tr('cast_stop')}</span></button>`;
+    html += `<button class="cast-stop" onclick="castStop()"><span>${tr('cast_stop')}</span></button>`;
   }
 
   list.innerHTML = html;
@@ -6866,8 +6870,14 @@ function castStartRemote() {
 
 // ── Détection ──
 let castWasConnected = false;
+// Ignore la toute première évaluation d'état au chargement de la page : elle
+// ne fait que refléter une session déjà existante (autojoin), ce n'est pas
+// une nouvelle connexion déclenchée par l'utilisateur — pas de toast/fermeture
+// de menu dans ce cas.
+let castStateInitialized = false;
 function castApplyChromecastState(state) {
   const S = cast.framework.CastState;
+  const wasConnected = castState.connected;
   castState.scanning = false;
   castState.devices = (state !== S.NO_DEVICES_AVAILABLE);
   castState.connecting = (state === S.CONNECTING);
@@ -6880,6 +6890,18 @@ function castApplyChromecastState(state) {
   // à reprendre côté local quand la diffusion s'arrête (TV éteinte, session
   // coupée depuis le téléviseur, etc.), elle continue simplement sa route.
   castWasConnected = castState.connected;
+
+  // Nouvelle connexion Chromecast : on ferme le menu et on affiche un petit
+  // toast de confirmation, comme pour les autres sélections (source,
+  // sous-titres...) — avec le nom de l'appareil quand on l'a, sinon un
+  // message générique.
+  if (castStateInitialized && castState.connected && !wasConnected) {
+    closeCastMenu();
+    showActionToast(name
+      ? tr('cast_connected_device_toast').replace('{device}', escapeHTML(name))
+      : tr('cast_connected_chromecast_toast'));
+  }
+  castStateInitialized = true;
 
   castRefresh();
 }
@@ -6949,7 +6971,14 @@ if (window.WebKitPlaybackTargetAvailabilityEvent) {
     castRefresh();
   });
   video.addEventListener('webkitcurrentplaybacktargetiswirelesschanged', () => {
+    const wasOn = castState.airplayOn;
     castState.airplayOn = !!video.webkitCurrentPlaybackTargetIsWireless;
+    // Nouvelle connexion AirPlay : le nom de l'appareil choisi dans le
+    // sélecteur natif n'est pas accessible en JS — message générique.
+    if (castState.airplayOn && !wasOn) {
+      closeCastMenu();
+      showActionToast(tr('cast_connected_airplay_toast'));
+    }
     castRefresh();
   });
 }
@@ -7041,6 +7070,33 @@ document.addEventListener('fullscreenchange', () => {
   // s'étaient masqués juste avant (souris immobile) : on rejoue l'animation
   // d'entrée existante (classe .cv) exactement comme au survol de la souris.
   if (!full) showCtrls();
+});
+
+// ── FIX SUPPLÉMENTAIRE : ces popups ne s'affichaient qu'en plein écran ──
+// L'événement standard "fullscreenchange" peut ne pas se déclencher à temps
+// (voire pas du tout selon le navigateur : Safari historique utilise des
+// variantes préfixées) avant qu'un popup ne s'ouvre, ou la sortie du plein
+// écran peut se produire sans que le popup soit remis à sa place d'origine.
+// Résultat : le popup reste "coincé" au mauvais endroit du DOM et n'apparaît
+// plus que dans l'état où il a été replacé pour la dernière fois. On
+// sécurise donc de deux façons complémentaires :
+//   1. On écoute aussi les variantes préfixées de l'évènement, pour ne
+//      jamais rater un changement d'état plein écran.
+//   2. À CHAQUE ouverture d'un de ces popups (classe "show"/"open" ajoutée),
+//      on revérifie l'état réel du plein écran et on replace le popup au bon
+//      endroit si besoin — indépendamment de ce que l'évènement a (ou non)
+//      déjà fait. Ainsi le popup s'affiche toujours, plein écran ou non.
+['webkitfullscreenchange', 'mozfullscreenchange', 'MSFullscreenChange'].forEach(evt => {
+  document.addEventListener(evt, () => relocatePopupsForFullscreen(!!document.fullscreenElement));
+});
+FS_RELOCATE_IDS.forEach(id => {
+  const el = document.getElementById(id);
+  if (!el) return;
+  new MutationObserver(muts => {
+    const justOpened = muts.some(m => m.attributeName === 'class'
+      && (el.classList.contains('show') || el.classList.contains('open')));
+    if (justOpened) relocatePopupsForFullscreen(!!document.fullscreenElement);
+  }).observe(el, { attributes: true, attributeFilter: ['class'] });
 });
 
 // ── PROGRESS ──
