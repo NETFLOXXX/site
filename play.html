@@ -2039,10 +2039,6 @@
     margin:0 auto 16px; box-shadow:0 8px 20px rgba(220,38,38,0.35);
   }
   #ext-modal .ab-icon svg { width:26px; height:26px; color:#fff; }
-  /* Léger recentrage optique de l'icône puzzle (le glyphe SVG n'est pas
-     parfaitement centré dans son viewBox) : on la décale d'1px vers le
-     haut et la droite pour compenser. */
-  #ext-modal .ext-icon svg { transform:translate(1px, -1px); }
   #ext-modal h3 { font-size:1.15rem; font-weight:700; margin-bottom:12px; letter-spacing:-0.01em; color:#fff; }
   #ext-modal p { font-size:0.87rem; line-height:1.55; color:rgba(255,255,255,0.6); margin-bottom:12px; }
   #ext-modal p strong { color:rgba(255,255,255,0.9); font-weight:600; }
@@ -2843,7 +2839,7 @@
 
     <div class="ab-note" data-i18n="ab_note">Un adblocker est conseillé pour limiter les pubs, mais il ne les supprimera pas toutes à 100%. Pour les connaisseurs, nous conseillons aussi de mettre votre DNS sur dns.adguard.com, qui bloque une bonne partie des pubs directement au niveau du réseau.</div>
     <div class="ab-note-mobile" id="ab-note-mobile-wrap" style="display:none;">
-      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path stroke-linecap="round" stroke-linejoin="round" d="M12 16v-4m0-4h.01"/></svg>
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><g transform="translate(0,-0.6)"><path stroke-linecap="round" stroke-linejoin="round" d="M12 16v-4m0-4h.01"/></g></svg>
       <span id="ab-note-mobile-text" data-i18n="ab_note_mobile_nonff">À noter que sur mobile, l'installation d'un adblocker n'est possible qu'avec <strong>Firefox</strong> ou <strong>Edge</strong>.</span>
     </div>
 
@@ -2865,12 +2861,12 @@
     <p id="ext-p1" data-i18n="ext_p1">Pour accéder à cette source et profiter d'une meilleure expérience, l'extension NETFLOX doit être installée sur votre navigateur.</p>
 
     <div class="ab-note-info" id="ext-note-info-wrap">
-      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path stroke-linecap="round" stroke-linejoin="round" d="M12 16v-4m0-4h.01"/></svg>
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><g transform="translate(0,-0.6)"><path stroke-linecap="round" stroke-linejoin="round" d="M12 16v-4m0-4h.01"/></g></svg>
       <span data-i18n="ext_note_already_installed">Vous possédez déjà l'extension&nbsp;? Veuillez l'activer dans votre navigateur.</span>
     </div>
 
     <div class="ab-note-mobile" id="ext-note-mobile-wrap" style="display:none;">
-      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path stroke-linecap="round" stroke-linejoin="round" d="M12 16v-4m0-4h.01"/></svg>
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><g transform="translate(0,-0.6)"><path stroke-linecap="round" stroke-linejoin="round" d="M12 16v-4m0-4h.01"/></g></svg>
       <span id="ext-note-mobile-text" data-i18n="ext_note_mobile_nonff">À noter que sur mobile, l'installation de l'extension n'est possible qu'avec <strong>Firefox</strong> ou <strong>Edge</strong>.</span>
     </div>
 
