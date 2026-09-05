@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -6953,6 +6954,45 @@ function toggleFullscreen() {
   else document.exitFullscreen?.();
 }
 
+// ── FIX PLEIN ÉCRAN : rendre les popups visibles ──
+// Ces popups (adblock, extension requise, langue indisponible, erreur de
+// source, film récent, confirmations Watch Party/Cast…) sont placés dans le
+// HTML en dehors de #player-wrap. Problème : quand #player-wrap passe en
+// plein écran, le navigateur n'affiche QUE cet élément et ses descendants —
+// tout ce qui est en dehors (même en position:fixed) devient invisible tant
+// qu'on ne quitte pas le plein écran, même si le popup s'ouvre bien "sous le
+// capot". On déplace donc temporairement ces popups à l'intérieur de
+// #player-wrap à l'entrée en plein écran, et on les remet exactement à leur
+// place d'origine (grâce à un marqueur) à la sortie.
+const FS_RELOCATE_IDS = [
+  'wp-leave-overlay', 'wp-hostclose-overlay', 'cast-leave-overlay',
+  'wp-join-prompt-overlay', 'ab-overlay', 'ext-overlay',
+  'nolang-overlay', 'src-error-overlay', 'recent-overlay'
+];
+const fsRelocateAnchors = new Map();
+
+function relocatePopupsForFullscreen(entering) {
+  FS_RELOCATE_IDS.forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    if (entering) {
+      if (!fsRelocateAnchors.has(id)) {
+        const anchor = document.createComment('fs-anchor-' + id);
+        el.parentNode.insertBefore(anchor, el);
+        fsRelocateAnchors.set(id, anchor);
+      }
+      pw.appendChild(el);
+    } else {
+      const anchor = fsRelocateAnchors.get(id);
+      if (anchor && anchor.parentNode) {
+        anchor.parentNode.insertBefore(el, anchor);
+        anchor.remove();
+      }
+      fsRelocateAnchors.delete(id);
+    }
+  });
+}
+
 document.addEventListener('fullscreenchange', () => {
   const full = !!document.fullscreenElement;
   document.getElementById('fs-exp').style.display = full ? 'none' : '';
@@ -6963,6 +7003,7 @@ document.addEventListener('fullscreenchange', () => {
     fsBtn.setAttribute('data-i18n-title', key);
     fsBtn.setAttribute('title', tr(key));
   }
+  relocatePopupsForFullscreen(full);
 });
 
 // ── PROGRESS ──
