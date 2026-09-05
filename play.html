@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -2040,6 +2039,10 @@
     margin:0 auto 16px; box-shadow:0 8px 20px rgba(220,38,38,0.35);
   }
   #ext-modal .ab-icon svg { width:26px; height:26px; color:#fff; }
+  /* Léger recentrage optique de l'icône puzzle (le glyphe SVG n'est pas
+     parfaitement centré dans son viewBox) : on la décale d'1px vers le
+     haut et la droite pour compenser. */
+  #ext-modal .ext-icon svg { transform:translate(1px, -1px); }
   #ext-modal h3 { font-size:1.15rem; font-weight:700; margin-bottom:12px; letter-spacing:-0.01em; color:#fff; }
   #ext-modal p { font-size:0.87rem; line-height:1.55; color:rgba(255,255,255,0.6); margin-bottom:12px; }
   #ext-modal p strong { color:rgba(255,255,255,0.9); font-weight:600; }
@@ -2858,10 +2861,10 @@
     <div class="ab-icon ext-icon">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><path d="M20.5 11H19V7c0-1.1-.9-2-2-2h-4V3.5C13 2.12 11.88 1 10.5 1S8 2.12 8 3.5V5H4c-1.1 0-1.99.9-1.99 2v3.8H3.5c1.49 0 2.7 1.21 2.7 2.7s-1.21 2.7-2.7 2.7H2V20c0 1.1.9 2 2 2h3.8v-1.5c0-1.49 1.21-2.7 2.7-2.7s2.7 1.21 2.7 2.7V22H17c1.1 0 2-.9 2-2v-4h1.5c1.38 0 2.5-1.12 2.5-2.5S21.88 11 20.5 11z"/></svg>
     </div>
-    <h3 data-i18n="ext_title">Extension NETFLOX requise</h3>
-    <p data-i18n="ext_p1">Pour accéder à cette source et profiter d'une meilleure expérience, l'extension NETFLOX doit être installée sur votre navigateur.</p>
+    <h3 id="ext-title" data-i18n="ext_title">Extension NETFLOX requise</h3>
+    <p id="ext-p1" data-i18n="ext_p1">Pour accéder à cette source et profiter d'une meilleure expérience, l'extension NETFLOX doit être installée sur votre navigateur.</p>
 
-    <div class="ab-note-info">
+    <div class="ab-note-info" id="ext-note-info-wrap">
       <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path stroke-linecap="round" stroke-linejoin="round" d="M12 16v-4m0-4h.01"/></svg>
       <span data-i18n="ext_note_already_installed">Vous possédez déjà l'extension&nbsp;? Veuillez l'activer dans votre navigateur.</span>
     </div>
@@ -2874,6 +2877,8 @@
     <div class="ab-btns">
       <button id="ext-install-btn" class="ab-action ab-primary" onclick="openExtensionInstallLink()" data-i18n="ext_btn_install">Installer l'extension</button>
       <button id="ext-install-edge-btn" class="ab-action ab-primary" onclick="openEdgeInstallLink()" data-i18n="ab_btn_install_edge" style="display:none;">Ouvrir dans Edge</button>
+      <button id="ext-install-chrome-btn" class="ab-action ab-primary" onclick="openChromeDownloadLink()" data-i18n="ext_btn_install_chrome" style="display:none;">Installer Chrome</button>
+      <button id="ext-install-firefox-mac-btn" class="ab-action ab-primary" onclick="openFirefoxMacDownloadLink()" data-i18n="ext_btn_install_firefox_mac" style="display:none;">Installer Firefox</button>
       <button class="ab-action ab-ghost" onclick="closeExtensionRequiredPopup()" data-i18n="ext_btn_proceed">J'ai compris</button>
     </div>
   </div>
@@ -3450,6 +3455,10 @@ const I18N = {
   ext_btn_install: { fr: 'Installer l\'extension', en: 'Install the extension' },
   ext_note_already_installed: { fr: 'Vous possédez déjà l\'extension\u00a0? Veuillez l\'activer dans votre navigateur.', en: 'Already have the extension? Please make sure it\'s enabled in your browser.' },
   ext_btn_install_firefox: { fr: 'Ouvrir dans Firefox', en: 'Open in Firefox' },
+  ext_title_safari: { fr: 'Extension non disponible sur Safari', en: 'Extension not available on Safari' },
+  ext_p1_safari: { fr: 'L\'extension NETFLOX n\'est pas disponible sur Safari. Pour l\'installer et profiter d\'une meilleure expérience, merci de basculer vers un autre navigateur tel que Google Chrome, Mozilla Firefox ou Microsoft Edge.', en: 'The NETFLOX extension is not available on Safari. To install it and enjoy a better experience, please switch to another browser such as Google Chrome, Mozilla Firefox or Microsoft Edge.' },
+  ext_btn_install_chrome: { fr: 'Installer Chrome', en: 'Install Chrome' },
+  ext_btn_install_firefox_mac: { fr: 'Installer Firefox', en: 'Install Firefox' },
   ext_btn_proceed: { fr: 'J\'ai compris', en: 'Got it' },
   sub_only_netflox: { fr: 'Les sous-titres externes (OpenSubtitles) sont disponibles uniquement pour le lecteur NETFLOX.', en: 'External subtitles (OpenSubtitles) are only available for the NETFLOX player.' },
   sub_change_source_hint: { fr: 'Changez de source depuis le panneau « Sources » pour y accéder.', en: 'Switch source from the "Sources" panel to access them.' },
@@ -7004,6 +7013,11 @@ document.addEventListener('fullscreenchange', () => {
     fsBtn.setAttribute('title', tr(key));
   }
   relocatePopupsForFullscreen(full);
+  // En sortant du plein écran, on force la réapparition animée des contrôles
+  // (barre du bas / boutons centraux) au lieu de les laisser cachés s'ils
+  // s'étaient masqués juste avant (souris immobile) : on rejoue l'animation
+  // d'entrée existante (classe .cv) exactement comme au survol de la souris.
+  if (!full) showCtrls();
 });
 
 // ── PROGRESS ──
@@ -10345,6 +10359,34 @@ function isDesktopEdge() {
   return /Edg\//i.test(ua) && !isMobileUA();
 }
 
+// Safari desktop (macOS) : le user-agent contient "Safari" mais aussi
+// "Chrome"/"Chromium"/"CriOS"/"Edg"/"OPR"/"Brave" chez tous les navigateurs
+// à base Chromium (qui embarquent "Safari" pour compatibilité) — il faut
+// donc explicitement les exclure. On vérifie en plus navigator.vendor
+// ("Apple Computer, Inc.") pour fiabiliser la détection, Chromium laissant
+// ce champ vide ou différent.
+function isDesktopSafari() {
+  if (isMobileUA()) return false;
+  const ua = navigator.userAgent || '';
+  const looksLikeSafari = /Safari/i.test(ua) && !/Chrome|Chromium|CriOS|Edg|OPR|Brave/i.test(ua);
+  const appleVendor = /Apple/i.test(navigator.vendor || '');
+  return looksLikeSafari && appleVendor;
+}
+
+// Liens de téléchargement proposés sur Safari desktop, puisqu'aucune
+// extension NETFLOX n'existe pour ce navigateur : on invite directement à
+// installer Chrome ou Firefox (dans cet ordre).
+const CHROME_DOWNLOAD_URL = 'https://www.google.com/chrome/';
+const FIREFOX_MAC_DOWNLOAD_URL = 'https://www.firefox.com/fr/download/mac/';
+
+function openChromeDownloadLink() {
+  window.open(CHROME_DOWNLOAD_URL, '_blank', 'noopener,noreferrer');
+}
+
+function openFirefoxMacDownloadLink() {
+  window.open(FIREFOX_MAC_DOWNLOAD_URL, '_blank', 'noopener,noreferrer');
+}
+
 function openExtensionInstallLink() {
   let url;
   if (isMobileEdge()) {
@@ -10378,7 +10420,57 @@ function refreshExtensionButtonsUI() {
   const edgeBtn = document.getElementById('ext-install-edge-btn');
   const noteWrap = document.getElementById('ext-note-mobile-wrap');
   const noteText = document.getElementById('ext-note-mobile-text');
+  const infoNote = document.getElementById('ext-note-info-wrap');
+  const titleEl = document.getElementById('ext-title');
+  const textEl = document.getElementById('ext-p1');
+  const chromeBtn = document.getElementById('ext-install-chrome-btn');
+  const firefoxMacBtn = document.getElementById('ext-install-firefox-mac-btn');
   if (!installBtn || !noteText) return;
+
+  // Safari desktop : aucune extension NETFLOX n'existe pour ce navigateur
+  // (contrairement à mobile où on peut renvoyer vers Firefox/Edge, il n'y a
+  // pas d'équivalent "app" côté PC). On remplace le message par une
+  // explication claire, on masque le bouton "Installer l'extension" et la
+  // note "vous l'avez déjà ?" (qui n'a pas de sens ici), et on propose à la
+  // place deux boutons de téléchargement de navigateur — Chrome d'abord,
+  // puis Firefox — en plus de "J'ai compris".
+  if (isDesktopSafari()) {
+    if (titleEl) {
+      titleEl.setAttribute('data-i18n', 'ext_title_safari');
+      const v = tr('ext_title_safari');
+      if (v) titleEl.innerHTML = v;
+    }
+    if (textEl) {
+      textEl.setAttribute('data-i18n', 'ext_p1_safari');
+      const v = tr('ext_p1_safari');
+      if (v) textEl.innerHTML = v;
+    }
+    installBtn.style.display = 'none';
+    if (edgeBtn) edgeBtn.style.display = 'none';
+    if (noteWrap) noteWrap.style.display = 'none';
+    if (infoNote) infoNote.style.display = 'none';
+    if (chromeBtn) chromeBtn.style.display = '';
+    if (firefoxMacBtn) firefoxMacBtn.style.display = '';
+    return;
+  }
+
+  // Navigateur autre que Safari desktop : on revient au message par défaut
+  // (au cas où la popup aurait été affichée précédemment en mode Safari)
+  // avant d'appliquer la logique mobile/desktop habituelle ci-dessous.
+  if (titleEl) {
+    titleEl.setAttribute('data-i18n', 'ext_title');
+    const v = tr('ext_title');
+    if (v) titleEl.innerHTML = v;
+  }
+  if (textEl) {
+    textEl.setAttribute('data-i18n', 'ext_p1');
+    const v = tr('ext_p1');
+    if (v) textEl.innerHTML = v;
+  }
+  installBtn.style.display = '';
+  if (infoNote) infoNote.style.display = '';
+  if (chromeBtn) chromeBtn.style.display = 'none';
+  if (firefoxMacBtn) firefoxMacBtn.style.display = 'none';
 
   const mobile = isMobileUA();
   const onFirefox = isMobileFirefox();
