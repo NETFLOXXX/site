@@ -1141,12 +1141,15 @@
      l'icône au milieu du bloc au lieu de rester alignée avec le texte. */
   .cast-empty p.cast-guide-prefix { margin:14px 0 6px; font-size:0.72rem; color:rgba(255,255,255,0.32); }
   .cast-guide-link {
-    display:inline-flex; align-items:center; gap:5px;
+    position:relative; display:inline-block; padding-left:17px;
     font-size:0.72rem; font-weight:600; color:rgba(255,255,255,0.5);
     text-decoration:none; transition:color 0.15s; white-space:nowrap;
   }
   .cast-guide-link:hover { color:#fff; }
-  .cast-guide-link svg { width:12px; height:12px; flex-shrink:0; opacity:0.85; }
+  .cast-guide-link svg {
+    position:absolute; left:0; top:calc(50% - 0.5px); transform:translateY(-50%);
+    width:11px; height:11px; opacity:0.85;
+  }
 
   .cast-stop {
     display:flex; align-items:center; justify-content:center; gap:8px;
@@ -2042,6 +2045,12 @@
   #ext-modal h3 { font-size:1.15rem; font-weight:700; margin-bottom:12px; letter-spacing:-0.01em; color:#fff; }
   #ext-modal p { font-size:0.87rem; line-height:1.55; color:rgba(255,255,255,0.6); margin-bottom:12px; }
   #ext-modal p strong { color:rgba(255,255,255,0.9); font-weight:600; }
+  #ext-modal .ext-benefits {
+    list-style:none; margin:0 0 16px; padding:0;
+    display:flex; flex-direction:column; gap:8px; text-align:left;
+  }
+  #ext-modal .ext-benefits li { display:flex; align-items:center; gap:9px; font-size:0.82rem; line-height:1.4; color:rgba(255,255,255,0.72); }
+  #ext-modal .ext-benefits svg { width:15px; height:15px; color:var(--red-h); flex-shrink:0; }
   #ext-modal .ab-note-mobile {
     display:flex; align-items:flex-start; gap:9px; text-align:left;
     font-size:0.78rem; line-height:1.5; color:rgba(255,255,255,0.6);
@@ -2860,6 +2869,21 @@
     <h3 id="ext-title" data-i18n="ext_title">Extension NETFLOX requise</h3>
     <p id="ext-p1" data-i18n="ext_p1">Pour accéder à cette source et profiter d'une meilleure expérience, l'extension NETFLOX doit être installée sur votre navigateur.</p>
 
+    <ul class="ext-benefits" id="ext-benefits">
+      <li>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        <span data-i18n="ext_benefit_1">Films et séries en qualité jusqu'à 1080p</span>
+      </li>
+      <li>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        <span data-i18n="ext_benefit_2">Sous-titres et pistes audio en plusieurs langues</span>
+      </li>
+      <li>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        <span data-i18n="ext_benefit_3">Une expérience de streaming optimisée, fluide et sans compromis</span>
+      </li>
+    </ul>
+
     <div class="ab-note-info" id="ext-note-info-wrap">
       <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><g transform="translate(0,-0.6)"><path stroke-linecap="round" stroke-linejoin="round" d="M12 16v-4m0-4h.01"/></g></svg>
       <span data-i18n="ext_note_already_installed">Vous possédez déjà l'extension&nbsp;? Veuillez l'activer dans votre navigateur.</span>
@@ -3447,6 +3471,9 @@ const I18N = {
   ab_btn_proceed: { fr: 'J\'ai compris', en: 'Got it' },
   ext_title: { fr: 'Extension NETFLOX requise', en: 'NETFLOX extension required' },
   ext_p1: { fr: 'Pour accéder à cette source et profiter d\'une meilleure expérience, l\'extension NETFLOX doit être installée sur votre navigateur.', en: 'To access this source and enjoy a better experience, the NETFLOX extension needs to be installed on your browser.' },
+  ext_benefit_1: { fr: 'Films et séries en qualité jusqu\'à 1080p', en: 'Movies and shows in quality up to 1080p' },
+  ext_benefit_2: { fr: 'Sous-titres et pistes audio en plusieurs langues', en: 'Subtitles and audio tracks in multiple languages' },
+  ext_benefit_3: { fr: 'Une expérience de streaming optimisée, fluide et sans compromis', en: 'An optimized streaming experience, smooth and uncompromising' },
   ext_note_mobile_nonff: { fr: 'À noter que sur mobile, l\'installation de l\'extension n\'est possible qu\'avec <strong>Firefox</strong> ou <strong>Edge</strong>.', en: 'Note that on mobile, installing the extension is only possible with <strong>Firefox</strong> or <strong>Edge</strong>.' },
   ext_btn_install: { fr: 'Installer l\'extension', en: 'Install the extension' },
   ext_note_already_installed: { fr: 'Vous possédez déjà l\'extension\u00a0? Veuillez l\'activer dans votre navigateur.', en: 'Already have the extension? Please make sure it\'s enabled in your browser.' },
