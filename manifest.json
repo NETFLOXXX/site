@@ -1,7 +1,7 @@
 {
   "name": "Netflox",
   "short_name": "Netflox",
-  "description": "Films et séries en streaming",
+  "description": "Voici le site officiel du géant américain NETFLOX. Tu sais le site de streaming qui fait TOU DOUM...",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
