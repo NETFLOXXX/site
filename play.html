@@ -2948,7 +2948,9 @@
       <button id="ext-install-edge-btn" class="ab-action ab-primary" onclick="openEdgeInstallLink()" data-i18n="ab_btn_install_edge" style="display:none;">Ouvrir dans Edge</button>
       <button id="ext-install-chrome-btn" class="ab-action ab-primary" onclick="openChromeDownloadLink()" data-i18n="ext_btn_install_chrome" style="display:none;">Installer Chrome</button>
       <button id="ext-install-firefox-mac-btn" class="ab-action ab-primary" onclick="openFirefoxMacDownloadLink()" data-i18n="ext_btn_install_firefox_mac" style="display:none;">Installer Firefox</button>
-      <button class="ab-action ab-ghost" onclick="closeExtensionRequiredPopup()" data-i18n="ext_btn_proceed">J'ai compris</button>
+      <button id="ext-retry-btn" class="ab-action ab-primary" onclick="retryFinepulfeExtensionCheck()" data-i18n="ext_btn_retry" style="display:none;">Réessayer</button>
+      <button id="ext-retry-cancel-btn" class="ab-action ab-ghost" onclick="closeExtensionRequiredPopup()" data-i18n="ext_btn_retry_cancel" style="display:none;">Annuler</button>
+      <button id="ext-proceed-btn" class="ab-action ab-ghost" onclick="closeExtensionRequiredPopup()" data-i18n="ext_btn_proceed">J'ai compris</button>
     </div>
   </div>
 </div>
@@ -3555,6 +3557,10 @@ const I18N = {
   ext_p1_safari: { fr: 'L\'extension NETFLOX n\'est pas disponible sur Safari. Pour l\'installer et profiter d\'une meilleure expérience, merci de basculer vers un autre navigateur tel que Google Chrome, Mozilla Firefox ou Microsoft Edge.', en: 'The NETFLOX extension is not available on Safari. To install it and enjoy a better experience, please switch to another browser such as Google Chrome, Mozilla Firefox or Microsoft Edge.' },
   ext_btn_install_chrome: { fr: 'Installer Chrome', en: 'Install Chrome' },
   ext_btn_install_firefox_mac: { fr: 'Installer Firefox', en: 'Install Firefox' },
+  ext_retry_title: { fr: 'Extension bien installée&nbsp;?', en: 'Extension installed correctly?' },
+  ext_retry_text: { fr: 'La source nécessite toujours l\'extension NETFLOX. Vérifiez qu\'elle est bien installée <strong>et activée</strong> dans votre navigateur, puis réessayez.', en: 'This source still requires the NETFLOX extension. Please check that it is installed <strong>and enabled</strong> in your browser, then try again.' },
+  ext_btn_retry: { fr: 'Réessayer', en: 'Try again' },
+  ext_btn_retry_cancel: { fr: 'Annuler', en: 'Cancel' },
   ext_btn_proceed: { fr: 'J\'ai compris', en: 'Got it' },
   wp_ext_warn_title: { fr: 'Extension requise pour tes invités', en: 'Extension required for your guests' },
   wp_ext_warn_p1: { fr: 'La source actuelle nécessite l\'extension NETFLOX. Assure-toi que <strong>tous tes invités l\'ont installée et activée</strong>, sinon la lecture ne fonctionnera pas de leur côté.', en: 'The current source requires the NETFLOX extension. Make sure <strong>all your guests have it installed and enabled</strong>, otherwise playback won\'t work for them.' },
@@ -6240,6 +6246,13 @@ function loadMedia(url, title, audioLangOverride, resumeTime) {
       populateSources(hls.audioTracks);
       if (audioLangOverride) selectHLSAudioTrackByLang(hls, audioLangOverride);
       applyResumeTime();
+      // Le flux finepulfe vient de charger avec succès alors qu'une popup
+      // "extension requise" était en cours (ex: après un retour d'onglet
+      // suite à l'installation) : on referme définitivement cette popup et
+      // on reste sur cette source, l'extension fonctionne bien.
+      if (isFinepulfe && extPopupPending) {
+        finishExtPopupAsSuccess();
+      }
       // On ne lance vraiment la lecture qu'une fois toutes les popups de
       // chargement fermées (ex: "Film récent" -> "Compris") : le flux est
       // déjà prêt/mis en buffer en arrière-plan, mais le son/l'image
@@ -6257,8 +6270,19 @@ function loadMedia(url, title, audioLangOverride, resumeTime) {
         // plutôt que d'afficher directement la popup générique d'erreur.
         const httpStatus = (d.response && d.response.code) || (d.networkDetails && d.networkDetails.status);
         if (isFinepulfe && httpStatus === 403) {
-          handleFinepulfeExtensionRequired();
+          if (extRetryPending) {
+            // On vient de retenter le chargement suite à un retour sur
+            // l'onglet (ou un clic sur "Réessayer") après un passage par
+            // "Installer l'extension", et ça échoue encore avec un 403 :
+            // on affiche la popup de confirmation dédiée plutôt que de
+            // relancer bêtement la popup d'installation initiale.
+            extRetryPending = false;
+            showExtRetryStillBlockedPopup();
+          } else {
+            handleFinepulfeExtensionRequired();
+          }
         } else {
+          extRetryPending = false;
           handleSourceFailure();
         }
       }
@@ -10644,6 +10668,12 @@ function openExtensionInstallLink() {
     url = EXT_CHROME_URL;
   }
   window.open(url, '_blank', 'noopener,noreferrer');
+  // On retient que l'utilisateur est parti installer l'extension : si il
+  // quitte puis revient sur l'onglet pendant que la popup est toujours
+  // ouverte, on retentera automatiquement le chargement de finepulfe (voir
+  // watchTabReturnForExtInstall ci-dessous). Sans ce clic, revenir sur
+  // l'onglet ne déclenche rien de spécial.
+  extInstallAttempted = true;
 }
 
 // Même logique d'adaptation que refreshAdblockButtonsUI(), mais pour la
@@ -10744,6 +10774,16 @@ function refreshExtensionButtonsUI() {
 // fonctionnera de toute façon pas sans l'extension.
 let extPopupPending = false;
 let extPopupResolve = null;
+// true dès que l'utilisateur a cliqué "Installer l'extension" pendant que
+// la popup est ouverte : sert à savoir si un retour sur l'onglet doit
+// déclencher une nouvelle tentative automatique (voir plus bas).
+let extInstallAttempted = false;
+// true le temps d'une tentative de rechargement de finepulfe faite APRÈS
+// un passage par "Installer l'extension" (retour d'onglet ou clic sur
+// "Réessayer") : permet au handler d'erreur HLS.js de distinguer ce cas
+// d'un tout premier échec, pour afficher la bonne popup en cas de nouvel
+// échec.
+let extRetryPending = false;
 
 function handleFinepulfeExtensionRequired() {
   if (pw.classList.contains('embed-mode')) return; // un embed gère ses propres erreurs
@@ -10759,6 +10799,7 @@ function handleFinepulfeExtensionRequired() {
 }
 
 function showExtensionRequiredPopup() {
+  exitExtRetryMode();
   refreshExtensionButtonsUI();
   document.getElementById('ext-overlay').classList.add('open');
 }
@@ -10766,12 +10807,123 @@ function showExtensionRequiredPopup() {
 function closeExtensionRequiredPopup() {
   document.getElementById('ext-overlay').classList.remove('open');
   extPopupPending = false;
+  extInstallAttempted = false;
+  extRetryPending = false;
+  exitExtRetryMode();
   goToNextSourceAfterError();
   if (typeof extPopupResolve === 'function') {
     const resolve = extPopupResolve;
     extPopupResolve = null;
     resolve();
   }
+}
+
+// Appelée quand finepulfe recharge avec succès (voir MANIFEST_PARSED) alors
+// qu'une popup "extension requise" était en cours (visible ou masquée le
+// temps d'une tentative) : on referme tout sans passer à la source
+// suivante, puisque cette source fonctionne maintenant.
+function finishExtPopupAsSuccess() {
+  document.getElementById('ext-overlay').classList.remove('open');
+  extPopupPending = false;
+  extInstallAttempted = false;
+  extRetryPending = false;
+  exitExtRetryMode();
+  if (typeof extPopupResolve === 'function') {
+    const resolve = extPopupResolve;
+    extPopupResolve = null;
+    resolve();
+  }
+}
+
+// ── Détection retour sur l'onglet après "Installer l'extension" ──
+// Si l'utilisateur quitte la page pour aller installer l'extension puis
+// revient sur cet onglet pendant que la popup est toujours affichée, on
+// retente automatiquement le chargement de finepulfe : succès -> on reste
+// dessus ; nouvel échec (403) -> popup de confirmation avec "Réessayer" /
+// "Annuler". Sans clic préalable sur "Installer l'extension", revenir sur
+// l'onglet ne déclenche rien (ex: simple clic sur "J'ai compris").
+let extReturnCheckLock = false;
+function watchTabReturnForExtInstall() {
+  if (document.hidden) return; // ne réagit qu'au retour, pas au départ
+  if (!extInstallAttempted) return;
+  const overlay = document.getElementById('ext-overlay');
+  if (!overlay || !overlay.classList.contains('open')) return;
+  if (extReturnCheckLock) return; // 'visibilitychange' et 'focus' peuvent se déclencher ensemble
+  extReturnCheckLock = true;
+  setTimeout(() => { extReturnCheckLock = false; }, 1000);
+  extInstallAttempted = false;
+  retryFinepulfeExtensionCheck();
+}
+document.addEventListener('visibilitychange', watchTabReturnForExtInstall);
+window.addEventListener('focus', watchTabReturnForExtInstall);
+
+// Relance le chargement de la source finepulfe actuelle (bouton "Réessayer"
+// de la popup de confirmation, ou tentative automatique au retour d'onglet).
+function retryFinepulfeExtensionCheck() {
+  document.getElementById('ext-overlay').classList.remove('open');
+  extRetryPending = true;
+  selectCloudflareSource(currentSourceIndex, { bypassLock: true });
+}
+
+// Bascule la popup "extension requise" (déjà affichée) vers son état
+// "toujours bloqué après tentative" : titre/texte de confirmation, boutons
+// d'installation initiaux masqués, uniquement "Réessayer" / "Annuler".
+function showExtRetryStillBlockedPopup() {
+  enterExtRetryMode();
+  document.getElementById('ext-overlay').classList.add('open');
+}
+
+function enterExtRetryMode() {
+  const titleEl = document.getElementById('ext-title');
+  const textEl = document.getElementById('ext-p1');
+  if (titleEl) {
+    titleEl.setAttribute('data-i18n', 'ext_retry_title');
+    const v = tr('ext_retry_title');
+    if (v) titleEl.innerHTML = v;
+  }
+  if (textEl) {
+    textEl.setAttribute('data-i18n', 'ext_retry_text');
+    const v = tr('ext_retry_text');
+    if (v) textEl.innerHTML = v;
+  }
+  const benefits = document.getElementById('ext-benefits');
+  if (benefits) benefits.style.display = 'none';
+  const infoNote = document.getElementById('ext-note-info-wrap');
+  if (infoNote) infoNote.style.display = 'none';
+  const mobileNote = document.getElementById('ext-note-mobile-wrap');
+  if (mobileNote) mobileNote.style.display = 'none';
+
+  const installBtn = document.getElementById('ext-install-btn');
+  if (installBtn) installBtn.style.display = 'none';
+  const edgeBtn = document.getElementById('ext-install-edge-btn');
+  if (edgeBtn) edgeBtn.style.display = 'none';
+  const chromeBtn = document.getElementById('ext-install-chrome-btn');
+  if (chromeBtn) chromeBtn.style.display = 'none';
+  const ffMacBtn = document.getElementById('ext-install-firefox-mac-btn');
+  if (ffMacBtn) ffMacBtn.style.display = 'none';
+  const proceedBtn = document.getElementById('ext-proceed-btn');
+  if (proceedBtn) proceedBtn.style.display = 'none';
+
+  const retryBtn = document.getElementById('ext-retry-btn');
+  if (retryBtn) retryBtn.style.display = '';
+  const cancelBtn = document.getElementById('ext-retry-cancel-btn');
+  if (cancelBtn) cancelBtn.style.display = '';
+}
+
+// Remet la popup dans son état par défaut (titre/texte/boutons d'origine),
+// utilisé à chaque nouvelle ouverture "fraîche" de la popup pour ne pas
+// hériter d'un état "réessayer" laissé par une source précédente.
+function exitExtRetryMode() {
+  const benefits = document.getElementById('ext-benefits');
+  if (benefits) benefits.style.display = '';
+  const proceedBtn = document.getElementById('ext-proceed-btn');
+  if (proceedBtn) proceedBtn.style.display = '';
+  const retryBtn = document.getElementById('ext-retry-btn');
+  if (retryBtn) retryBtn.style.display = 'none';
+  const cancelBtn = document.getElementById('ext-retry-cancel-btn');
+  if (cancelBtn) cancelBtn.style.display = 'none';
+  // Les boutons d'installation/notes par navigateur et titre/texte par
+  // défaut sont ensuite remis par refreshExtensionButtonsUI().
 }
 
 // ── POPUP "AUCUN LECTEUR DU TOUT DISPONIBLE" (ni NETFLOX ni Autres, dans aucune langue) ──
