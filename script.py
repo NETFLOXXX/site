@@ -4,15 +4,10 @@ import json
 from datetime import datetime, timezone
 
 MOVIX_URL = "https://t.me/s/movix_site"
-STREAMFLIX_URL = "https://t.me/s/streamflixoff"
-FREMBED_TELEGRAM_URL = "https://t.me/+gBSyUOO_3D1mZDZk"
-
 KWEFLIX_CONFIG_URL = "https://kweflix.com/config.js?v=4"
 CINEPULSE_CONFIG_URL = "https://cinepulse.wiki/site.js?v=7"
 
 MOVIX_PATTERN = r'(https?://[^\s"\'<]*movix[^\s"\'<]*|\bmovix\.[a-z]{2,10}\b)'
-GENERIC_PATTERN = r'(https?://[^\s"\'<]+|\b[a-z0-9-]+\.[a-z]{2,10}\b)'
-
 
 def normalize_https(url):
     url = url.strip().rstrip('/')
@@ -50,92 +45,6 @@ def get_movix_url():
 
     except Exception as e:
         print(f"Erreur Movix: {e}")
-
-    return None
-
-
-def get_streamflix_bio_url():
-    try:
-        resp = requests.get(
-            STREAMFLIX_URL,
-            headers={"User-Agent": "Mozilla/5.0"},
-            timeout=10
-        )
-        resp.raise_for_status()
-
-        match = re.search(
-            r'<div class="tgme_channel_info_description">(.*?)</div>',
-            resp.text,
-            re.DOTALL
-        )
-
-        if match:
-            bio_text = re.sub(r'<[^>]+>', ' ', match.group(1))
-
-            urls = re.findall(
-                GENERIC_PATTERN,
-                bio_text,
-                re.IGNORECASE
-            )
-
-            if urls:
-                return normalize_https(urls[0])
-
-    except Exception as e:
-        print(f"Erreur Streamflix: {e}")
-
-    return None
-
-
-def get_frembed_url():
-    """
-    Récupère l'URL Frembed depuis la description du groupe Telegram.
-
-    Exemple de page :
-        https://t.me/+gBSyUOO_3D1mZDZk
-
-    Description :
-        https://frembed.casa
-    """
-
-    try:
-        resp = requests.get(
-            FREMBED_TELEGRAM_URL,
-            headers={
-                "User-Agent": (
-                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-                    "AppleWebKit/537.36 "
-                    "(KHTML, like Gecko) "
-                    "Chrome/120.0 Safari/537.36"
-                )
-            },
-            timeout=10
-        )
-
-        resp.raise_for_status()
-
-        html = resp.text
-
-        # Telegram encode parfois les caractères HTML.
-        html = html.replace("&quot;", '"')
-        html = html.replace("&#x2F;", "/")
-        html = html.replace("&#47;", "/")
-        html = html.replace("&amp;", "&")
-
-        # Cherche d'abord une URL Frembed explicite.
-        matches = re.findall(
-            r'https?://(?:www\.)?frembed\.[a-z]{2,}(?:/[^\s"\'<>]*)?',
-            html,
-            re.IGNORECASE
-        )
-
-        if matches:
-            return normalize_https(matches[0])
-
-        print("Frembed : aucune URL trouvée dans la description Telegram")
-
-    except Exception as e:
-        print(f"Erreur Frembed Telegram: {e}")
 
     return None
 
@@ -220,8 +129,6 @@ def get_cinepulse_url():
 def main():
     data = {
         "movix_url": get_movix_url(),
-        "streamflix_url": get_streamflix_bio_url(),
-        "frembed_url": get_frembed_url(),
         "kweflix_url": get_kweflix_url(),
         "cinepulse_url": get_cinepulse_url(),
         "updated_at": datetime.now(timezone.utc).isoformat()
