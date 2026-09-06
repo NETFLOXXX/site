@@ -6291,6 +6291,7 @@ function loadMedia(url, title, audioLangOverride, resumeTime) {
           // affiche la popup de confirmation dédiée plutôt que de relancer
           // bêtement la popup d'installation initiale ou la popup générique.
           extRetryPending = false;
+          extRetryInFlight = false;
           showExtRetryStillBlockedPopup();
         } else if (isFinepulfe && httpStatus === 403) {
           // Cas spécifique : source finepulfe qui répond 403 -> l'extension
@@ -10830,6 +10831,7 @@ function closeExtensionRequiredPopup() {
   extPopupPending = false;
   extInstallAttempted = false;
   extRetryPending = false;
+  extRetryInFlight = false;
   exitExtRetryMode();
   goToNextSourceAfterError();
   if (typeof extPopupResolve === 'function') {
@@ -10848,6 +10850,7 @@ function finishExtPopupAsSuccess() {
   extPopupPending = false;
   extInstallAttempted = false;
   extRetryPending = false;
+  extRetryInFlight = false;
   exitExtRetryMode();
   if (typeof extPopupResolve === 'function') {
     const resolve = extPopupResolve;
@@ -10863,24 +10866,36 @@ function finishExtPopupAsSuccess() {
 // dessus ; nouvel échec (403) -> popup de confirmation avec "Réessayer" /
 // "Annuler". Sans clic préalable sur "Installer l'extension", revenir sur
 // l'onglet ne déclenche rien (ex: simple clic sur "J'ai compris").
+//
+// On n'utilise QUE 'visibilitychange' (pas 'focus') : ouvrir un nouvel
+// onglet via window.open() (bouton "Installer"/"Réessayer") ne fait très
+// souvent PAS quitter la page (l'onglet d'origine reste visible), mais
+// déclenche quand même un évènement 'focus' sur la fenêtre juste après —
+// ce qui provoquait un nouvel essai instantané, avant même que
+// l'utilisateur ait pu installer quoi que ce soit, et donnait l'impression
+// d'une boucle infinie de popups. 'visibilitychange' ne se déclenche que
+// si l'onglet a vraiment été masqué puis réaffiché, ce qui correspond
+// réellement à "l'utilisateur est parti puis revenu".
 let extReturnCheckLock = false;
+let extRetryInFlight = false; // évite un chevauchement si l'utilisateur revient plusieurs fois très vite
 function watchTabReturnForExtInstall() {
   if (document.hidden) return; // ne réagit qu'au retour, pas au départ
   if (!extInstallAttempted) return;
   const overlay = document.getElementById('ext-overlay');
   if (!overlay || !overlay.classList.contains('open')) return;
-  if (extReturnCheckLock) return; // 'visibilitychange' et 'focus' peuvent se déclencher ensemble
+  if (extReturnCheckLock || extRetryInFlight) return;
   extReturnCheckLock = true;
   setTimeout(() => { extReturnCheckLock = false; }, 1000);
   extInstallAttempted = false;
   retryFinepulfeExtensionCheck();
 }
 document.addEventListener('visibilitychange', watchTabReturnForExtInstall);
-window.addEventListener('focus', watchTabReturnForExtInstall);
 
 // Relance le chargement de la source finepulfe actuelle (bouton "Réessayer"
 // de la popup de confirmation, ou tentative automatique au retour d'onglet).
 function retryFinepulfeExtensionCheck() {
+  if (extRetryInFlight) return; // une tentative est déjà en cours, on ignore
+  extRetryInFlight = true;
   document.getElementById('ext-overlay').classList.remove('open');
   extRetryPending = true;
   selectCloudflareSource(currentSourceIndex, { bypassLock: true });
