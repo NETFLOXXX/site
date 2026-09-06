@@ -6246,13 +6246,6 @@ function loadMedia(url, title, audioLangOverride, resumeTime) {
       populateSources(hls.audioTracks);
       if (audioLangOverride) selectHLSAudioTrackByLang(hls, audioLangOverride);
       applyResumeTime();
-      // Le flux finepulfe vient de charger avec succès alors qu'une popup
-      // "extension requise" était en cours (ex: après un retour d'onglet
-      // suite à l'installation) : on referme définitivement cette popup et
-      // on reste sur cette source, l'extension fonctionne bien.
-      if (isFinepulfe && extPopupPending) {
-        finishExtPopupAsSuccess();
-      }
       // On ne lance vraiment la lecture qu'une fois toutes les popups de
       // chargement fermées (ex: "Film récent" -> "Compris") : le flux est
       // déjà prêt/mis en buffer en arrière-plan, mais le son/l'image
@@ -6262,27 +6255,39 @@ function loadMedia(url, title, audioLangOverride, resumeTime) {
     hls.on(Hls.Events.AUDIO_TRACKS_UPDATED, () => {
       if (audioLangOverride) selectHLSAudioTrackByLang(hls, audioLangOverride);
     });
+    // Sur finepulfe, c'est le chargement des SEGMENTS (pas du manifeste
+    // principal, souvent public) qui nécessite réellement l'extension —
+    // MANIFEST_PARSED peut donc se déclencher même sans elle. On attend
+    // qu'un premier segment ait réellement été récupéré avec succès avant
+    // de considérer que la source fonctionne et de refermer la popup
+    // "extension requise" — sinon on fermait la popup et on lançait la
+    // lecture juste sur la base d'un manifeste chargé, avant même de savoir
+    // si les segments allaient passer.
+    if (isFinepulfe) {
+      hls.on(Hls.Events.FRAG_LOADED, () => {
+        if (extPopupPending) finishExtPopupAsSuccess();
+      });
+    }
     hls.on(Hls.Events.ERROR, (e,d) => {
       if(d.fatal){
         hideSpinner();
-        // Cas spécifique : source finepulfe qui répond 403 -> l'extension
-        // NETFLOX est requise pour y accéder. On propose son installation
-        // plutôt que d'afficher directement la popup générique d'erreur.
         const httpStatus = (d.response && d.response.code) || (d.networkDetails && d.networkDetails.status);
-        if (isFinepulfe && httpStatus === 403) {
-          if (extRetryPending) {
-            // On vient de retenter le chargement suite à un retour sur
-            // l'onglet (ou un clic sur "Réessayer") après un passage par
-            // "Installer l'extension", et ça échoue encore avec un 403 :
-            // on affiche la popup de confirmation dédiée plutôt que de
-            // relancer bêtement la popup d'installation initiale.
-            extRetryPending = false;
-            showExtRetryStillBlockedPopup();
-          } else {
-            handleFinepulfeExtensionRequired();
-          }
-        } else {
+        if (extRetryPending) {
+          // On vient de retenter le chargement suite à un retour sur
+          // l'onglet (ou un clic sur "Réessayer") après un passage par
+          // "Installer l'extension", et ça échoue encore — peu importe le
+          // code d'erreur exact (403 typique, mais un timeout ou une autre
+          // erreur réseau sont aussi possibles selon le serveur) : on
+          // affiche la popup de confirmation dédiée plutôt que de relancer
+          // bêtement la popup d'installation initiale ou la popup générique.
           extRetryPending = false;
+          showExtRetryStillBlockedPopup();
+        } else if (isFinepulfe && httpStatus === 403) {
+          // Cas spécifique : source finepulfe qui répond 403 -> l'extension
+          // NETFLOX est requise pour y accéder. On propose son installation
+          // plutôt que d'afficher directement la popup générique d'erreur.
+          handleFinepulfeExtensionRequired();
+        } else {
           handleSourceFailure();
         }
       }
@@ -10789,6 +10794,8 @@ function handleFinepulfeExtensionRequired() {
   if (pw.classList.contains('embed-mode')) return; // un embed gère ses propres erreurs
   if (extPopupPending) return; // déjà en train de gérer ce popup
   extPopupPending = true;
+  extInstallAttempted = false;
+  extRetryPending = false; // remise à zéro défensive : pas de résidu d'un cycle précédent
   hideError();
   enqueuePopup(POPUP_PRIORITY.srcError, () => {
     return new Promise(resolve => {
