@@ -2948,7 +2948,7 @@
       <button id="ext-install-edge-btn" class="ab-action ab-primary" onclick="openEdgeInstallLink()" data-i18n="ab_btn_install_edge" style="display:none;">Ouvrir dans Edge</button>
       <button id="ext-install-chrome-btn" class="ab-action ab-primary" onclick="openChromeDownloadLink()" data-i18n="ext_btn_install_chrome" style="display:none;">Installer Chrome</button>
       <button id="ext-install-firefox-mac-btn" class="ab-action ab-primary" onclick="openFirefoxMacDownloadLink()" data-i18n="ext_btn_install_firefox_mac" style="display:none;">Installer Firefox</button>
-      <button id="ext-retry-btn" class="ab-action ab-primary" onclick="retryFinepulfeExtensionCheck()" data-i18n="ext_btn_retry" style="display:none;">Réessayer</button>
+      <button id="ext-retry-btn" class="ab-action ab-primary" onclick="reopenExtensionStoreFromRetry()" data-i18n="ext_btn_retry" style="display:none;">Réessayer</button>
       <button id="ext-retry-cancel-btn" class="ab-action ab-ghost" onclick="closeExtensionRequiredPopup()" data-i18n="ext_btn_retry_cancel" style="display:none;">Annuler</button>
       <button id="ext-proceed-btn" class="ab-action ab-ghost" onclick="closeExtensionRequiredPopup()" data-i18n="ext_btn_proceed">J'ai compris</button>
     </div>
@@ -6246,11 +6246,20 @@ function loadMedia(url, title, audioLangOverride, resumeTime) {
       populateSources(hls.audioTracks);
       if (audioLangOverride) selectHLSAudioTrackByLang(hls, audioLangOverride);
       applyResumeTime();
-      // On ne lance vraiment la lecture qu'une fois toutes les popups de
-      // chargement fermées (ex: "Film récent" -> "Compris") : le flux est
-      // déjà prêt/mis en buffer en arrière-plan, mais le son/l'image
-      // n'apparaissent qu'après la fermeture de la dernière popup.
-      waitForPopupsCleared(() => video.play().catch(()=>{}));
+      // Sur finepulfe, le manifeste peut se charger même sans l'extension
+      // (seuls les segments la nécessitent) : on ne lance donc PAS la
+      // lecture ici pour cette source, pour éviter que la vidéo ne se
+      // mette à jouer derrière la popup "extension requise" avant même de
+      // savoir si les segments vont réellement passer. Le lancement réel
+      // se fait plus bas, sur FRAG_LOADED (premier segment chargé avec
+      // succès).
+      if (!isFinepulfe) {
+        // On ne lance vraiment la lecture qu'une fois toutes les popups de
+        // chargement fermées (ex: "Film récent" -> "Compris") : le flux est
+        // déjà prêt/mis en buffer en arrière-plan, mais le son/l'image
+        // n'apparaissent qu'après la fermeture de la dernière popup.
+        waitForPopupsCleared(() => video.play().catch(()=>{}));
+      }
     });
     hls.on(Hls.Events.AUDIO_TRACKS_UPDATED, () => {
       if (audioLangOverride) selectHLSAudioTrackByLang(hls, audioLangOverride);
@@ -6259,13 +6268,14 @@ function loadMedia(url, title, audioLangOverride, resumeTime) {
     // principal, souvent public) qui nécessite réellement l'extension —
     // MANIFEST_PARSED peut donc se déclencher même sans elle. On attend
     // qu'un premier segment ait réellement été récupéré avec succès avant
-    // de considérer que la source fonctionne et de refermer la popup
-    // "extension requise" — sinon on fermait la popup et on lançait la
-    // lecture juste sur la base d'un manifeste chargé, avant même de savoir
-    // si les segments allaient passer.
+    // de considérer que la source fonctionne : c'est seulement à ce
+    // moment-là qu'on referme la popup "extension requise" ET qu'on lance
+    // la lecture — tant que ce n'est pas le cas, la vidéo reste à l'arrêt,
+    // popup affichée ou non.
     if (isFinepulfe) {
       hls.on(Hls.Events.FRAG_LOADED, () => {
         if (extPopupPending) finishExtPopupAsSuccess();
+        waitForPopupsCleared(() => video.play().catch(()=>{}));
       });
     }
     hls.on(Hls.Events.ERROR, (e,d) => {
@@ -10809,6 +10819,10 @@ function showExtensionRequiredPopup() {
   exitExtRetryMode();
   refreshExtensionButtonsUI();
   document.getElementById('ext-overlay').classList.add('open');
+  // Garde-fou : la vidéo ne doit jamais jouer tant que cette popup est
+  // affichée (elle ne le devrait déjà pas, mais on s'assure qu'aucune
+  // lecture ne démarre/continue derrière le popup).
+  video.pause();
 }
 
 function closeExtensionRequiredPopup() {
@@ -10872,12 +10886,24 @@ function retryFinepulfeExtensionCheck() {
   selectCloudflareSource(currentSourceIndex, { bypassLock: true });
 }
 
+// Bouton "Réessayer" de la popup de confirmation ("Extension bien
+// installée ?") : plutôt que de relancer une requête à l'aveugle, on
+// renvoie l'utilisateur vers la page d'installation/activation de
+// l'extension adaptée à son navigateur (même logique que le bouton initial
+// "Installer l'extension") — la popup reste affichée. Le vrai rechargement
+// de finepulfe se fait ensuite automatiquement dès qu'il revient sur cet
+// onglet, via watchTabReturnForExtInstall().
+function reopenExtensionStoreFromRetry() {
+  openExtensionInstallLink();
+}
+
 // Bascule la popup "extension requise" (déjà affichée) vers son état
 // "toujours bloqué après tentative" : titre/texte de confirmation, boutons
 // d'installation initiaux masqués, uniquement "Réessayer" / "Annuler".
 function showExtRetryStillBlockedPopup() {
   enterExtRetryMode();
   document.getElementById('ext-overlay').classList.add('open');
+  video.pause();
 }
 
 function enterExtRetryMode() {
