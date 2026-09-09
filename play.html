@@ -910,6 +910,10 @@
     background:rgba(220,38,38,0.14); display:flex; align-items:center; justify-content:center;
     color:var(--red-h);
   }
+  /* Variante "problème technique" (icône warning) : ambre plutôt que rouge,
+     pour ne pas donner l'impression d'un bannissement. */
+  #wp-ended-card.warn #wp-ended-icon { background:rgba(245,158,11,0.14); color:#f59e0b; }
+  #wp-ended-card.warn button { background:#f59e0b; }
   #wp-ended-card h3 { font-size:1.08rem; font-weight:700; letter-spacing:-0.01em; margin-bottom:8px; }
   #wp-ended-card p { color:rgba(255,255,255,0.55); font-size:0.86rem; line-height:1.5; margin-bottom:22px; }
   #wp-ended-card button {
@@ -1802,6 +1806,18 @@
   .spin-ring { border:3px solid rgba(255,255,255,0.15); border-top-color:var(--red); border-radius:50%; animation:spin 0.8s linear infinite; }
   @keyframes spin { to { transform:rotate(360deg); } }
 
+  /* Cercle de chargement invité (voir commentaire HTML) : centré comme
+     #center-controls mais totalement indépendant de wp-guest-hide, affiché
+     uniquement côté invité en Watch Party et seulement pendant le buffering. */
+  #wp-guest-spin-ring {
+    position:absolute; inset:0; z-index:50;
+    display:none; align-items:center; justify-content:center;
+    opacity:0; pointer-events:none; transition:opacity 0.15s;
+  }
+  #wp-guest-spin-ring .spin-ring { width:52px; height:52px; }
+  body.wp-guest-mode #wp-guest-spin-ring { display:flex; }
+  #player-wrap.buffering #wp-guest-spin-ring { opacity:1; }
+
   /* error */
   #error-msg { position:absolute; inset:0; display:none; flex-direction:column; align-items:center; justify-content:center; gap:12px; z-index:70; }
   #error-msg svg { color:var(--red); }
@@ -2415,6 +2431,14 @@
       <svg width="42" height="42" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polygon points="13 19 22 12 13 5 13 19"/><polygon points="2 19 11 12 2 5 2 19"/></svg>
     </button>
   </div>
+
+  <!-- Cercle de chargement pour l'INVITÉ en Watch Party : le spinner normal
+       (#cc-spin-ring) vit à l'intérieur de #center-controls, qui est masqué
+       en entier chez l'invité (wp-guest-hide, ses boutons lecture/pause etc.
+       sont désactivés) — du coup le spinner disparaissait avec le reste et
+       l'invité ne voyait jamais d'indicateur de chargement. Élément
+       indépendant, centré pareil, jamais affecté par wp-guest-hide. -->
+  <div id="wp-guest-spin-ring"><div class="spin-ring"></div></div>
 
   <!-- Message "En pause" pour l'invité : ses contrôles de lecture sont masqués,
        donc rien ne montre visuellement que la vidéo est en pause côté hôte. -->
@@ -3508,6 +3532,8 @@ const I18N = {
   watchparty_joining: { fr: 'Connexion...', en: 'Joining...' },
   watchparty_kicked_title: { fr: 'Tu as été banni', en: 'You were banned' },
   watchparty_kicked_sub: { fr: "L'hôte t'a retiré de cette Watch Party.", en: 'The host removed you from this Watch Party.' },
+  watchparty_conn_issue_title: { fr: 'Problème technique', en: 'Technical issue' },
+  watchparty_conn_issue_sub: { fr: "La connexion à la Watch Party a été perdue. Réessaie de la rejoindre avec le code.", en: 'Connection to the Watch Party was lost. Try rejoining with the code.' },
   watchparty_expired_msg: { fr: 'Cette Watch Party a expiré (plus de 24h).', en: 'This Watch Party has expired (over 24h old).' },
   watchparty_expired_title: { fr: 'Watch Party expirée', en: 'Watch Party expired' },
   watchparty_expired_sub: { fr: 'Ce salon a été fermé automatiquement après 24 heures.', en: 'This room was automatically closed after 24 hours.' },
@@ -4467,6 +4493,21 @@ async function fetchTMDBSources(id, type, season, episode, allowSeriesFallback=f
     currentMediaType = type === 'tv' ? 'tv' : 'movie';
     currentSources = processed;
     currentSourceIndex = -1;
+    // Nouveau contenu chargé (retour + autre film, changement via la
+    // recherche du haut, etc.) : on autorise le popup adblocker à
+    // réapparaître au prochain "Autres lecteurs", puisqu'il ne s'était
+    // affiché "une seule fois" que pour CE film-là. Rester sur le même
+    // film et juste changer de source/lecteur ne repasse pas par ici, donc
+    // ne réinitialise pas ce flag.
+    abPopupAlreadyShown = false;
+    // Idem pour le sous-onglet "Lecteurs NETFLOX" / "Autres lecteurs" : il
+    // ne doit pas rester coincé sur "Autres lecteurs" d'un film à l'autre
+    // (ex: film précédent sans lecteur NETFLOX). On revient sur "Lecteurs
+    // NETFLOX" par défaut pour ce nouveau contenu ; le bloc juste en dessous
+    // le rebasculera sur "Autres" si CE film n'a justement aucun lecteur
+    // NETFLOX dans la langue choisie.
+    sourceSubTab.fr = 'netflox';
+    sourceSubTab.en = 'netflox';
     collapsedLangs.clear();
     expandedGroups.clear();
     resetActiveSubtitle();
@@ -5239,6 +5280,18 @@ function selectCloudflareSource(id, opts) {
   opts = opts || {};
 
   const changed = id !== currentSourceIndex;
+
+  // BUG FIX : cliquer sur la source DÉJÀ active ne doit rien faire — avant,
+  // le code continuait quand même jusqu'à loadMedia/showEmbedPlayer, ce qui
+  // relançait la vidéo depuis le début à chaque clic sur la source en cours
+  // (en solo comme en Watch Party). Seul un rechargement explicitement
+  // demandé (ex: nouvelle tentative finepulfe après installation de
+  // l'extension, voir retryFinepulfeExtensionCheck) doit pouvoir recharger
+  // la même source, via opts.forceReload.
+  if (!changed && !opts.forceReload) {
+    closeMenus();
+    return;
+  }
 
   // Watch Party ou diffusion en cours : la source est verrouillée pour
   // TOUT LE MONDE (hôte comme invité, ou l'appareil qui diffuse), sauf
@@ -6196,6 +6249,7 @@ function loadMedia(url, title, audioLangOverride, resumeTime) {
   hideSourceErrorPopup();
   hideUpNextCard();
   clearHLS(); hideError(); showSpinner();
+  srcHasStartedThisLoad = false; // nouveau chargement : on ne sait pas encore si ça va démarrer
   embedEstimateStartedAt = null; // on quitte l'iframe : plus besoin d'estimer
   loadScreen.style.display = 'none';
   pw.style.display = 'block';
@@ -6273,7 +6327,18 @@ function loadMedia(url, title, audioLangOverride, resumeTime) {
     // la lecture — tant que ce n'est pas le cas, la vidéo reste à l'arrêt,
     // popup affichée ou non.
     if (isFinepulfe) {
+      // BUG FIX : ce listener restait actif sur TOUS les FRAG_LOADED, pas
+      // seulement le premier. Comme hls.js continue de charger des segments
+      // en arrière-plan pendant la lecture (pour garder son buffer plein),
+      // ça relançait video.play() à chaque nouveau segment récupéré — donc
+      // la vidéo repartait toute seule même après une mise en pause manuelle.
+      // On ne veut lancer la lecture (et fermer la popup "extension requise"
+      // si besoin) qu'une seule fois, au tout premier segment chargé avec
+      // succès.
+      let finepulfeFirstFragLoaded = false;
       hls.on(Hls.Events.FRAG_LOADED, () => {
+        if (finepulfeFirstFragLoaded) return;
+        finepulfeFirstFragLoaded = true;
         if (extPopupPending) finishExtPopupAsSuccess();
         waitForPopupsCleared(() => video.play().catch(()=>{}));
       });
@@ -7199,11 +7264,25 @@ function toggleFullscreen() {
 // #player-wrap à l'entrée en plein écran, et on les remet exactement à leur
 // place d'origine (grâce à un marqueur) à la sortie.
 const FS_RELOCATE_IDS = [
-  'wp-leave-overlay', 'wp-hostclose-overlay', 'cast-leave-overlay',
+  'wp-leave-overlay', 'wp-hostclose-overlay',
   'wp-join-prompt-overlay', 'ab-overlay', 'ext-overlay', 'wp-ext-warn-overlay',
   'nolang-overlay', 'src-error-overlay', 'recent-overlay'
 ];
 const fsRelocateAnchors = new Map();
+
+// "Arrêter la diffusion ?" (cast-leave-overlay) n'est PAS géré par le
+// mécanisme de relocalisation lié au plein écran ci-dessus (qui ne déplace
+// les popups dans #player-wrap qu'À L'ENTRÉE en plein écran, puis les remet
+// à leur place quand on en sort). Sur certains navigateurs mobiles, la
+// <video> locale continue de jouer par-dessus le reste de la page (calque
+// matériel) même hors plein écran, dès qu'un popup n'est pas dans le même
+// sous-arbre qu'elle — d'où le bug où ce popup ne s'affichait qu'en plein
+// écran. On le rattache donc une bonne fois pour toutes à #player-wrap dès
+// le chargement, indépendamment de l'état plein écran.
+(function relocateCastLeaveOverlayPermanently() {
+  const el = document.getElementById('cast-leave-overlay');
+  if (el && pw && el.parentNode !== pw) pw.appendChild(el);
+})();
 
 function relocatePopupsForFullscreen(entering) {
   FS_RELOCATE_IDS.forEach(id => {
@@ -7373,6 +7452,10 @@ video.addEventListener('timeupdate', maybeShowUpNext);
 video.addEventListener('ended', handleVideoEnded);
 video.addEventListener('waiting', showSpinner);
 video.addEventListener('playing', hideSpinner);
+// Une lecture qui reprend correctement = la source est de nouveau saine,
+// on remet le compteur de tentatives de reconnexion à zéro, et on retient
+// qu'elle a bel et bien démarré (voir srcHasStartedThisLoad / handleSourceFailure).
+video.addEventListener('playing', () => { srcRetryCount = 0; srcHasStartedThisLoad = true; });
 video.addEventListener('canplay', hideSpinner);
 video.addEventListener('loadeddata', hideSpinner);
 video.addEventListener('loadedmetadata', () => {
@@ -9199,7 +9282,16 @@ function wpPushStateThrottled() {
 }
 
 function stopWatchParty() {
-  if (wpRoomCode) window.wpRemove(window.wpRef(window.wpDB, `watchparties/${wpRoomCode}`));
+  if (wpRoomCode) {
+    const roomRef = window.wpRef(window.wpDB, `watchparties/${wpRoomCode}`);
+    // Fermeture VOLONTAIRE : on remplace le contenu du salon par un simple
+    // marqueur "fermé par l'hôte" au lieu de le supprimer instantanément —
+    // ça laisse aux invités le temps de le lire (voir wpFetchRoomStatus) et
+    // d'afficher "L'hôte a terminé la Watch Party" plutôt qu'un message de
+    // problème technique. Suppression pour de bon un peu plus tard.
+    window.wpSet(roomRef, { closedByHost: true, closedAt: Date.now() }).catch(() => {});
+    setTimeout(() => { window.wpRemove(roomRef).catch(() => {}); }, 60000);
+  }
   video.removeEventListener('play', wpPushStateThrottled);
   video.removeEventListener('pause', wpPushStateThrottled);
   video.removeEventListener('seeked', wpPushStateThrottled);
@@ -9362,7 +9454,15 @@ function joinWatchParty(code, onDone, viaLink) {
       snap => {
         wpConnErrorMsg = null;
         const s = snap.val();
-        if (!s) { wpShowEndedNotice(); return; }
+        if (!s) {
+          const code = wpRoomCode;
+          wpFetchRoomStatus(code).then(res => {
+            if (!wpRoomCode || wpRoomCode !== code) return;
+            if (res.status === 'closed') wpShowEndedNotice();
+            else wpHandleConnectionIssue();
+          });
+          return;
+        }
         wpApplyRemoteState(s);
       },
       err => {
@@ -9560,6 +9660,21 @@ function wpBanMember(id, pseudo) {
 // Détecte si NOTRE PROPRE entrée membre disparaît (banni par l'hôte) pour
 // distinguer ça d'un départ volontaire (leaveWatchParty met wpSelfLeaving à
 // true juste avant de se retirer soi-même).
+// Une Watch Party peut disparaître de Firebase pour 2 raisons bien
+// différentes : fermeture VOLONTAIRE par l'hôte (bouton "Terminer"), ou
+// coupure de connexion (chez l'hôte ou chez soi). Comme les deux vident le
+// salon de la même façon, l'hôte pose un marqueur `closedByHost` avant de
+// fermer volontairement (voir stopWatchParty) — on le vérifie ici pour
+// afficher le bon message plutôt que de supposer "l'hôte a terminé" à
+// chaque disparition.
+function wpFetchRoomStatus(code) {
+  return window.wpGet(window.wpRef(window.wpDB, `watchparties/${code}`)).then(snap => {
+    if (!snap.exists()) return { status: 'gone' };
+    const val = snap.val() || {};
+    return { status: val.closedByHost ? 'closed' : 'exists', val };
+  }).catch(() => ({ status: 'gone' }));
+}
+
 function wpListenSelfMembership() {
   if (wpSelfMemberUnsub) { wpSelfMemberUnsub(); wpSelfMemberUnsub = null; }
   const ref = window.wpRef(window.wpDB, `watchparties/${wpRoomCode}/members/${wpMemberId}`);
@@ -9567,18 +9682,29 @@ function wpListenSelfMembership() {
   wpSelfMemberUnsub = window.wpOnValue(ref, snap => {
     if (firstSnapshot) { firstSnapshot = false; return; } // évite de réagir à notre propre écriture initiale
     if (!snap.exists() && !wpSelfLeaving && wpRoomCode) {
-      // Notre entrée membre a disparu : ça peut être un bannissement ciblé
-      // (le salon existe toujours) OU la conséquence d'une fermeture globale
-      // de la Watch Party par l'hôte (tout le salon, membres compris, a été
-      // supprimé). On vérifie l'existence du salon pour afficher le bon
-      // message plutôt que d'annoncer un bannissement à tort.
+      // Notre entrée membre a disparu : plusieurs causes possibles —
+      // 1) un bannissement ciblé par l'hôte (le salon existe toujours ET on
+      //    est bien dans banned/{notreId}) ;
+      // 2) une fermeture globale de la Watch Party (tout le salon a été
+      //    supprimé) ;
+      // 3) BUG FIX : une simple coupure de connexion/déconnexion (le salon
+      //    existe toujours mais on n'a PAS été banni) — avant, ce cas
+      //    affichait à tort "Tu as été banni" alors qu'il s'agissait d'un
+      //    problème réseau/technique. On vérifie donc explicitement
+      //    banned/{notreId} avant d'afficher le message de bannissement.
       const code = wpRoomCode;
-      window.wpGet(window.wpRef(window.wpDB, `watchparties/${code}`)).then(roomSnap => {
+      const memberId = wpMemberId;
+      wpFetchRoomStatus(code).then(res => {
         if (!wpRoomCode || wpRoomCode !== code) return; // état déjà changé entre-temps (ex: on a déjà rejoint autre chose)
-        if (roomSnap.exists()) wpHandleKicked();
-        else wpShowEndedNotice();
-      }).catch(() => {
-        if (wpRoomCode === code) wpHandleKicked();
+        if (res.status === 'closed') { wpShowEndedNotice(); return; }
+        if (res.status === 'gone') { wpHandleConnectionIssue(); return; }
+        window.wpGet(window.wpRef(window.wpDB, `watchparties/${code}/banned/${memberId}`)).then(banSnap => {
+          if (!wpRoomCode || wpRoomCode !== code) return;
+          if (banSnap.exists()) wpHandleKicked();
+          else wpHandleConnectionIssue();
+        }).catch(() => {
+          if (wpRoomCode === code) wpHandleConnectionIssue();
+        });
       });
     }
   });
@@ -9593,6 +9719,22 @@ function wpHandleKicked() {
   document.getElementById('watchparty-btn').classList.remove('wp-live');
   wpExitRoomUI();
   wpShowEndedPopup(tr('watchparty_kicked_title'), tr('watchparty_kicked_sub'));
+  renderWatchPartyPanel();
+  renderCloudflareSources();
+}
+
+// Même sortie de salon que wpHandleKicked, mais pour un problème de
+// connexion/technique (notre entrée membre a disparu sans qu'on soit
+// réellement banni) — on ne veut PAS afficher "Tu as été banni" dans ce cas.
+function wpHandleConnectionIssue() {
+  if (wpUnsubscribe) { wpUnsubscribe(); wpUnsubscribe = null; }
+  video.removeEventListener('play', wpSuppressAutoplay);
+  wpWaitingFirstSync = false;
+  wpTeardownRoomListeners();
+  wpIsGuest = false; wpIsHost = false; wpRoomCode = null; wpMemberId = null; wpCurrentHostId = null;
+  document.getElementById('watchparty-btn').classList.remove('wp-live');
+  wpExitRoomUI();
+  wpShowEndedPopup(tr('watchparty_conn_issue_title'), tr('watchparty_conn_issue_sub'), 'warning');
   renderWatchPartyPanel();
   renderCloudflareSources();
 }
@@ -9692,7 +9834,15 @@ function wpBecomeGuest() {
   wpUnsubscribe = window.wpOnValue(stateRef, snap => {
     wpConnErrorMsg = null;
     const s = snap.val();
-    if (!s) { wpShowEndedNotice(); return; }
+    if (!s) {
+      const code = wpRoomCode;
+      wpFetchRoomStatus(code).then(res => {
+        if (!wpRoomCode || wpRoomCode !== code) return;
+        if (res.status === 'closed') wpShowEndedNotice();
+        else wpHandleConnectionIssue();
+      });
+      return;
+    }
     wpApplyRemoteState(s);
   });
   renderCloudflareSources();
@@ -10014,10 +10164,21 @@ function wpApplyRemoteState(s) {
   setTimeout(() => { wpApplyingRemote = false; }, 300);
 }
 
-function wpShowEndedPopup(title, msg) {
+// icon: 'ban' (banni / salon fermé, icône par défaut) ou 'warning' (problème
+// technique — même triangle d'alerte que les autres popups du lecteur, ex.
+// #src-error-modal / #recent-modal, pour rester cohérent visuellement).
+const WP_ENDED_ICONS = {
+  ban: '<svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="17" y1="8" x2="23" y2="14"/><line x1="23" y1="8" x2="17" y2="14"/></svg>',
+  warning: '<svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v4m0 4h.01M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"/></svg>',
+};
+function wpShowEndedPopup(title, msg, icon) {
   const overlay = document.getElementById('wp-ended-overlay');
   document.getElementById('wp-ended-title').textContent = title || tr('watchparty_ended_title');
   document.getElementById('wp-ended-msg').textContent = msg || tr('watchparty_ended');
+  const iconEl = document.getElementById('wp-ended-icon');
+  if (iconEl) iconEl.innerHTML = WP_ENDED_ICONS[icon] || WP_ENDED_ICONS.ban;
+  const card = document.getElementById('wp-ended-card');
+  if (card) card.classList.toggle('warn', icon === 'warning');
   overlay.classList.add('show');
   requestAnimationFrame(() => requestAnimationFrame(() => overlay.classList.add('in')));
 }
@@ -10282,6 +10443,55 @@ let srcErrorPending = false;
 let srcErrorCountdownInterval = null;
 let srcErrorPopupResolve = null;
 let srcErrorCancelled = false;
+// true dès que la source en cours a réussi à démarrer au moins une fois
+// depuis son chargement (voir loadMedia) — sert à distinguer un échec AU
+// LANCEMENT (jamais démarré) d'une panne EN COURS DE LECTURE.
+let srcHasStartedThisLoad = false;
+
+// ── RECONNEXION SUR PLACE (Watch Party + solo en cours de lecture) ──
+// Changer de source automatiquement pendant que ça lit déjà pose problème :
+// en Watch Party ça désynchronise tout le monde (les invités sont verrouillés
+// sur la source de l'hôte), et en solo ça interrompt une lecture qui allait
+// bien pour une simple coupure passagère. Dans ces deux cas, on ne change
+// PLUS de source tout seul : on affiche le cercle de chargement et on
+// retente la MÊME source quelques fois.
+// Seule exception : un échec AU LANCEMENT en solo (la source n'a jamais
+// réussi à démarrer du tout) garde l'ancien comportement utile — proposer de
+// passer à la source suivante (voir srcHasStartedThisLoad plus bas).
+const SRC_RETRY_MAX = 3;
+const SRC_RETRY_DELAY = 2500;
+let srcRetryCount = 0;
+let srcRetryTimer = null;
+
+function retryCurrentSourceAfterFailure() {
+  srcRetryCount++;
+  if (srcRetryCount > SRC_RETRY_MAX) {
+    srcRetryCount = 0;
+    srcErrorPending = false;
+    hideSpinner();
+    // Watch Party : hôte -> proposer de fermer/transférer ; invité -> popup
+    // "problème technique". Solo (panne en cours de lecture, tentatives
+    // épuisées) : on retombe sur l'ancien comportement, proposer la source
+    // suivante via la popup de compte à rebours habituelle.
+    if (wpIsHost) { wpOpenHostCloseModal(); return; }
+    if (wpIsGuest) { wpHandleConnectionIssue(); return; }
+    srcErrorPending = true;
+    enqueuePopup(POPUP_PRIORITY.srcError, () => {
+      if (srcErrorCancelled) { srcErrorPending = false; return; }
+      return new Promise(resolve => {
+        srcErrorPopupResolve = resolve;
+        showSourceErrorPopup();
+      });
+    });
+    return;
+  }
+  clearTimeout(srcRetryTimer);
+  srcRetryTimer = setTimeout(() => {
+    srcErrorPending = false; // autorise une nouvelle détection si cette tentative échoue aussi
+    if (!currentSources || !currentSources[currentSourceIndex]) return;
+    selectCloudflareSource(currentSourceIndex, { bypassLock: true, forceReload: true });
+  }, SRC_RETRY_DELAY);
+}
 
 function handleSourceFailure() {
   if (pw.classList.contains('embed-mode')) return; // un embed gère ses propres erreurs
@@ -10289,6 +10499,18 @@ function handleSourceFailure() {
   srcErrorPending = true;
   srcErrorCancelled = false;
   hideError();
+  // Cercle de chargement affiché dès la détection du problème, pendant toute
+  // la recherche/reconnexion — solo, hôte ET invité.
+  showSpinner();
+
+  // Watch Party : toujours retenter sur place. Solo : retenter sur place
+  // UNIQUEMENT si la source avait déjà démarré (panne en cours de lecture) —
+  // sinon (échec au lancement), ancien comportement plus bas.
+  if (wpIsHost || wpIsGuest || srcHasStartedThisLoad) {
+    retryCurrentSourceAfterFailure();
+    return;
+  }
+
   enqueuePopup(POPUP_PRIORITY.srcError, () => {
     if (srcErrorCancelled) { srcErrorPending = false; return; }
     return new Promise(resolve => {
@@ -10369,6 +10591,7 @@ function goToNextSourceAfterError() {
     showActionToast(tr('source_changed_toast').replace('{source}', escapeHTML(sourceLabel(currentSources[nextId]))));
   } else {
     // Plus aucune source suivante disponible dans la liste.
+    hideSpinner();
     showError(preferredLang === 'fr' ? 'Aucune autre source disponible.' : 'No other source available.');
   }
 }
@@ -10898,7 +11121,7 @@ function retryFinepulfeExtensionCheck() {
   extRetryInFlight = true;
   document.getElementById('ext-overlay').classList.remove('open');
   extRetryPending = true;
-  selectCloudflareSource(currentSourceIndex, { bypassLock: true });
+  selectCloudflareSource(currentSourceIndex, { bypassLock: true, forceReload: true });
 }
 
 // Bouton "Réessayer" de la popup de confirmation ("Extension bien
