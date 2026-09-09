@@ -7005,6 +7005,10 @@ function castLoadMedia(explicitStartTime) {
       // castSyncPlayPause/castSyncSeek et l'écouteur IS_PAUSED_CHANGED).
       castState.note = '';
       castSetupRemotePlayer();
+      // Nouveau média chargé avec autoplay=true : on repart sur un état
+      // "en lecture" supposé, plutôt que de garder l'hypothèse pause/lecture
+      // de l'épisode précédent.
+      castRemoteAssumedPaused = false;
       castRefresh();
       closeCastMenu();
       // Filet de sécurité : certains récepteurs (surtout en HLS) ignorent
@@ -7055,6 +7059,10 @@ function castStop() {
   castState.connected = false;
   castState.connecting = false;
   castState.airplayOn = false;
+  // On efface l'état supposé du récepteur : une prochaine session Cast
+  // repartira sur l'état réellement confirmé par le SDK, pas sur une
+  // hypothèse héritée de la session précédente.
+  castRemoteAssumedPaused = null;
   castRefresh();
 }
 
@@ -7113,14 +7121,27 @@ function castApplyChromecastState(state) {
 // deux sens : une commande locale (lecture/pause/avance/recul) est répercutée
 // sur le récepteur (castSyncPlayPause/castSyncSeek), et une pause/reprise
 // lancée depuis la TV/l'appli Google Home est répercutée sur la vidéo locale
-// (écouteur IS_PAUSED_CHANGED ci-dessous). Le garde anti-boucle évite qu'une
-// mise à jour venant du récepteur ne redéclenche aussitôt une commande vers
-// ce même récepteur.
+// (écouteur IS_PAUSED_CHANGED ci-dessous).
+//
+// Il n'y a PAS de garde anti-boucle ici : castSyncPlayPause/castSyncSeek ne
+// sont déclenchés QUE par une action explicite de l'utilisateur (bouton
+// lecture/pause, avance/recul, glissement de la barre de progression) — et
+// jamais automatiquement par l'écouteur IS_PAUSED_CHANGED lui-même, qui se
+// contente d'appliquer l'état sur la vidéo locale sans jamais renvoyer de
+// commande vers le récepteur.
+//
+// castRemoteAssumedPaused retient l'état lecture/pause qu'on VIENT
+// d'envoyer au récepteur, mis à jour immédiatement (de façon optimiste),
+// sans attendre la confirmation réseau. Sans ça, en cliquant vite deux fois
+// (ex: pause puis play dans la même seconde), la 2e commande se basait sur
+// castRemotePlayer.isPaused — qui ne reflète QUE le dernier état CONFIRMÉ
+// par le récepteur, donc encore l'ancien état tant que la 1re commande n'a
+// pas fini son aller-retour réseau — et concluait à tort qu'aucune commande
+// n'était nécessaire : le récepteur restait bloqué sur pause alors que la
+// vidéo locale, elle, était repartie en lecture.
 let castRemotePlayer = null;
 let castRemotePlayerController = null;
-let castSyncGuardUntil = 0;
-function castSyncGuardActive() { return Date.now() < castSyncGuardUntil; }
-function castSyncGuard(ms) { castSyncGuardUntil = Date.now() + (ms || 600); }
+let castRemoteAssumedPaused = null;
 
 function castRemoteActive() {
   return !!(castState.connected && castRemotePlayer && castRemotePlayerController && castRemotePlayer.isMediaLoaded);
@@ -7128,16 +7149,19 @@ function castRemoteActive() {
 
 // Aligne l'état lecture/pause du récepteur sur celui demandé localement.
 function castSyncPlayPause(shouldPlay) {
-  if (!castRemoteActive() || castSyncGuardActive()) return;
+  if (!castRemoteActive()) return;
   try {
-    const isPaused = !!castRemotePlayer.isPaused;
-    if (shouldPlay === isPaused) castRemotePlayerController.playOrPause();
+    const isPaused = castRemoteAssumedPaused != null ? castRemoteAssumedPaused : !!castRemotePlayer.isPaused;
+    if (shouldPlay === isPaused) {
+      castRemotePlayerController.playOrPause();
+      castRemoteAssumedPaused = !isPaused; // mise à jour optimiste, avant confirmation réseau
+    }
   } catch (err) {}
 }
 
 // Aligne la position de lecture du récepteur sur celle de la vidéo locale.
 function castSyncSeek(time) {
-  if (!castRemoteActive() || castSyncGuardActive() || !isFinite(time)) return;
+  if (!castRemoteActive() || !isFinite(time)) return;
   try {
     castRemotePlayer.currentTime = time;
     castRemotePlayerController.seek();
@@ -7152,18 +7176,24 @@ function castSetupRemotePlayer() {
     castRemotePlayerController = new cast.framework.RemotePlayerController(castRemotePlayer);
     // Pause/reprise lancée depuis la TV, la télécommande ou l'appli Google
     // Home (donc PAS depuis nos propres boutons) : on répercute l'état sur
-    // la vidéo locale pour que les deux restent bien ensemble.
+    // la vidéo locale pour que les deux restent bien ensemble. On ne
+    // touche jamais à video.play()/video.pause() si l'état local correspond
+    // déjà (les conditions ci-dessous), donc aucun risque de boucle avec
+    // castSyncPlayPause. On met aussi à jour castRemoteAssumedPaused ici :
+    // c'est la seule source 100% fiable de l'état réel du récepteur.
     castRemotePlayerController.addEventListener(
       cast.framework.RemotePlayerEventType.IS_PAUSED_CHANGED,
       () => {
         if (!castRemoteActive()) return;
-        castSyncGuard();
+        castRemoteAssumedPaused = !!castRemotePlayer.isPaused;
         if (castRemotePlayer.isPaused && !video.paused) video.pause();
         else if (!castRemotePlayer.isPaused && video.paused) video.play().catch(() => {});
       }
     );
   } catch (err) {}
 }
+
+
 
 function castInitChromecast() {
   if (castState.sdkReady) return true;
