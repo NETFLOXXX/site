@@ -104,6 +104,19 @@
     from { opacity:0; transform:translateY(6px); }
     to   { opacity:1; transform:translateY(0); }
   }
+  /* ── points de suspension animés affichés à la place du titre tant qu'on
+     ne connaît pas encore le nom du film/de la série (avant réponse TMDB) ── */
+  .gather-target-dots { display:inline-flex; align-items:center; gap:6px; }
+  .gather-target-dots span {
+    width:8px; height:8px; border-radius:50%; background:rgba(255,255,255,0.55);
+    animation:gather-dot-bounce 1.1s ease-in-out infinite;
+  }
+  .gather-target-dots span:nth-child(2) { animation-delay:0.15s; }
+  .gather-target-dots span:nth-child(3) { animation-delay:0.3s; }
+  @keyframes gather-dot-bounce {
+    0%, 60%, 100% { opacity:0.35; transform:translateY(0) scale(0.85); }
+    30% { opacity:1; transform:translateY(-5px) scale(1); }
+  }
   #gather-screen .gather-sub {
     font-family:'Outfit',sans-serif; font-size:0.8rem; font-weight:500; color:rgba(255,255,255,0.5);
     text-align:center; max-width:320px; min-height:1.2em;
@@ -127,6 +140,16 @@
   /* VIDEO — grayscale instantané à la pause */
   video { width:100%; height:100%; object-fit:contain; display:block; }
   #player-wrap.paused video { filter:grayscale(1); }
+
+  /* ── IMAGE GELÉE PENDANT UNE RECONNEXION ──
+     BUG FIX : sans connexion, chaque nouvelle tentative vide le <video>
+     (video.src=''), ce qui faisait disparaître l'image au profit d'un fond
+     noir après quelques tentatives. On affiche à la place la dernière image
+     valable, figée, jusqu'à ce que la lecture reprenne réellement. */
+  #freeze-frame {
+    position:absolute; inset:0; width:100%; height:100%; object-fit:contain;
+    display:none; pointer-events:none; z-index:1;
+  }
 
   /* gradients */
   .overlay-gradient {
@@ -1368,19 +1391,24 @@
     display:flex; align-items:center; justify-content:space-between;
     margin:2px 12px 2px 26px; padding:11px 16px; border-radius:10px; cursor:pointer;
     font-size:0.9rem; color:rgba(255,255,255,0.8);
-    border:1px solid transparent; transition:background .15s,border-color .15s,color .15s;
+    border:1px solid transparent; transition:background .15s,border-color .15s,color .15s,box-shadow .15s;
   }
   .src-row:hover { background:rgba(255,255,255,0.06); }
-  .src-row.active { background:rgba(220,38,38,0.14); border-color:var(--red); color:#fff; }
+  .src-row.active {
+    background:rgba(220,38,38,0.14); border-color:transparent; color:#fff;
+    box-shadow:inset 3px 0 0 var(--red);
+  }
 
   .src-group-header {
     display:flex; align-items:center; justify-content:space-between;
     margin:2px 12px 2px 26px; padding:11px 16px; border-radius:10px; cursor:pointer;
     font-size:0.9rem; color:rgba(255,255,255,0.8);
-    border:1px solid transparent; transition:background .15s,border-color .15s,color .15s;
+    border:1px solid transparent; transition:background .15s,border-color .15s,color .15s,box-shadow .15s;
   }
   .src-group-header:hover { background:rgba(255,255,255,0.06); }
-  .src-group-header.active-parent { border-color:var(--red); color:#fff; }
+  /* Indicateur discret (juste une fine barre à gauche, pas un contour complet)
+     pour signaler que l'élément actif se trouve DANS ce groupe replié. */
+  .src-group-header.active-parent { border-color:transparent; color:#fff; box-shadow:inset 2px 0 0 rgba(220,38,38,0.55); }
   .group-triangle {
     width:0; height:0; border-left:4px solid transparent; border-right:4px solid transparent;
     border-top:5px solid rgba(255,255,255,0.5); transition:transform .2s; transform:rotate(-90deg); flex-shrink:0;
@@ -1390,11 +1418,14 @@
     display:none; align-items:center; justify-content:space-between;
     margin:2px 12px 2px 44px; padding:9px 16px; border-radius:9px; cursor:pointer;
     font-size:0.85rem; color:rgba(255,255,255,0.7);
-    border:1px solid transparent; transition:background .15s,border-color .15s,color .15s;
+    border:1px solid transparent; transition:background .15s,border-color .15s,color .15s,box-shadow .15s;
   }
   .src-subrow:hover { background:rgba(255,255,255,0.06); }
   .src-group.open .src-subrow { display:flex; }
-  .src-subrow.active { background:rgba(220,38,38,0.14); border-color:var(--red); color:#fff; }
+  .src-subrow.active {
+    background:rgba(220,38,38,0.14); border-color:transparent; color:#fff;
+    box-shadow:inset 3px 0 0 var(--red);
+  }
 
   /* ── Watch Party : sources non compatibles grisées et non cliquables ──
      (pointer-events reste actif exprès : on veut pouvoir détecter le survol
@@ -2199,13 +2230,20 @@
     position:fixed; inset:0; z-index:2100;
     background:rgba(0,0,0,0.78); backdrop-filter:blur(10px);
     display:none; align-items:center; justify-content:center; padding:20px;
+    opacity:1; transition:opacity 0.4s ease;
   }
   #src-error-overlay.open { display:flex; }
+  /* Animation de sortie : plutôt qu'une disparition instantanée, on laisse
+     la popup se refermer en fondu + léger retrait avant de la retirer du
+     flux (voir closeSrcErrorOverlayAnimated en JS). */
+  #src-error-overlay.closing { opacity:0; }
+  #src-error-overlay.closing #src-error-modal { transform:scale(0.94) translateY(8px); }
   #src-error-modal {
     width:100%; max-width:420px; background:linear-gradient(180deg, #1c1c1c, #131313);
     border:1px solid rgba(255,255,255,0.1); border-radius:20px;
     padding:32px 30px 28px; box-shadow:0 30px 70px rgba(0,0,0,0.7);
     animation:ab-pop 0.3s cubic-bezier(0.34,1.56,0.64,1);
+    transition:transform 0.4s ease;
     font-family:'Outfit',sans-serif; text-align:center;
   }
   #src-error-modal .ab-icon {
@@ -2225,8 +2263,17 @@
     cursor:pointer; transition:background 0.2s, transform 0.15s; text-align:center;
   }
   #src-error-modal button.ab-action:active { transform:scale(0.98); }
-  #src-error-modal button.ab-primary { background:var(--red); color:#fff; }
-  #src-error-modal button.ab-primary:hover { background:var(--red-h); }
+  #src-error-modal button.ab-primary { padding:16px 16px; font-size:1rem; font-weight:700; background:var(--red); color:#fff; }
+  #src-error-modal button.ab-primary:hover { background:var(--red-h); transform:scale(1.03); }
+  #src-error-modal button.ab-ghost {
+    background:none; color:rgba(255,255,255,0.55); padding:12px; font-size:0.95rem; font-weight:700;
+    border:1px solid transparent; border-top:1px solid rgba(255,255,255,0.07); border-radius:12px; margin-top:4px; padding-top:16px;
+    transition: color 0.2s, transform 0.15s;
+  }
+  #src-error-modal button.ab-ghost:hover { color:rgba(255,255,255,0.75); transform:scale(1.03); }
+  #src-error-modal button.ab-ghost:active { transform:scale(0.98); }
+  #src-error-modal button.ab-ghost:focus,
+  #src-error-modal button.ab-ghost:focus-visible { outline:none; }
 
   /* ── POPUP "FILM RÉCENT" (qualité potentiellement mauvaise) ── */
   #recent-overlay {
@@ -2336,6 +2383,7 @@
 <!-- PLAYER -->
 <div id="player-wrap">
   <video id="video" playsinline x-webkit-airplay="allow" disableRemotePlayback></video>
+  <canvas id="freeze-frame"></canvas>
   <iframe id="embed-frame" src="about:blank" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe>
   <div class="overlay-gradient"></div>
   <div class="overlay-top"></div>
@@ -2413,7 +2461,7 @@
     <div id="title-text">
       <h3 id="media-title" data-i18n="default_media_title">Flux vidéo</h3>
       <p id="media-episode"></p>
-      <p id="media-duration" data-i18n="duration_unknown">Durée : --</p>
+      <p id="media-duration" data-i18n="duration_unknown">0:00 / --:--</p>
     </div>
   </div>
 
@@ -3009,7 +3057,9 @@
   </div>
 </div>
 
-<!-- POPUP "PETIT PROBLÈME TECHNIQUE" (source en erreur -> changement auto) -->
+<!-- POPUP "PETIT PROBLÈME TECHNIQUE" (source en erreur -> changement auto,
+     OU perte de connexion prolongée en cours de lecture -> choix utilisateur,
+     voir showSourceErrorPopup) -->
 <div id="src-error-overlay">
   <div id="src-error-modal">
     <div class="ab-icon">
@@ -3019,6 +3069,7 @@
     <p id="src-error-text">Changement de source automatique dans <span id="src-error-count">5</span>...</p>
     <div class="ab-btns">
       <button class="ab-action ab-primary" id="src-error-skip-btn" onclick="skipSourceErrorCountdown()">Passer maintenant</button>
+      <button class="ab-action ab-ghost" id="src-error-stay-btn" onclick="retrySourceErrorReconnect()" style="display:none;">Réessayer</button>
     </div>
   </div>
 </div>
@@ -3102,7 +3153,7 @@ function showGatherScreen() {
     ? ['Recherche des sources disponibles…', 'Vérification des lecteurs…', 'Sélection du meilleur flux…', 'Optimisation de la qualité…', 'Presque prêt…', 'Interrogation des serveurs…', 'Analyse des flux trouvés…', 'Test de la stabilité du lien…', 'Préparation du sous-titrage…', 'Dernière vérification…']
     : ['Looking for available sources…', 'Checking players…', 'Selecting the best stream…', 'Optimizing quality…', 'Almost there…', 'Querying servers…', 'Analyzing found streams…', 'Testing link stability…', 'Preparing subtitles…', 'Final check…'];
   eyebrow.textContent = preferredLang === 'fr' ? 'Préparation du flux pour' : 'Preparing your stream for';
-  target.textContent = preferredLang === 'fr' ? 'Chargement…' : 'Loading…';
+  target.innerHTML = '<span class="gather-target-dots"><span></span><span></span><span></span></span>';
   document.getElementById('gather-episode').innerHTML = '';
 
   clearInterval(gatherMsgInterval);
@@ -3384,7 +3435,7 @@ const I18N = {
   nav_next_title: { fr: 'Suivant', en: 'Next' },
   nav_next_label: { fr: 'Suivant', en: 'Next' },
   default_media_title: { fr: 'Flux vidéo', en: 'Video stream' },
-  duration_unknown: { fr: 'Durée : --', en: 'Duration: --' },
+  duration_unknown: { fr: '0:00 / --:--', en: '0:00 / --:--' },
   time_display_title: { fr: 'Cliquer pour le temps restant', en: 'Click for remaining time' },
   settings_title: { fr: 'Paramètres', en: 'Settings' },
   tab_sources: { fr: 'Sources', en: 'Sources' },
@@ -3970,6 +4021,15 @@ function formatRuntime(minutes) {
   return h > 0 ? `${h} h${min ? ` ${min} min` : ''}` : `${min} min`;
 }
 
+// Formate une durée (en minutes) au même format que la barre de progression
+// (ex: "2:24:00"), précédée du temps courant "0:00" tant que la vidéo n'a pas
+// démarré. Une fois la lecture lancée, updateTimeDisplay() prend le relais
+// et remplace cette valeur par le temps réel écoulé.
+function formatRuntimeAsTime(minutes) {
+  if (!minutes || !isFinite(minutes)) return tr('duration_unknown');
+  return `0:00 / ${fmt(minutes * 60)}`;
+}
+
 function applyTMDBInfo(info, id, season=null, episode=null) {
   const titleEl = document.getElementById('media-title');
   const posterEl = document.getElementById('title-poster');
@@ -3993,7 +4053,7 @@ function applyTMDBInfo(info, id, season=null, episode=null) {
           : `${info.title}: Season ${season} · Episode ${episode}`)
       : info.title;
 
-    durationEl.textContent = (preferredLang === 'fr' ? 'Durée : ' : 'Duration: ') + formatRuntime(info.runtime);
+    durationEl.textContent = formatRuntimeAsTime(info.runtime);
   } else {
     titleEl.textContent = `TMDB ${id}`;
     document.title = `TMDB ${id}`;
@@ -4162,7 +4222,7 @@ async function loadSeriesByTMDB() {
     );
     if (epRes.ok) {
       const ep = await epRes.json();
-      if (ep.runtime) document.getElementById('media-duration').textContent = (preferredLang === 'fr' ? 'Durée : ' : 'Duration: ') + formatRuntime(ep.runtime);
+      if (ep.runtime) document.getElementById('media-duration').textContent = formatRuntimeAsTime(ep.runtime);
     }
   } catch (e) {}
 
@@ -4224,17 +4284,10 @@ async function fetchTMDBSources(id, type, season, episode, allowSeriesFallback=f
       console.error('Source directe net-flox indisponible:', e);
     }
 
-    // Idem pour le Worker "mr-wolf-yt" : flux HLS direct en anglais (VO), récupéré
-    // dès maintenant pour la même raison (ne pas sortir en erreur trop tôt s'il
-    // finit par être la seule source disponible).
-    let mrWolfEarlySources = [];
-    try {
-      mrWolfEarlySources = await fetchMrWolfDirectStream(id, type, season, episode);
-    } catch (e) {
-      console.error('Source directe mr-wolf-yt indisponible:', e);
-    }
+    // Idem pour le Worker "mr-wolf-yt" : flux HLS direct en anglais (VO) — retiré
+    // (le Worker n'est plus interrogé).
 
-    if (!entries.length && !netfloxEarlySources.length && !mrWolfEarlySources.length) {
+    if (!entries.length && !netfloxEarlySources.length) {
       if (allowSeriesFallback) {
         showEpisodeFields(true);
         setStatus(preferredLang === 'fr' ? 'Aucun lien vidéo trouvé sur /movies/. Si c’est une série, indique la saison et l’épisode.' : 'No video link found on /movies/. If it’s a series, enter the season and episode.');
@@ -4413,26 +4466,8 @@ async function fetchTMDBSources(id, type, season, episode, allowSeriesFallback=f
       processed.splice(insertAt, 0, netSrc);
     });
 
-    // Source directe HLS (Worker "mr-wolf-yt") récupérée plus haut. Elle est
-    // toujours en anglais (VO) : on l'insère explicitement JUSTE APRÈS la (les)
-    // source(s) finepulfe anglaises, exactement comme pour net-flox ci-dessus —
-    // donc toujours juste après finepulfe dans l'onglet Anglais, quel que soit
-    // l'ordre de push dans le tableau "processed".
-    mrWolfEarlySources.forEach(mwSrc => {
-      let insertAt = -1;
-      for (let i = processed.length - 1; i >= 0; i--) {
-        const s = processed[i];
-        if (s.lang === mwSrc.lang && s.isDirect && isFinepulfeHost(s.hostname)) {
-          insertAt = i + 1;
-          break;
-        }
-      }
-      if (insertAt === -1) {
-        insertAt = processed.findIndex(s => s.lang === mwSrc.lang && s.isDirect);
-        if (insertAt === -1) insertAt = processed.length;
-      }
-      processed.splice(insertAt, 0, mwSrc);
-    });
+    // Source directe HLS (Worker "mr-wolf-yt") — retirée (le Worker n'est plus
+    // interrogé, plus d'insertion de source ici).
 
     // Nouvelle source directe VO (1embed.cc, token + proxy_m3u8) ajoutée manuellement
     // dans l'onglet Anglais / Lecteur NETFLOX (flux direct, comme les autres lecteurs directs).
@@ -4554,6 +4589,7 @@ async function fetchTMDBSources(id, type, season, episode, allowSeriesFallback=f
       sourceToSelect = processed.findIndex(s => s.lang === sortLang && !s.isDirect);
     }
     if (sourceToSelect < 0) sourceToSelect = 0;
+    userWantsPlaying = true; // un nouveau contenu se lance en lecture par défaut, quel que soit l'état du précédent
     selectCloudflareSource(sourceToSelect, { bypassLock: true, noResume: true });
     setStatus('', false);
     return true;
@@ -4789,46 +4825,8 @@ async function fetchNetFloxDirectStream(id, type, season, episode) {
   }
 }
 
-// ── Nouvelle source directe HLS anglaise (Worker "mr-wolf-yt") ──
-// Endpoints :
-//   Film   -> ?id={id_tmdb}&type=movie
-//   Série  -> ?id={id_tmdb}&type=tv&s={saison}&e={episode}
-// Réponse : { success, streams: { raw_m3u8, proxy_m3u8, ... , format:"hls" }, audioTracks:[...] }
-// Toujours de l'audio anglais (VO) d'après "audioTracks" : la source est donc
-// systématiquement ajoutée en lang:'en', isDirect:true (flux direct, onglet
-// "Lecteur NETFLOX" anglais), et positionnée juste après finepulfe (voir l'appel
-// dans fetchTMDBSources). On utilise "proxy_m3u8" (avec referer/origin déjà
-// intégrés dans l'URL) plutôt que "raw_m3u8" pour éviter les soucis CORS/referer.
-const MRWOLF_API_BASE = 'https://netfloxxx.mr-wolf-yt.workers.dev';
-
-async function fetchMrWolfDirectStream(id, type, season, episode) {
-  const qs = type === 'tv'
-    ? `?id=${encodeURIComponent(id)}&type=tv&s=${encodeURIComponent(season)}&e=${encodeURIComponent(episode)}`
-    : `?id=${encodeURIComponent(id)}&type=movie`;
-
-  try {
-    const response = await fetch(`${MRWOLF_API_BASE}/${qs}`, {
-      method: 'GET',
-      headers: { 'Accept': 'application/json,text/plain,*/*' }
-    });
-    if (!response.ok) return [];
-
-    let data;
-    try { data = await response.json(); } catch (e) { return []; }
-    if (!data || typeof data !== 'object' || !data.streams) return [];
-
-    const url = data.streams.proxy_m3u8 || data.streams.raw_m3u8;
-    if (!url || typeof url !== 'string') return [];
-
-    let hostname = '';
-    try { hostname = new URL(url).hostname.replace(/^www\./, ''); } catch (e) {}
-
-    return [{ url, lang: 'en', isDirect: true, hostname, known: null }];
-  } catch (e) {
-    console.error('fetchMrWolfDirectStream error:', e);
-    return [];
-  }
-}
+// ── Ancienne source directe HLS anglaise (Worker "mr-wolf-yt") — retirée :
+// le Worker https://netfloxxx.mr-wolf-yt.workers.dev/ n'est plus interrogé.
 
 function matchKnownHost(hostname) {
   const h = (hostname || '').toLowerCase();
@@ -5316,13 +5314,28 @@ function selectCloudflareSource(id, opts) {
   // Pas de reprise pour la toute première sélection auto d'un NOUVEAU
   // contenu (noResume) : le temps affiché serait celui de la vidéo
   // précédente, pas pertinent ici.
-  const estimatedTime = getEstimatedCurrentTime();
-  const resumeTime = (changed && !opts.noResume && isFinite(estimatedTime) && estimatedTime > 0)
+  // BUG FIX : un rechargement EN PLACE de la même source après une coupure
+  // (opts.forceReload, voir startReconnectRetryLoop) a "changed"
+  // à false puisque l'index de source ne change pas — la reprise du temps
+  // était donc ignorée à tort et chaque tentative de reconnexion repartait
+  // du tout début de la vidéo au lieu de reprendre où elle en était.
+  // BUG FIX (toujours reparti du début) : même une fois "changed" pris en
+  // compte pour forceReload, video.currentTime devient 0 dès la PREMIÈRE
+  // tentative ratée (clearHLS() la remet à zéro) — donc TOUTES les
+  // tentatives suivantes du même cycle de reconnexion relisaient un temps
+  // déjà remis à zéro et repartaient elles aussi du début. On utilise donc
+  // en priorité le temps mémorisé UNE SEULE FOIS au tout début du cycle de
+  // reconnexion (srcReconnectResumeTime, capturé dans handleSourceFailure
+  // avant toute tentative), plutôt que de le relire à chaque tentative.
+  const estimatedTime = (opts.forceReload && isFinite(srcReconnectResumeTime) && srcReconnectResumeTime > 0)
+    ? srcReconnectResumeTime
+    : getEstimatedCurrentTime();
+  const resumeTime = ((changed || opts.forceReload) && !opts.noResume && isFinite(estimatedTime) && estimatedTime > 0)
     ? estimatedTime : null;
   currentSourceIndex = id;
 
   if (source.isDirect) {
-    loadMedia(source.url, source.displayName, source.audioLangOverride, resumeTime);
+    loadMedia(source.url, source.displayName, source.audioLangOverride, resumeTime, !!opts.forceReload);
   } else {
     showEmbedPlayer(source.url, resumeTime);
   }
@@ -6009,7 +6022,7 @@ async function playEpisode(season, episode) {
     const epRes = await fetch(`${TMDB_BASE}/tv/${currentTMDB}/season/${season}/episode/${episode}?api_key=${TMDB_KEY}&language=${preferredLang === 'en' ? 'en-US' : 'fr-FR'}`);
     if (epRes.ok) {
       const ep = await epRes.json();
-      if (ep.runtime) document.getElementById('media-duration').textContent = (preferredLang === 'fr' ? 'Durée : ' : 'Duration: ') + formatRuntime(ep.runtime);
+      if (ep.runtime) document.getElementById('media-duration').textContent = formatRuntimeAsTime(ep.runtime);
     }
   } catch (e) {}
   await fetchTMDBSources(currentTMDB, 'tv', season, episode);
@@ -6244,12 +6257,23 @@ function showEmbedPlayer(url, resumeTime) {
   showCtrls();
 }
 
-function loadMedia(url, title, audioLangOverride, resumeTime) {
+function loadMedia(url, title, audioLangOverride, resumeTime, isReconnectRetry) {
   showVideoPlayer();
-  hideSourceErrorPopup();
+  // BUG FIX : une tentative de reconnexion SILENCIEUSE en arrière-plan ne
+  // doit PAS fermer la popup de choix ("rester" / "changer de source") si
+  // elle est affichée — sinon elle disparaissait dès la 1ère tentative
+  // silencieuse, avant même de savoir si celle-ci allait réussir. Seul un
+  // vrai nouveau chargement (sélection manuelle, nouveau contenu) ferme la
+  // popup ici ; sa fermeture en cas de SUCCÈS de la reconnexion est gérée
+  // séparément (voir l'écouteur 'playing').
+  if (!isReconnectRetry) hideSourceErrorPopup();
   hideUpNextCard();
   clearHLS(); hideError(); showSpinner();
   srcHasStartedThisLoad = false; // nouveau chargement : on ne sait pas encore si ça va démarrer
+  // On ne sort du "mode reconnexion" (srcReconnectionActive / srcReconnectPopupShown)
+  // que si CE chargement n'est PAS lui-même une tentative de reconnexion
+  // automatique — sinon une simple sélection manuelle de source ou un nouveau contenu.
+  if (!isReconnectRetry) { srcReconnectionActive = false; srcReconnectPopupShown = false; srcReconnectResumeTime = null; }
   embedEstimateStartedAt = null; // on quitte l'iframe : plus besoin d'estimer
   loadScreen.style.display = 'none';
   pw.style.display = 'block';
@@ -6282,6 +6306,32 @@ function loadMedia(url, title, audioLangOverride, resumeTime) {
       armResumeWatchdog(resumeTime);
     }
   };
+  // BUG FIX (deadlock) : une tentative de reconnexion silencieuse en
+  // arrière-plan (isReconnectRetry) doit lancer la lecture IMMÉDIATEMENT,
+  // sans passer par waitForPopupsCleared — sinon, tant que la popup de choix
+  // "petit problème technique" reste affichée (elle n'attend justement QUE
+  // cette lecture pour se refermer toute seule, voir l'écouteur 'playing'),
+  // video.play() restait mis en attente indéfiniment derrière cette même
+  // popup : ni la vidéo ne repartait, ni la popup ne se fermait jamais,
+  // même une fois la connexion revenue.
+  // BUG FIX (reprise auto pendant une pause volontaire) : une tentative de
+  // reconnexion ne doit JAMAIS relancer la lecture si l'utilisateur avait
+  // mis pause avant la coupure — voir userWantsPlaying. On recharge quand
+  // même la source en silence (prête pour quand il appuiera sur Play), mais
+  // sans jamais appeler video.play() dans ce cas.
+  // BUG FIX (pause parfois annulée) : ce même risque existe aussi hors
+  // reconnexion — si l'utilisateur clique Pause pendant la toute première
+  // fraction de seconde de chargement (avant que MANIFEST_PARSED / le
+  // premier segment n'arrive), le video.play() différé ici se déclenchait
+  // quand même juste après, annulant sa pause. On vérifie donc aussi
+  // userWantsPlaying dans ce cas.
+  const playWhenReady = () => {
+    if (isReconnectRetry) {
+      if (userWantsPlaying) video.play().catch(()=>{});
+      else resolveReconnectionSuccess(); // la source est de nouveau saine, même sans relancer la lecture
+    }
+    else if (userWantsPlaying) { waitForPopupsCleared(() => video.play().catch(()=>{})); }
+  };
   if (isHLS && Hls.isSupported()) {
     // Finepulfe : utiliser exactement le même mécanisme de requête HLS.js
     // que le lecteur M3U8 de référence (mémoire uniquement, sans persistance).
@@ -6312,7 +6362,8 @@ function loadMedia(url, title, audioLangOverride, resumeTime) {
         // chargement fermées (ex: "Film récent" -> "Compris") : le flux est
         // déjà prêt/mis en buffer en arrière-plan, mais le son/l'image
         // n'apparaissent qu'après la fermeture de la dernière popup.
-        waitForPopupsCleared(() => video.play().catch(()=>{}));
+        // (Sauf tentative de reconnexion silencieuse, voir playWhenReady.)
+        playWhenReady();
       }
     });
     hls.on(Hls.Events.AUDIO_TRACKS_UPDATED, () => {
@@ -6340,7 +6391,7 @@ function loadMedia(url, title, audioLangOverride, resumeTime) {
         if (finepulfeFirstFragLoaded) return;
         finepulfeFirstFragLoaded = true;
         if (extPopupPending) finishExtPopupAsSuccess();
-        waitForPopupsCleared(() => video.play().catch(()=>{}));
+        playWhenReady();
       });
     }
     hls.on(Hls.Events.ERROR, (e,d) => {
@@ -6371,7 +6422,7 @@ function loadMedia(url, title, audioLangOverride, resumeTime) {
   } else if (video.canPlayType('application/vnd.apple.mpegurl') && isHLS) {
     video.src = url;
     video.addEventListener('loadedmetadata', applyResumeTime, { once:true });
-    waitForPopupsCleared(() => video.play().catch(()=>{}));
+    playWhenReady();
     if (audioLangOverride) {
       const applyNative = () => { selectNativeAudioTrackByLang(video, audioLangOverride); };
       video.addEventListener('loadedmetadata', applyNative, { once:true });
@@ -6380,7 +6431,7 @@ function loadMedia(url, title, audioLangOverride, resumeTime) {
   } else {
     video.src = url;
     video.addEventListener('loadedmetadata', applyResumeTime, { once:true });
-    waitForPopupsCleared(() => video.play().catch(()=>{}));
+    playWhenReady();
   }
   video.onerror = () => {
     if (pw.classList.contains('embed-mode')) return;
@@ -6388,6 +6439,45 @@ function loadMedia(url, title, audioLangOverride, resumeTime) {
     handleSourceFailure();
   };
   loadPreviewSource(url, isHLS);
+}
+
+// ── IMAGE GELÉE PENDANT UNE RECONNEXION ──
+// BUG FIX : chaque tentative de reconnexion vide le <video> (voir clearHLS
+// -> video.src=''), ce qui faisait disparaître l'image (fond noir) après
+// quelques tentatives infructueuses. On capture donc la dernière image
+// valable UNE FOIS, au tout début du cycle de reconnexion (avant la
+// première tentative), et on l'affiche par-dessus le <video> vidé jusqu'à
+// ce qu'une vraie image recommence à s'afficher.
+function showFreezeFrame() {
+  const canvas = document.getElementById('freeze-frame');
+  if (!canvas || !video.videoWidth || !video.videoHeight) return;
+  try {
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+    canvas.style.display = 'block';
+  } catch (e) {} // flux protégé ou canvas "tainted" : on continue simplement sans l'image gelée
+}
+function hideFreezeFrame() {
+  const canvas = document.getElementById('freeze-frame');
+  if (canvas) canvas.style.display = 'none';
+}
+
+// Appelée dès que la source est de nouveau saine — que la lecture ait
+// réellement repris (événement 'playing') ou non (utilisateur resté en
+// pause pendant la reconnexion, voir playWhenReady/userWantsPlaying) : dans
+// les deux cas, on referme popup/spinner/image gelée et on nettoie l'état
+// du cycle de reconnexion. Sans effet si aucun cycle n'était en cours.
+function resolveReconnectionSuccess() {
+  if (srcReconnectionActive || srcReconnectPopupShown) {
+    stopReconnectRetryLoop();
+    clearTimeout(srcReconnectDeadlineTimer);
+    hideSourceErrorPopup();
+  }
+  srcReconnectionActive = false;
+  srcReconnectPopupShown = false;
+  srcReconnectResumeTime = null;
+  hideFreezeFrame();
 }
 
 function clearHLS() {
@@ -6604,10 +6694,44 @@ function selectNativeAudioTrackByLang(videoEl, langCode) {
 // récepteur (castSyncPlayPause/castSyncSeek), et inversement une pause/reprise
 // lancée depuis la TV/l'appli Google Home se répercute sur la vidéo locale
 // (cf. l'écouteur IS_PAUSED_CHANGED dans castSetupRemotePlayer).
+// BUG FIX : cliquer sur Lecture alors qu'il n'y a plus de connexion du tout
+// pouvait laisser le lecteur figé sur l'icône pause (le navigateur déclenche
+// 'play' dès l'appel à video.play(), donc l'icône bascule immédiatement),
+// sans jamais afficher le cercle de chargement ni déclencher la moindre
+// tentative de reconnexion — aucun retour visuel, comme si rien ne s'était
+// passé. On affiche donc le spinner tout de suite, et si la lecture n'a
+// toujours pas réellement démarré après quelques secondes, on déclenche
+// nous-mêmes le mécanisme de reconnexion habituel (popup "problème de
+// connexion" après le délai normal, tentatives en arrière-plan, etc.).
+let playAttemptWatchdog = null;
+// BUG FIX (le plus important) : pendant une reconnexion automatique (voir
+// startReconnectRetryLoop), chaque tentative rechargeait la source ET
+// relançait la lecture (video.play()) sans se soucier de si l'utilisateur
+// avait volontairement mis pause avant la coupure — la vidéo repartait donc
+// toute seule en lecture après une dizaine de secondes, perdant au passage
+// le filtre noir de pause (retiré dès que 'play' se déclenche). On ne peut
+// PAS se fier à video.paused pour savoir ce que l'utilisateur veut vraiment
+// PENDANT une tentative de reconnexion : recharger la source (clearHLS ->
+// video.src='') repasse toujours l'élément en "paused" transitoirement,
+// qu'on soit censé jouer ou pas. On garde donc à part l'intention réelle de
+// l'utilisateur : les tentatives de reconnexion ne relanceront la lecture
+// que si userWantsPlaying est vrai (voir playWhenReady dans loadMedia).
+let userWantsPlaying = true;
 function togglePlay() {
   if (wpGuestBlocked()) return;
   const wantPlay = video.paused;
-  if (wantPlay) video.play(); else video.pause();
+  userWantsPlaying = wantPlay;
+  if (wantPlay) {
+    showSpinner();
+    video.play().catch(() => {});
+    clearTimeout(playAttemptWatchdog);
+    playAttemptWatchdog = setTimeout(() => {
+      if (video.paused || video.readyState < 3) handleSourceFailure();
+    }, 4000);
+  } else {
+    clearTimeout(playAttemptWatchdog);
+    video.pause();
+  }
   castSyncPlayPause(wantPlay);
 }
 
@@ -6615,11 +6739,19 @@ function seekFlash(s) {
   if (wpGuestBlocked()) return;
   video.currentTime = Math.max(0, Math.min(video.currentTime + s, video.duration || 0));
   castSyncSeek(video.currentTime);
+  // Même correctif que pour le glissement de la barre (voir doScrub) : entre
+  // deux clics rapprochés (spam ou appui maintenu sur +10/-10), l'événement
+  // 'timeupdate' peut ne pas encore s'être déclenché, ce qui donnait
+  // l'impression que le timecode, la timeline et les sous-titres ne
+  // bougeaient pas. On les met nous-mêmes à jour immédiatement, sans
+  // attendre cet événement.
+  updateProgress();
+  updateSubtitleOverlay();
   const id = s < 0 ? 'flash-rw' : 'flash-fw';
   const el = document.getElementById(id);
   el.classList.add('show');
   clearTimeout(flashT[id]);
-  flashT[id] = setTimeout(() => el.classList.remove('show'), 650);
+  flashT[id] = setTimeout(() => el.classList.remove('show'), 1100);
 }
 
 function setSpeed(el, s) {
@@ -6631,6 +6763,8 @@ function setSpeed(el, s) {
 // ── FORMAT (object-fit du lecteur) ──
 function setFormat(el, fit) {
   video.style.objectFit = fit;
+  const freezeFrame = document.getElementById('freeze-frame');
+  if (freezeFrame) freezeFrame.style.objectFit = fit; // reste cohérent avec l'image gelée pendant une reconnexion
   document.querySelectorAll('#pane-format .set-row').forEach(r => r.classList.remove('active'));
   el.classList.add('active');
 }
@@ -7005,10 +7139,6 @@ function castLoadMedia(explicitStartTime) {
       // castSyncPlayPause/castSyncSeek et l'écouteur IS_PAUSED_CHANGED).
       castState.note = '';
       castSetupRemotePlayer();
-      // Nouveau média chargé avec autoplay=true : on repart sur un état
-      // "en lecture" supposé, plutôt que de garder l'hypothèse pause/lecture
-      // de l'épisode précédent.
-      castRemoteAssumedPaused = false;
       castRefresh();
       closeCastMenu();
       // Filet de sécurité : certains récepteurs (surtout en HLS) ignorent
@@ -7059,10 +7189,6 @@ function castStop() {
   castState.connected = false;
   castState.connecting = false;
   castState.airplayOn = false;
-  // On efface l'état supposé du récepteur : une prochaine session Cast
-  // repartira sur l'état réellement confirmé par le SDK, pas sur une
-  // hypothèse héritée de la session précédente.
-  castRemoteAssumedPaused = null;
   castRefresh();
 }
 
@@ -7121,27 +7247,14 @@ function castApplyChromecastState(state) {
 // deux sens : une commande locale (lecture/pause/avance/recul) est répercutée
 // sur le récepteur (castSyncPlayPause/castSyncSeek), et une pause/reprise
 // lancée depuis la TV/l'appli Google Home est répercutée sur la vidéo locale
-// (écouteur IS_PAUSED_CHANGED ci-dessous).
-//
-// Il n'y a PAS de garde anti-boucle ici : castSyncPlayPause/castSyncSeek ne
-// sont déclenchés QUE par une action explicite de l'utilisateur (bouton
-// lecture/pause, avance/recul, glissement de la barre de progression) — et
-// jamais automatiquement par l'écouteur IS_PAUSED_CHANGED lui-même, qui se
-// contente d'appliquer l'état sur la vidéo locale sans jamais renvoyer de
-// commande vers le récepteur.
-//
-// castRemoteAssumedPaused retient l'état lecture/pause qu'on VIENT
-// d'envoyer au récepteur, mis à jour immédiatement (de façon optimiste),
-// sans attendre la confirmation réseau. Sans ça, en cliquant vite deux fois
-// (ex: pause puis play dans la même seconde), la 2e commande se basait sur
-// castRemotePlayer.isPaused — qui ne reflète QUE le dernier état CONFIRMÉ
-// par le récepteur, donc encore l'ancien état tant que la 1re commande n'a
-// pas fini son aller-retour réseau — et concluait à tort qu'aucune commande
-// n'était nécessaire : le récepteur restait bloqué sur pause alors que la
-// vidéo locale, elle, était repartie en lecture.
+// (écouteur IS_PAUSED_CHANGED ci-dessous). Le garde anti-boucle évite qu'une
+// mise à jour venant du récepteur ne redéclenche aussitôt une commande vers
+// ce même récepteur.
 let castRemotePlayer = null;
 let castRemotePlayerController = null;
-let castRemoteAssumedPaused = null;
+let castSyncGuardUntil = 0;
+function castSyncGuardActive() { return Date.now() < castSyncGuardUntil; }
+function castSyncGuard(ms) { castSyncGuardUntil = Date.now() + (ms || 600); }
 
 function castRemoteActive() {
   return !!(castState.connected && castRemotePlayer && castRemotePlayerController && castRemotePlayer.isMediaLoaded);
@@ -7149,19 +7262,16 @@ function castRemoteActive() {
 
 // Aligne l'état lecture/pause du récepteur sur celui demandé localement.
 function castSyncPlayPause(shouldPlay) {
-  if (!castRemoteActive()) return;
+  if (!castRemoteActive() || castSyncGuardActive()) return;
   try {
-    const isPaused = castRemoteAssumedPaused != null ? castRemoteAssumedPaused : !!castRemotePlayer.isPaused;
-    if (shouldPlay === isPaused) {
-      castRemotePlayerController.playOrPause();
-      castRemoteAssumedPaused = !isPaused; // mise à jour optimiste, avant confirmation réseau
-    }
+    const isPaused = !!castRemotePlayer.isPaused;
+    if (shouldPlay === isPaused) castRemotePlayerController.playOrPause();
   } catch (err) {}
 }
 
 // Aligne la position de lecture du récepteur sur celle de la vidéo locale.
 function castSyncSeek(time) {
-  if (!castRemoteActive() || !isFinite(time)) return;
+  if (!castRemoteActive() || castSyncGuardActive() || !isFinite(time)) return;
   try {
     castRemotePlayer.currentTime = time;
     castRemotePlayerController.seek();
@@ -7176,24 +7286,18 @@ function castSetupRemotePlayer() {
     castRemotePlayerController = new cast.framework.RemotePlayerController(castRemotePlayer);
     // Pause/reprise lancée depuis la TV, la télécommande ou l'appli Google
     // Home (donc PAS depuis nos propres boutons) : on répercute l'état sur
-    // la vidéo locale pour que les deux restent bien ensemble. On ne
-    // touche jamais à video.play()/video.pause() si l'état local correspond
-    // déjà (les conditions ci-dessous), donc aucun risque de boucle avec
-    // castSyncPlayPause. On met aussi à jour castRemoteAssumedPaused ici :
-    // c'est la seule source 100% fiable de l'état réel du récepteur.
+    // la vidéo locale pour que les deux restent bien ensemble.
     castRemotePlayerController.addEventListener(
       cast.framework.RemotePlayerEventType.IS_PAUSED_CHANGED,
       () => {
         if (!castRemoteActive()) return;
-        castRemoteAssumedPaused = !!castRemotePlayer.isPaused;
+        castSyncGuard();
         if (castRemotePlayer.isPaused && !video.paused) video.pause();
         else if (!castRemotePlayer.isPaused && video.paused) video.play().catch(() => {});
       }
     );
   } catch (err) {}
 }
-
-
 
 function castInitChromecast() {
   if (castState.sdkReady) return true;
@@ -7294,25 +7398,11 @@ function toggleFullscreen() {
 // #player-wrap à l'entrée en plein écran, et on les remet exactement à leur
 // place d'origine (grâce à un marqueur) à la sortie.
 const FS_RELOCATE_IDS = [
-  'wp-leave-overlay', 'wp-hostclose-overlay',
+  'wp-leave-overlay', 'wp-hostclose-overlay', 'cast-leave-overlay',
   'wp-join-prompt-overlay', 'ab-overlay', 'ext-overlay', 'wp-ext-warn-overlay',
   'nolang-overlay', 'src-error-overlay', 'recent-overlay'
 ];
 const fsRelocateAnchors = new Map();
-
-// "Arrêter la diffusion ?" (cast-leave-overlay) n'est PAS géré par le
-// mécanisme de relocalisation lié au plein écran ci-dessus (qui ne déplace
-// les popups dans #player-wrap qu'À L'ENTRÉE en plein écran, puis les remet
-// à leur place quand on en sort). Sur certains navigateurs mobiles, la
-// <video> locale continue de jouer par-dessus le reste de la page (calque
-// matériel) même hors plein écran, dès qu'un popup n'est pas dans le même
-// sous-arbre qu'elle — d'où le bug où ce popup ne s'affichait qu'en plein
-// écran. On le rattache donc une bonne fois pour toutes à #player-wrap dès
-// le chargement, indépendamment de l'état plein écran.
-(function relocateCastLeaveOverlayPermanently() {
-  const el = document.getElementById('cast-leave-overlay');
-  if (el && pw && el.parentNode !== pw) pw.appendChild(el);
-})();
 
 function relocatePopupsForFullscreen(entering) {
   FS_RELOCATE_IDS.forEach(id => {
@@ -7456,7 +7546,18 @@ function doScrub(e) {
   const r = document.getElementById('progress-wrap').getBoundingClientRect();
   const x = Math.max(0, Math.min((e.clientX||e.pageX)-r.left, r.width));
   if (video.duration) {
-    video.currentTime = (x/r.width)*video.duration;
+    const t = (x/r.width)*video.duration;
+    video.currentTime = t;
+    // BUG FIX : sans connexion, ce seek peut ne jamais aboutir (aucun
+    // 'timeupdate' ne se déclenche alors) — le curseur et le temps affiché
+    // restaient donc figés sur l'ancienne position pendant qu'on glissait la
+    // barre. On les met à jour nous-mêmes, immédiatement, à partir de la
+    // position glissée — sans attendre un événement vidéo qui peut ne
+    // jamais arriver.
+    const pct = (t/video.duration)*100;
+    document.getElementById('progress-fill').style.width = pct+'%';
+    document.getElementById('progress-thumb').style.left = pct+'%';
+    updateTimeDisplay(t);
   }
 }
 
@@ -7476,17 +7577,29 @@ function updatePlayPauseUI(paused) {
 }
 // La vidéo locale pilote toujours l'icône lecture/pause, casting ou non.
 video.addEventListener('play', () => updatePlayPauseUI(false));
-video.addEventListener('pause', () => updatePlayPauseUI(true));
+video.addEventListener('pause', () => { clearTimeout(playAttemptWatchdog); updatePlayPauseUI(true); });
 video.addEventListener('timeupdate', updateProgress);
 video.addEventListener('timeupdate', maybeShowUpNext);
 video.addEventListener('ended', handleVideoEnded);
 video.addEventListener('waiting', showSpinner);
 video.addEventListener('playing', hideSpinner);
 // Une lecture qui reprend correctement = la source est de nouveau saine,
-// on remet le compteur de tentatives de reconnexion à zéro, et on retient
-// qu'elle a bel et bien démarré (voir srcHasStartedThisLoad / handleSourceFailure).
-video.addEventListener('playing', () => { srcRetryCount = 0; srcHasStartedThisLoad = true; });
+// on retient qu'elle a bel et bien démarré (voir srcHasStartedThisLoad /
+// handleSourceFailure), et on résout le cycle de reconnexion en cours s'il
+// y en avait un (voir resolveReconnectionSuccess).
+video.addEventListener('playing', () => {
+  clearTimeout(playAttemptWatchdog);
+  srcHasStartedThisLoad = true;
+  resolveReconnectionSuccess();
+});
+// BUG FIX : si l'utilisateur était resté en pause pendant la reconnexion
+// (voir userWantsPlaying), 'playing' ne se déclenche jamais puisqu'on ne
+// relance pas la lecture — mais la source, elle, est bien redevenue saine
+// dès que 'canplay' se déclenche (assez de données pour jouer, qu'on joue
+// ou non). On résout donc aussi le cycle de reconnexion à ce moment-là,
+// pour que la popup/l'image gelée disparaissent même en restant en pause.
 video.addEventListener('canplay', hideSpinner);
+video.addEventListener('canplay', resolveReconnectionSuccess);
 video.addEventListener('loadeddata', hideSpinner);
 video.addEventListener('loadedmetadata', () => {
   updateTimeDisplay();
@@ -7503,7 +7616,11 @@ function showCtrls() {
 }
 function hideCtrls() {
   // Le menu "Diffuser" ouvert maintient la barre visible (il vit dedans).
-  if (!video.paused && !scrubbing && !overBar && !castIsOpen()) {
+  // BUG FIX : pendant une reconnexion/perte de connexion (spinner affiché,
+  // classe "buffering" sur le lecteur), les commandes ne doivent JAMAIS être
+  // masquées par le minuteur d'inactivité — avant, au bout de 3.5s sans
+  // bouger la souris pendant un buffering, elles disparaissaient quand même.
+  if (!video.paused && !scrubbing && !overBar && !castIsOpen() && !pw.classList.contains('buffering')) {
     pw.classList.remove('cv');
     pw.style.cursor = 'none';
   }
@@ -7661,8 +7778,16 @@ function toggleSettings() {
     document.getElementById('cast-panel').classList.remove('open');
     document.getElementById('cast-scrim').classList.remove('open');
     document.getElementById('cast-btn').classList.remove('open');
-    panel.classList.add('open'); scrim.classList.add('open'); btn.classList.add('open');
-    requestAnimationFrame(() => refreshTabUnderlines(panel));
+    const openNow = () => {
+      panel.classList.add('open'); scrim.classList.add('open'); btn.classList.add('open');
+      requestAnimationFrame(() => refreshTabUnderlines(panel));
+    };
+    if (pendingAutresPanelOpen) {
+      pendingAutresPanelOpen = false;
+      openAdblockPopup(openNow);
+    } else {
+      openNow();
+    }
   } else {
     panel.classList.remove('open');
     scrim.classList.remove('open');
@@ -7692,8 +7817,16 @@ function toggleSourcesPanel() {
     document.getElementById('cast-panel').classList.remove('open');
     document.getElementById('cast-scrim').classList.remove('open');
     document.getElementById('cast-btn').classList.remove('open');
-    panel.classList.add('open'); scrim.classList.add('open'); btn.classList.add('open');
-    requestAnimationFrame(() => refreshTabUnderlines(panel));
+    const openNow = () => {
+      panel.classList.add('open'); scrim.classList.add('open'); btn.classList.add('open');
+      requestAnimationFrame(() => refreshTabUnderlines(panel));
+    };
+    if (pendingAutresPanelOpen) {
+      pendingAutresPanelOpen = false;
+      openAdblockPopup(openNow);
+    } else {
+      openNow();
+    }
   } else {
     panel.classList.remove('open');
     scrim.classList.remove('open');
@@ -9335,6 +9468,27 @@ function stopWatchParty() {
 }
 
 // ── INVITÉ ──
+// Vérification proactive de l'extension NETFLOX pour un invité qui vient de
+// rejoindre (lien ou code — les deux passent par joinWatchParty). But :
+// prévenir tout de suite plutôt que d'attendre un échec de lecture, pour le
+// cas où la resynchronisation sur la source de l'hôte interromprait le
+// chargement avant que l'erreur 403 n'ait eu le temps de remonter par le
+// pipeline HLS normal. Réutilise la même popup "Extension requise"
+// (Installer / Réessayer) que celle affichée en solo, avec la même boucle
+// tant que l'extension n'est pas détectée.
+async function wpCheckGuestExtensionRequirement() {
+  if (!wpIsGuest) return;
+  const src = currentSources && currentSources[currentSourceIndex];
+  if (!src || !src.isDirect || !isFinepulfeHost(src.hostname)) return;
+  try {
+    const res = await fetch(src.url, { method: 'HEAD', cache: 'no-store' });
+    if (res.status === 403) handleFinepulfeExtensionRequired();
+  } catch (e) {
+    // Requête impossible (réseau, CORS...) : on laisse le pipeline HLS
+    // normal gérer l'éventuelle erreur au moment de la lecture réelle.
+  }
+}
+
 // viaLink=true : on est arrivé en ouvrant le lien partagé (?wp=CODE) → on
 // bascule TOUT le lecteur (textes, TMDB, sources) sur la langue de l'hôte.
 // viaLink=false/absent : code tapé à la main dans le panneau → on garde la
@@ -9461,6 +9615,10 @@ function joinWatchParty(code, onDone, viaLink) {
     wpIsGuest = true;
     wpIsHost = false;
     document.getElementById('watchparty-btn').classList.add('wp-live');
+    // Vérification proactive de l'extension NETFLOX (voir
+    // wpCheckGuestExtensionRequirement ci-dessous) : ne bloque pas la suite
+    // de la jonction, la popup s'affichera d'elle-même si besoin.
+    wpCheckGuestExtensionRequirement();
 
     // Inscription dans la liste des membres du salon.
     const memberRef = window.wpRef(window.wpDB, `watchparties/${wpRoomCode}/members/${wpMemberId}`);
@@ -10191,6 +10349,7 @@ function wpApplyRemoteState(s) {
   }
   if (s.paused && !video.paused) video.pause();
   if (!s.paused && video.paused) video.play().catch(() => {});
+  userWantsPlaying = !s.paused; // reflète l'état voulu par la Watch Party (utilisé par playWhenReady pendant une reconnexion)
   setTimeout(() => { wpApplyingRemote = false; }, 300);
 }
 
@@ -10459,7 +10618,7 @@ function switchSettingsTab(tab) {
 }
 
 // ── SPINNER / ERROR ──
-function showSpinner() { pw.classList.add('buffering'); }
+function showSpinner() { pw.classList.add('buffering'); showCtrls(); }
 function hideSpinner() { pw.classList.remove('buffering'); }
 function showError(msg) { document.getElementById('error-text').textContent=msg; document.getElementById('error-msg').style.display='flex'; }
 function hideError() { document.getElementById('error-msg').style.display='none'; }
@@ -10473,10 +10632,36 @@ let srcErrorPending = false;
 let srcErrorCountdownInterval = null;
 let srcErrorPopupResolve = null;
 let srcErrorCancelled = false;
+// true quand la popup affichée concerne une PERTE DE CONNEXION EN COURS DE
+// LECTURE (voir startReconnectRetryLoop) : dans ce cas il ne doit
+// JAMAIS y avoir de compte à rebours ni de bascule automatique de source —
+// seulement un choix explicite laissé à l'utilisateur (réessayer / changer
+// de source en solo ; réessayer uniquement en Watch Party). false =
+// comportement existant (échec au tout premier lancement d'une source),
+// inchangé.
+let srcErrorReconnectMode = false;
 // true dès que la source en cours a réussi à démarrer au moins une fois
 // depuis son chargement (voir loadMedia) — sert à distinguer un échec AU
 // LANCEMENT (jamais démarré) d'une panne EN COURS DE LECTURE.
 let srcHasStartedThisLoad = false;
+// BUG FIX : contrairement à srcHasStartedThisLoad (qui redevient false à
+// CHAQUE rechargement, y compris les tentatives de reconnexion automatiques
+// en place), ce drapeau reste vrai pendant TOUT un cycle de reconnexion —
+// du premier échec (alors que la vidéo jouait déjà) jusqu'à la réussite ou
+// l'abandon.
+let srcReconnectionActive = false;
+// Position (en secondes) à laquelle reprendre une fois la reconnexion
+// réussie — capturée UNE SEULE FOIS au tout début du cycle (voir
+// handleSourceFailure), car video.currentTime devient peu fiable (souvent
+// remis à 0) après la première tentative ratée. Voir selectCloudflareSource.
+let srcReconnectResumeTime = null;
+// true dès que la popup de choix (mode reconnexion) a déjà été montrée pour
+// le cycle de reconnexion EN COURS — évite de la ré-ouvrir en boucle pendant
+// que les tentatives silencieuses continuent en arrière-plan.
+let srcReconnectPopupShown = false;
+// Minuteur du DÉLAI FIXE (indépendant du nombre de tentatives déjà faites,
+// voir plus bas) avant de proposer le choix à l'utilisateur.
+let srcReconnectDeadlineTimer = null;
 
 // ── RECONNEXION SUR PLACE (Watch Party + solo en cours de lecture) ──
 // Changer de source automatiquement pendant que ça lit déjà pose problème :
@@ -10484,43 +10669,70 @@ let srcHasStartedThisLoad = false;
 // sur la source de l'hôte), et en solo ça interrompt une lecture qui allait
 // bien pour une simple coupure passagère. Dans ces deux cas, on ne change
 // PLUS de source tout seul : on affiche le cercle de chargement et on
-// retente la MÊME source quelques fois.
+// retente la MÊME source en boucle, à intervalle régulier.
 // Seule exception : un échec AU LANCEMENT en solo (la source n'a jamais
 // réussi à démarrer du tout) garde l'ancien comportement utile — proposer de
 // passer à la source suivante (voir srcHasStartedThisLoad plus bas).
-const SRC_RETRY_MAX = 3;
-const SRC_RETRY_DELAY = 2500;
-let srcRetryCount = 0;
-let srcRetryTimer = null;
+// BUG FIX (délai imprévisible) : le seuil était avant basé sur un NOMBRE de
+// tentatives (ex: 5 essais) — mais chaque tentative peut elle-même mettre
+// plusieurs secondes à échouer (le temps que le navigateur/HLS.js détecte
+// réellement l'absence de réseau), donc le délai réel avant la popup était
+// très variable et pouvait dépasser la minute. On utilise maintenant un
+// DÉLAI FIXE en temps réel, indépendant du nombre de tentatives : la popup
+// apparaît toujours après SRC_RECONNECT_POPUP_DELAY, ni plus ni moins — les
+// tentatives silencieuses, elles, continuent indéfiniment en arrière-plan
+// à intervalle régulier (SRC_RETRY_DELAY), avant ET après l'apparition de
+// la popup.
+const SRC_RETRY_DELAY = 4000;
+const SRC_RECONNECT_POPUP_DELAY = 15000;
+let srcRetryInterval = null;
 
-function retryCurrentSourceAfterFailure() {
-  srcRetryCount++;
-  if (srcRetryCount > SRC_RETRY_MAX) {
-    srcRetryCount = 0;
+// BUG FIX (popup qui ne se referme jamais / lecture qui ne reprend pas) :
+// l'ancienne version programmait UNE SEULE tentative (setTimeout), et
+// n'en reprogrammait une nouvelle qu'après avoir détecté l'ÉCHEC explicite
+// de la précédente (un nouvel événement d'erreur). Problème : sans réseau
+// du tout, une tentative de rechargement peut rester "en attente" très
+// longtemps avant que le navigateur ne signale un échec franc (voire ne
+// jamais le faire proprement) — la chaîne de tentatives s'arrêtait alors de
+// fait, et même une fois la connexion réellement revenue, plus rien ne
+// relançait de nouvelle tentative pour le vérifier : le popup restait figé
+// et la vidéo ne repartait jamais. On utilise maintenant une boucle à
+// intervalle FIXE, indépendante du sort de la tentative précédente : à
+// chaque tick, on relance la MÊME source (ce qui interrompt au passage
+// toute tentative précédente restée bloquée, via clearHLS()) — garantissant
+// qu'une connexion revenue sera détectée au tick suivant au plus tard.
+function startReconnectRetryLoop() {
+  if (srcRetryInterval) return; // déjà en cours pour ce cycle
+  srcRetryInterval = setInterval(() => {
+    if (!srcReconnectionActive) { stopReconnectRetryLoop(); return; }
     srcErrorPending = false;
-    hideSpinner();
-    // Watch Party : hôte -> proposer de fermer/transférer ; invité -> popup
-    // "problème technique". Solo (panne en cours de lecture, tentatives
-    // épuisées) : on retombe sur l'ancien comportement, proposer la source
-    // suivante via la popup de compte à rebours habituelle.
-    if (wpIsHost) { wpOpenHostCloseModal(); return; }
-    if (wpIsGuest) { wpHandleConnectionIssue(); return; }
-    srcErrorPending = true;
-    enqueuePopup(POPUP_PRIORITY.srcError, () => {
-      if (srcErrorCancelled) { srcErrorPending = false; return; }
-      return new Promise(resolve => {
-        srcErrorPopupResolve = resolve;
-        showSourceErrorPopup();
-      });
-    });
-    return;
-  }
-  clearTimeout(srcRetryTimer);
-  srcRetryTimer = setTimeout(() => {
-    srcErrorPending = false; // autorise une nouvelle détection si cette tentative échoue aussi
     if (!currentSources || !currentSources[currentSourceIndex]) return;
     selectCloudflareSource(currentSourceIndex, { bypassLock: true, forceReload: true });
   }, SRC_RETRY_DELAY);
+}
+
+function stopReconnectRetryLoop() {
+  clearInterval(srcRetryInterval);
+  srcRetryInterval = null;
+}
+
+// Appelé une seule fois par cycle de reconnexion, SRC_RECONNECT_POPUP_DELAY
+// après le tout premier échec — propose le choix à l'utilisateur SANS jamais
+// arrêter les tentatives silencieuses en arrière-plan (qui continuent tant
+// que ce n'est pas résolu, voir startReconnectRetryLoop).
+function showReconnectPopupIfStillFailing() {
+  // Peut se déclencher alors que la reconnexion a entre-temps réussi (le
+  // minuteur tournait déjà) : dans ce cas, ne rien faire.
+  if (!srcReconnectionActive || srcReconnectPopupShown) return;
+  srcReconnectPopupShown = true;
+  srcErrorPending = true;
+  enqueuePopup(POPUP_PRIORITY.srcError, () => {
+    if (srcErrorCancelled) { srcErrorPending = false; return; }
+    return new Promise(resolve => {
+      srcErrorPopupResolve = resolve;
+      showSourceErrorPopup(true);
+    });
+  });
 }
 
 function handleSourceFailure() {
@@ -10533,11 +10745,28 @@ function handleSourceFailure() {
   // la recherche/reconnexion — solo, hôte ET invité.
   showSpinner();
 
-  // Watch Party : toujours retenter sur place. Solo : retenter sur place
-  // UNIQUEMENT si la source avait déjà démarré (panne en cours de lecture) —
-  // sinon (échec au lancement), ancien comportement plus bas.
-  if (wpIsHost || wpIsGuest || srcHasStartedThisLoad) {
-    retryCurrentSourceAfterFailure();
+  // Watch Party : toujours retenter sur place, JAMAIS de changement de
+  // source (voir showSourceErrorPopup, mode reconnexion + Watch Party :
+  // seul le bouton "Réessayer" est proposé, aucune option de changer de
+  // source). Solo : retenter sur place UNIQUEMENT si la source avait déjà
+  // démarré (panne en cours de lecture) OU si un cycle de reconnexion est
+  // déjà en cours (voir srcReconnectionActive) — sinon (échec au lancement),
+  // ancien comportement plus bas.
+  if (wpIsHost || wpIsGuest || srcHasStartedThisLoad || srcReconnectionActive) {
+    const enteringNewCycle = !srcReconnectionActive;
+    srcReconnectionActive = true;
+    if (enteringNewCycle) {
+      // On capture la position à cet instant précis — avant toute tentative
+      // de rechargement qui remettrait video.currentTime à 0 — pour pouvoir
+      // y revenir même après plusieurs tentatives ratées (voir
+      // selectCloudflareSource / srcReconnectResumeTime).
+      const t = getEstimatedCurrentTime();
+      srcReconnectResumeTime = (isFinite(t) && t > 0) ? t : null;
+      showFreezeFrame();
+      clearTimeout(srcReconnectDeadlineTimer);
+      srcReconnectDeadlineTimer = setTimeout(showReconnectPopupIfStillFailing, SRC_RECONNECT_POPUP_DELAY);
+    }
+    startReconnectRetryLoop();
     return;
   }
 
@@ -10545,17 +10774,59 @@ function handleSourceFailure() {
     if (srcErrorCancelled) { srcErrorPending = false; return; }
     return new Promise(resolve => {
       srcErrorPopupResolve = resolve;
-      showSourceErrorPopup();
+      showSourceErrorPopup(false);
     });
   });
 }
 
-function showSourceErrorPopup() {
+// reconnectMode=false (défaut) : comportement historique, popup avec compte
+// à rebours puis bascule auto sur la source suivante — réservé au cas où la
+// source ne fonctionne pas AU LANCEMENT (jamais démarrée, voir
+// srcHasStartedThisLoad).
+// reconnectMode=true : perte de connexion pendant une lecture qui
+// fonctionnait déjà — aucun compte à rebours, aucune bascule automatique ;
+// on laisse le choix à l'utilisateur. En solo : "Réessayer" ou "Changer de
+// source". En Watch Party (hôte ou invité) : "Réessayer" UNIQUEMENT — un
+// changement de source y est interdit à tout moment pendant la lecture.
+function showSourceErrorPopup(reconnectMode) {
   const overlay = document.getElementById('src-error-overlay');
   const title = document.getElementById('src-error-title');
   const text = document.getElementById('src-error-text');
   const skipBtn = document.getElementById('src-error-skip-btn');
+  const retryBtn = document.getElementById('src-error-stay-btn');
+  srcErrorReconnectMode = !!reconnectMode;
+  clearInterval(srcErrorCountdownInterval);
+  srcErrorCountdownInterval = null;
+
+  if (srcErrorReconnectMode) {
+    // Titre dédié pour ce cas précis (perte de connexion en cours de
+    // lecture) : plus parlant que le générique "petit problème technique"
+    // utilisé pour un vrai échec au lancement d'une source.
+    title.textContent = preferredLang === 'fr' ? 'Oups, problème de connexion' : 'Oops, connection issue';
+    const inWatchParty = wpIsHost || wpIsGuest;
+    text.textContent = inWatchParty
+      ? (preferredLang === 'fr'
+          ? 'La connexion semble interrompue. Nouvelle tentative en cours...'
+          : 'The connection seems to be interrupted. Retrying...')
+      : (preferredLang === 'fr'
+          ? 'La connexion semble interrompue. Voulez-vous essayer une autre source ?'
+          : 'The connection seems to be interrupted. Would you like to try another source?');
+    // En Watch Party, aucun changement de source n'est jamais proposé : seul
+    // le bouton "Réessayer" est visible, et il devient le bouton principal
+    // puisque c'est la seule action possible.
+    skipBtn.style.display = inWatchParty ? 'none' : '';
+    skipBtn.textContent = preferredLang === 'fr' ? 'Changer de source' : 'Switch source';
+    retryBtn.style.display = '';
+    retryBtn.textContent = preferredLang === 'fr' ? 'Réessayer' : 'Retry';
+    retryBtn.classList.toggle('ab-primary', inWatchParty);
+    retryBtn.classList.toggle('ab-ghost', !inWatchParty);
+    openSrcErrorOverlay();
+    return;
+  }
+
   title.textContent = preferredLang === 'fr' ? 'Oups, petit problème technique' : 'Oops, small technical issue';
+  retryBtn.style.display = 'none';
+  skipBtn.style.display = '';
   skipBtn.textContent = preferredLang === 'fr' ? 'Passer maintenant' : 'Skip now';
 
   let n = 5;
@@ -10565,7 +10836,7 @@ function showSourceErrorPopup() {
       : `Switching source automatically in <span id="src-error-count">${n}</span>...`;
   };
   renderCountdown();
-  overlay.classList.add('open');
+  openSrcErrorOverlay();
 
   clearInterval(srcErrorCountdownInterval);
   srcErrorCountdownInterval = setInterval(() => {
@@ -10578,11 +10849,34 @@ function showSourceErrorPopup() {
   }, 1000);
 }
 
+// Ferme la popup en fondu (voir CSS .closing) plutôt que de la faire
+// disparaître d'un coup — utilisé pour toutes les fermetures (choix de
+// l'utilisateur ou reprise automatique de la connexion). Le jeton évite
+// qu'une fermeture programmée n'efface par erreur une réouverture survenue
+// entre-temps (ex: nouvel échec juste après la reprise).
+let srcErrorOverlayCloseToken = 0;
+function closeSrcErrorOverlayAnimated() {
+  const overlay = document.getElementById('src-error-overlay');
+  const token = ++srcErrorOverlayCloseToken;
+  overlay.classList.add('closing');
+  setTimeout(() => {
+    if (token !== srcErrorOverlayCloseToken) return; // une réouverture a eu lieu depuis
+    overlay.classList.remove('open', 'closing');
+  }, 400);
+}
+function openSrcErrorOverlay() {
+  srcErrorOverlayCloseToken++; // invalide toute fermeture programmée en attente
+  const overlay = document.getElementById('src-error-overlay');
+  overlay.classList.remove('closing');
+  overlay.classList.add('open');
+}
+
 function finishSourceErrorCountdown() {
   clearInterval(srcErrorCountdownInterval);
   srcErrorCountdownInterval = null;
-  document.getElementById('src-error-overlay').classList.remove('open');
+  closeSrcErrorOverlayAnimated();
   srcErrorPending = false;
+  srcErrorReconnectMode = false;
   goToNextSourceAfterError();
   if (typeof srcErrorPopupResolve === 'function') {
     const resolve = srcErrorPopupResolve;
@@ -10591,18 +10885,54 @@ function finishSourceErrorCountdown() {
   }
 }
 
-// Appelé par le bouton "Passer maintenant" : on saute directement à la source
-// suivante sans attendre la fin du compte à rebours.
+// Appelé par le bouton "Passer maintenant" (échec au lancement) OU par le
+// bouton "Changer de source" (choix explicite de l'utilisateur, solo
+// uniquement — jamais proposé en Watch Party) : dans les deux cas,
+// l'utilisateur a lui-même décidé de passer à la source suivante.
 function skipSourceErrorCountdown() {
   finishSourceErrorCountdown();
+}
+
+// Appelé par le bouton "Réessayer" (mode reconnexion — solo ET Watch Party) :
+// referme la popup et relance immédiatement une tentative sur la MÊME
+// source, tout en réarmant le délai avant de reproposer la popup si ça
+// échoue encore — toujours sans jamais changer de source automatiquement.
+function retrySourceErrorReconnect() {
+  clearInterval(srcErrorCountdownInterval);
+  srcErrorCountdownInterval = null;
+  closeSrcErrorOverlayAnimated();
+  srcErrorPending = false;
+  srcErrorReconnectMode = false;
+  if (typeof srcErrorPopupResolve === 'function') {
+    const resolve = srcErrorPopupResolve;
+    srcErrorPopupResolve = null;
+    resolve();
+  }
+  showSpinner();
+  // On autorise la popup à réapparaître si ça échoue encore après un nouveau
+  // délai complet (sinon l'utilisateur ne serait plus jamais reproposé le
+  // choix après avoir cliqué "Réessayer" une fois).
+  srcReconnectPopupShown = false;
+  clearTimeout(srcReconnectDeadlineTimer);
+  srcReconnectDeadlineTimer = setTimeout(showReconnectPopupIfStillFailing, SRC_RECONNECT_POPUP_DELAY);
+  srcErrorPending = true; // un nouveau cycle de tentatives est actif (même invariant que handleSourceFailure)
+  startReconnectRetryLoop(); // s'assure que la boucle de fond tourne bien (sans effet si déjà active)
+  // Nouvelle tentative immédiate (pas d'attente de SRC_RETRY_DELAY) puisque
+  // l'utilisateur vient explicitement de demander de réessayer maintenant.
+  if (!currentSources || !currentSources[currentSourceIndex]) return;
+  selectCloudflareSource(currentSourceIndex, { bypassLock: true, forceReload: true });
 }
 
 function hideSourceErrorPopup() {
   clearInterval(srcErrorCountdownInterval);
   srcErrorCountdownInterval = null;
+  stopReconnectRetryLoop();
+  clearTimeout(srcReconnectDeadlineTimer);
+  hideFreezeFrame();
   srcErrorPending = false;
   srcErrorCancelled = true;
-  document.getElementById('src-error-overlay').classList.remove('open');
+  srcErrorReconnectMode = false;
+  closeSrcErrorOverlayAnimated();
   if (typeof srcErrorPopupResolve === 'function') {
     const resolve = srcErrorPopupResolve;
     srcErrorPopupResolve = null;
@@ -10617,6 +10947,16 @@ function goToNextSourceAfterError() {
   }
   const nextId = currentSourceIndex + 1;
   if (nextId < currentSources.length) {
+    const nextSource = currentSources[nextId];
+    // La bascule auto nous envoie sur un lecteur tiers : on prépare le
+    // sous-onglet "Autres lecteurs" pour qu'il soit déjà actif au prochain
+    // rendu, et on marque qu'il faut rouvrir le panneau Sources/Paramètres
+    // directement dessus (+ repasser par le popup adblocker) la prochaine
+    // fois que l'utilisateur l'ouvre.
+    if (nextSource && !nextSource.isDirect) {
+      sourceSubTab[nextSource.lang] = 'autres';
+      pendingAutresPanelOpen = true;
+    }
     selectCloudflareSource(nextId, { bypassLock: true });
     showActionToast(tr('source_changed_toast').replace('{source}', escapeHTML(sourceLabel(currentSources[nextId]))));
   } else {
@@ -10630,6 +10970,14 @@ function goToNextSourceAfterError() {
 let abProceedCallback = null;
 let abPopupAlreadyShown = false; // reste à false tant que la page n'est pas rechargée
 let abVideoWasPlaying = false;
+// true quand une bascule AUTOMATIQUE (suite à "Oups, petit problème
+// technique") vient d'atterrir sur un lecteur tiers ("Autres lecteurs").
+// Dans ce cas, le prochain clic sur Sources/Paramètres doit rouvrir le
+// panneau direct sur ce sous-onglet et redéclencher le popup adblocker
+// (voir goToNextSourceAfterError, toggleSettings, toggleSourcesPanel) —
+// sinon le panneau resterait affiché sur "Lecteur NETFLOX" alors que ce
+// n'est plus ce qui est en cours de lecture.
+let pendingAutresPanelOpen = false;
 
 function isMobileUA() {
   const ua = navigator.userAgent || '';
@@ -11053,6 +11401,12 @@ let extInstallAttempted = false;
 // d'un tout premier échec, pour afficher la bonne popup en cas de nouvel
 // échec.
 let extRetryPending = false;
+// Position de lecture mémorisée au moment PRÉCIS où l'extension est détectée
+// comme manquante/désactivée (avant que le blocage des segments ne puisse
+// faire dériver video.currentTime). Réutilisée pour reprendre pile à cet
+// endroit, que l'utilisateur change ensuite de source ou réactive
+// l'extension depuis le popup — au lieu de repartir du tout début.
+let extPopupResumeTime = null;
 
 function handleFinepulfeExtensionRequired() {
   if (pw.classList.contains('embed-mode')) return; // un embed gère ses propres erreurs
@@ -11060,6 +11414,7 @@ function handleFinepulfeExtensionRequired() {
   extPopupPending = true;
   extInstallAttempted = false;
   extRetryPending = false; // remise à zéro défensive : pas de résidu d'un cycle précédent
+  extPopupResumeTime = getEstimatedCurrentTime();
   hideError();
   enqueuePopup(POPUP_PRIORITY.srcError, () => {
     return new Promise(resolve => {
@@ -11086,7 +11441,16 @@ function closeExtensionRequiredPopup() {
   extRetryPending = false;
   extRetryInFlight = false;
   exitExtRetryMode();
+  // On réimpose la position mémorisée à l'ouverture du popup juste avant de
+  // basculer sur la source suivante : le blocage des segments pendant que
+  // le popup était affiché a pu faire dériver video.currentTime (ex: vers 0
+  // faute de données bufferisées), ce qui ferait sinon repartir la source
+  // suivante depuis le début au lieu de reprendre où on s'était arrêté.
+  if (isFinite(extPopupResumeTime) && extPopupResumeTime > 0) {
+    try { video.currentTime = extPopupResumeTime; } catch (e) {}
+  }
   goToNextSourceAfterError();
+  extPopupResumeTime = null;
   if (typeof extPopupResolve === 'function') {
     const resolve = extPopupResolve;
     extPopupResolve = null;
@@ -11105,6 +11469,16 @@ function finishExtPopupAsSuccess() {
   extRetryPending = false;
   extRetryInFlight = false;
   exitExtRetryMode();
+  // Même logique que closeExtensionRequiredPopup() : on s'assure que la
+  // lecture qui reprend (l'extension fonctionne à nouveau) repart bien de
+  // la position où l'utilisateur s'était arrêté, et on la maintient
+  // quelques secondes (armResumeWatchdog) au cas où le premier segment
+  // chargé replacerait la vidéo à 0.
+  if (isFinite(extPopupResumeTime) && extPopupResumeTime > 0) {
+    try { video.currentTime = extPopupResumeTime; } catch (e) {}
+    armResumeWatchdog(extPopupResumeTime);
+  }
+  extPopupResumeTime = null;
   if (typeof extPopupResolve === 'function') {
     const resolve = extPopupResolve;
     extPopupResolve = null;
@@ -11151,6 +11525,13 @@ function retryFinepulfeExtensionCheck() {
   extRetryInFlight = true;
   document.getElementById('ext-overlay').classList.remove('open');
   extRetryPending = true;
+  // On réimpose la position mémorisée à l'ouverture du popup avant de
+  // relancer le chargement : garantit que le rechargement reprend bien où
+  // l'utilisateur s'était arrêté, même si video.currentTime a dérivé
+  // pendant que le popup était affiché (segments bloqués, pas de buffer).
+  if (isFinite(extPopupResumeTime) && extPopupResumeTime > 0) {
+    try { video.currentTime = extPopupResumeTime; } catch (e) {}
+  }
   selectCloudflareSource(currentSourceIndex, { bypassLock: true, forceReload: true });
 }
 
