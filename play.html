@@ -7070,16 +7070,23 @@ function renderCastMenu() {
 }
 
 // Re-render uniquement si le menu est ouvert (évite le travail inutile).
+let castRefreshWasCasting = false;
 function castRefresh() {
   const btn = document.getElementById('cast-btn');
   const casting = castState.connected || castState.airplayOn;
   if (btn) btn.classList.toggle('casting', casting);
   if (castIsOpen()) renderCastMenu();
   // Le verrouillage grisé des sources (pendant une diffusion) dépend de
-  // activeSourceLockReason() === 'cast' : sans ce refresh, le panneau Sources
-  // gardait son état d'avant le début/la fin du cast (pas grisé, pas de
-  // tooltip, pas de vibration) tant qu'on ne le rouvrait pas "à froid".
-  if (typeof renderCloudflareSources === 'function') renderCloudflareSources();
+  // activeSourceLockReason() === 'cast'. On ne reconstruit le panneau Sources
+  // QUE quand l'état "en train de caster" change réellement (début/fin), pas
+  // à chaque appel de castRefresh() — celui-ci est aussi déclenché à chaque
+  // tick de scan Cast (bien plus fréquent qu'une vraie connexion/déconnexion),
+  // et reconstruire tout le panneau à ce rythme surchargeait le thread
+  // principal et perturbait la détection Chromecast/AirPlay elle-même.
+  if (casting !== castRefreshWasCasting) {
+    castRefreshWasCasting = casting;
+    if (typeof renderCloudflareSources === 'function') renderCloudflareSources();
+  }
 }
 
 function castSetNote(msg) {
