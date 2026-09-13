@@ -7075,6 +7075,11 @@ function castRefresh() {
   const casting = castState.connected || castState.airplayOn;
   if (btn) btn.classList.toggle('casting', casting);
   if (castIsOpen()) renderCastMenu();
+  // Le verrouillage grisé des sources (pendant une diffusion) dépend de
+  // activeSourceLockReason() === 'cast' : sans ce refresh, le panneau Sources
+  // gardait son état d'avant le début/la fin du cast (pas grisé, pas de
+  // tooltip, pas de vibration) tant qu'on ne le rouvrait pas "à froid".
+  if (typeof renderCloudflareSources === 'function') renderCloudflareSources();
 }
 
 function castSetNote(msg) {
