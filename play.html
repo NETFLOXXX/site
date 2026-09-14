@@ -1120,53 +1120,32 @@
      .settings-scrim + .settings-panel (voir plus bas). */
   #cast-panel .settings-content { display:flex; flex-direction:column; }
 
-  .cast-list { padding:10px; display:flex; flex-direction:column; gap:8px; max-height:238px; overflow-y:auto; overflow-x:hidden; }
+  .cast-list { padding:7px; max-height:238px; overflow-y:auto; overflow-x:hidden; }
   .cast-list::-webkit-scrollbar { width:5px; }
   .cast-list::-webkit-scrollbar-thumb { background:rgba(255,255,255,0.15); border-radius:6px; }
 
   .cast-row {
-    display:flex; align-items:center; gap:13px; width:100%;
-    padding:14px; border-radius:14px; cursor:pointer;
-    background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); color:rgba(255,255,255,0.86);
-    font-family:'Outfit',sans-serif; font-size:0.9rem; text-align:left;
-    transition:background 0.15s, border-color 0.15s, color 0.15s, box-shadow 0.2s;
+    display:flex; align-items:center; justify-content:center; gap:12px; width:100%;
+    padding:11px 12px; border-radius:11px; cursor:pointer;
+    background:none; border:1px solid transparent; color:rgba(255,255,255,0.86);
+    font-family:'Outfit',sans-serif; font-size:0.9rem; text-align:center;
+    transition:background 0.15s, border-color 0.15s, color 0.15s;
   }
-  .cast-row:hover { background:rgba(255,255,255,0.07); border-color:rgba(255,255,255,0.14); color:#fff; }
+  .cast-row:hover { background:rgba(255,255,255,0.06); color:#fff; }
   .cast-row:active { transform:scale(0.985); }
-  .cast-row.active {
-    background:linear-gradient(135deg,rgba(220,38,38,0.18),rgba(220,38,38,0.08));
-    border-color:rgba(220,38,38,0.55); color:#fff;
-    box-shadow:0 6px 20px rgba(220,38,38,0.15), inset 0 0 0 1px rgba(220,38,38,0.08);
-  }
-  .cast-row-icon {
-    display:flex; align-items:center; justify-content:center; flex-shrink:0;
-    width:42px; height:42px; border-radius:12px;
-    background:rgba(255,255,255,0.06); color:rgba(255,255,255,0.75);
-    transition:background 0.15s, color 0.15s;
-  }
-  .cast-row.active .cast-row-icon { background:rgba(220,38,38,0.22); color:var(--red-h); }
-  .cast-row-icon svg { width:20px; height:20px; }
-  .cast-row-txt { display:flex; flex-direction:column; gap:3px; min-width:0; flex:1; text-align:left; }
-  .cast-row-name { font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .cast-row.active { background:rgba(220,38,38,0.14); border-color:rgba(220,38,38,0.5); color:#fff; }
+  .cast-row svg { width:20px; height:20px; flex-shrink:0; }
+  .cast-row.active svg { color:var(--red-h); }
+  .cast-row-txt { display:flex; flex-direction:column; align-items:center; gap:2px; min-width:0; flex:1; text-align:center; }
+  .cast-row-name { font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .cast-row-sub {
-    display:flex; align-items:center; gap:6px;
-    font-size:0.76rem; color:rgba(255,255,255,0.42);
+    font-size:0.72rem; color:rgba(255,255,255,0.42);
     white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
   }
-  .cast-row.active .cast-row-sub { color:rgba(255,255,255,0.65); }
-  .cast-row.active .cast-row-sub::before {
-    content:''; width:6px; height:6px; border-radius:50%; flex-shrink:0;
-    background:var(--red-h); box-shadow:0 0 0 0 rgba(220,38,38,0.55);
-    animation:cast-live-pulse 1.8s ease-out infinite;
-  }
-  @keyframes cast-live-pulse {
-    0% { box-shadow:0 0 0 0 rgba(220,38,38,0.55); }
-    70% { box-shadow:0 0 0 6px rgba(220,38,38,0); }
-    100% { box-shadow:0 0 0 0 rgba(220,38,38,0); }
-  }
+  .cast-row.active .cast-row-sub { color:rgba(255,255,255,0.62); }
   .cast-badge {
     font-size:0.6rem; font-weight:700; text-transform:uppercase; letter-spacing:0.04em;
-    background:var(--red); color:#fff; padding:4px 10px; border-radius:20px; flex-shrink:0;
+    background:var(--red); color:#fff; padding:3px 9px; border-radius:20px; flex-shrink:0;
   }
 
   .cast-list.is-empty {
@@ -1201,18 +1180,17 @@
 
   .cast-stop {
     display:flex; align-items:center; justify-content:center; gap:8px;
-    width:100%; margin-top:4px; padding:12px; border-radius:12px; cursor:pointer;
-    background:transparent; border:1.5px solid rgba(220,38,38,0.4); color:#f87171;
-    font-family:'Outfit',sans-serif; font-size:0.84rem; font-weight:700;
-    transition:background 0.15s, border-color 0.15s, color 0.15s;
+    width:calc(100% - 14px); margin:1px 7px 8px; padding:10px; border-radius:11px; cursor:pointer;
+    background:rgba(220,38,38,0.14); border:1px solid rgba(220,38,38,0.45); color:#fff;
+    font-family:'Outfit',sans-serif; font-size:0.84rem; font-weight:600;
+    transition:background 0.15s;
   }
-  .cast-stop:hover { background:rgba(220,38,38,0.14); border-color:rgba(220,38,38,0.6); color:#fff; }
-  .cast-stop:active { transform:scale(0.985); }
+  .cast-stop:hover { background:rgba(220,38,38,0.28); }
   .cast-stop svg { width:16px; height:16px; }
 
   .cast-foot {
-    padding:12px 16px 14px; margin-top:2px; border-top:1px solid rgba(255,255,255,0.08);
-    font-size:0.72rem; color:rgba(255,255,255,0.35); line-height:1.5;
+    padding:9px 16px 12px; border-top:1px solid rgba(255,255,255,0.08);
+    font-size:0.7rem; color:rgba(255,255,255,0.3); line-height:1.45;
   }
   .cast-foot.warn { color:#f87171; }
 
@@ -1458,20 +1436,12 @@
   .src-subtabs .settings-tab.wp-locked {
     opacity:0.35; cursor:not-allowed; filter:grayscale(0.4); transition:opacity .15s,filter .15s,border-color .15s;
   }
-  /* Le survol n'existe que sur souris/trackpad (pointer:fine + hover:hover) :
-     sur mobile, le navigateur simule parfois ce :hover après un tap et le
-     laisse "collé" tant qu'on ne touche pas ailleurs, ce qui donnait un
-     rendu grisé incohérent/moche. En le limitant aux vrais pointeurs à
-     survol, le mobile garde toujours le même gris que l'état de base,
-     et seul le tap (cf. wp-locked-shake + tooltip en JS) donne un retour. */
-  @media (hover:hover) and (pointer:fine) {
-    .src-row.wp-locked:hover,
-    .src-group-header.wp-locked:hover,
-    .src-subrow.wp-locked:hover,
-    .src-subtabs .settings-tab.wp-locked:hover {
-      background:transparent; opacity:0.5; filter:grayscale(0.15);
-      border-color:rgba(248,113,113,0.3);
-    }
+  .src-row.wp-locked:hover,
+  .src-group-header.wp-locked:hover,
+  .src-subrow.wp-locked:hover,
+  .src-subtabs .settings-tab.wp-locked:hover {
+    background:transparent; opacity:0.5; filter:grayscale(0.15);
+    border-color:rgba(248,113,113,0.3);
   }
   @keyframes wp-locked-shake {
     10%, 90% { transform:translateX(-1px); }
@@ -2106,13 +2076,21 @@
     position:fixed; inset:0; z-index:2000;
     background:rgba(0,0,0,0.78); backdrop-filter:blur(10px);
     display:none; align-items:center; justify-content:center; padding:20px;
+    opacity:1; transition:opacity 0.4s ease;
   }
   #ext-overlay.open { display:flex; }
+  /* Animation de sortie (voir closeExtOverlayAnimated en JS) : utilisée en
+     particulier quand l'extension redevient fonctionnelle toute seule
+     (retour sur l'onglet + nouveau segment chargé avec succès) — la popup
+     se referme en fondu au lieu de disparaître d'un coup. */
+  #ext-overlay.closing { opacity:0; }
+  #ext-overlay.closing #ext-modal { transform:scale(0.94) translateY(8px); }
   #ext-modal {
     width:100%; max-width:400px; background:linear-gradient(180deg, #1c1c1c, #131313);
     border:1px solid rgba(255,255,255,0.1); border-radius:20px;
     padding:28px 26px 22px; box-shadow:0 30px 70px rgba(0,0,0,0.7);
     animation:ab-pop 0.3s cubic-bezier(0.34,1.56,0.64,1);
+    transition:transform 0.4s ease;
     font-family:'Outfit',sans-serif; text-align:center;
   }
   #ext-modal .ab-icon {
@@ -4083,7 +4061,7 @@ function applyTMDBInfo(info, id, season=null, episode=null) {
           : `${info.title}: Season ${season} · Episode ${episode}`)
       : info.title;
 
-    durationEl.textContent = formatRuntimeAsTime(info.runtime);
+    durationEl.textContent = tr('duration_unknown');
   } else {
     titleEl.textContent = `TMDB ${id}`;
     document.title = `TMDB ${id}`;
@@ -5172,17 +5150,7 @@ function wpGetLockTipEl() {
     wpLockTipEl = document.createElement('div');
     wpLockTipEl.className = 'wp-lock-tip';
     wpLockTipEl.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg><span></span>`;
-  }
-  // La bulle doit toujours vivre dans l'élément actuellement en plein écran
-  // (le cas typique sur mobile) : en plein écran, tout ce qui reste rattaché
-  // à <body> passe derrière le lecteur ("top layer" natif du navigateur),
-  // c'est ce qui faisait apparaître le message DERRIÈRE le menu Sources sur
-  // mobile. #player-wrap remplit alors tout l'écran (inset:0), donc les
-  // coordonnées viewport calculées plus bas restent valables telles quelles.
-  const fsEl = document.fullscreenElement || document.webkitFullscreenElement || null;
-  const targetParent = fsEl || document.body;
-  if (wpLockTipEl.parentNode !== targetParent) {
-    targetParent.appendChild(wpLockTipEl);
+    document.body.appendChild(wpLockTipEl);
   }
   return wpLockTipEl;
 }
@@ -5206,31 +5174,18 @@ function wpPositionLockTip(tip, anchorEl) {
   tip.style.left = left + 'px';
   tip.style.top = top + 'px';
 }
-let wpLockTipHideTimer = null;
 function wpShowLockTip(anchorEl) {
   const tip = wpGetLockTipEl();
   const reason = activeSourceLockReason();
   tip.querySelector('span').textContent = reason === 'cast' ? tr('cast_source_locked_msg') : tr('watchparty_source_locked_msg');
   tip.classList.add('show');
   wpPositionLockTip(tip, anchorEl);
-  // Sur mobile il n'y a pas de "mouseleave" pour refermer la bulle : elle se
-  // referme donc toute seule après quelques secondes (et aussi au prochain
-  // tap ailleurs, cf. listener plus bas).
-  clearTimeout(wpLockTipHideTimer);
-  wpLockTipHideTimer = setTimeout(wpHideLockTip, 2600);
 }
 function wpHideLockTip() {
-  clearTimeout(wpLockTipHideTimer);
   if (wpLockTipEl) wpLockTipEl.classList.remove('show');
 }
 window.addEventListener('scroll', wpHideLockTip, true);
 window.addEventListener('resize', wpHideLockTip);
-// Referme la bulle si on tape/clique ailleurs (utile sur mobile où il n'y a pas de mouseleave)
-document.addEventListener('pointerdown', (e) => {
-  if (wpLockTipEl && wpLockTipEl.classList.contains('show') && !wpLockTipEl.contains(e.target)) {
-    wpHideLockTip();
-  }
-}, true);
 function wpAttachLockedRow(el) {
   el.setAttribute('aria-disabled', 'true');
   el.addEventListener('mouseenter', () => wpShowLockTip(el));
@@ -5238,8 +5193,6 @@ function wpAttachLockedRow(el) {
   el.addEventListener('click', (e) => {
     e.preventDefault(); e.stopPropagation();
     wpShowLockTip(el);
-    // petit retour haptique au tap (mobile uniquement, no-op ailleurs si l'API n'existe pas)
-    if (navigator.vibrate) navigator.vibrate(35);
     el.classList.remove('wp-locked-shake');
     // force reflow pour pouvoir rejouer l'animation si on clique plusieurs fois de suite
     void el.offsetWidth;
@@ -6962,7 +6915,7 @@ function closeCastMenu() {
 function castRowHTML(icon, name, sub, opts) {
   opts = opts || {};
   return `<button class="cast-row ${opts.active ? 'active' : ''}" onclick="${opts.action}">
-      <span class="cast-row-icon">${icon}</span>
+      ${icon}
       <span class="cast-row-txt">
         <span class="cast-row-name">${name}</span>
         <span class="cast-row-sub">${sub}</span>
@@ -7052,7 +7005,7 @@ function renderCastMenu() {
   }
 
   if (casting) {
-    html += `<button class="cast-stop" onclick="castStop()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="6" width="12" height="12" rx="2"/></svg><span>${tr('cast_stop')}</span></button>`;
+    html += `<button class="cast-stop" onclick="castStop()"><span>${tr('cast_stop')}</span></button>`;
   }
 
   list.innerHTML = html;
@@ -7070,23 +7023,11 @@ function renderCastMenu() {
 }
 
 // Re-render uniquement si le menu est ouvert (évite le travail inutile).
-let castRefreshWasCasting = false;
 function castRefresh() {
   const btn = document.getElementById('cast-btn');
   const casting = castState.connected || castState.airplayOn;
   if (btn) btn.classList.toggle('casting', casting);
   if (castIsOpen()) renderCastMenu();
-  // Le verrouillage grisé des sources (pendant une diffusion) dépend de
-  // activeSourceLockReason() === 'cast'. On ne reconstruit le panneau Sources
-  // QUE quand l'état "en train de caster" change réellement (début/fin), pas
-  // à chaque appel de castRefresh() — celui-ci est aussi déclenché à chaque
-  // tick de scan Cast (bien plus fréquent qu'une vraie connexion/déconnexion),
-  // et reconstruire tout le panneau à ce rythme surchargeait le thread
-  // principal et perturbait la détection Chromecast/AirPlay elle-même.
-  if (casting !== castRefreshWasCasting) {
-    castRefreshWasCasting = casting;
-    if (typeof renderCloudflareSources === 'function') renderCloudflareSources();
-  }
 }
 
 function castSetNote(msg) {
@@ -11487,11 +11428,30 @@ function handleFinepulfeExtensionRequired() {
 function showExtensionRequiredPopup() {
   exitExtRetryMode();
   refreshExtensionButtonsUI();
-  document.getElementById('ext-overlay').classList.add('open');
+  extOverlayCloseToken++; // invalide toute fermeture animée programmée en attente
+  const overlay = document.getElementById('ext-overlay');
+  overlay.classList.remove('closing');
+  overlay.classList.add('open');
   // Garde-fou : la vidéo ne doit jamais jouer tant que cette popup est
   // affichée (elle ne le devrait déjà pas, mais on s'assure qu'aucune
   // lecture ne démarre/continue derrière le popup).
   video.pause();
+}
+
+// Ferme la popup en fondu (voir CSS #ext-overlay.closing) plutôt que de la
+// faire disparaître d'un coup — utilisé quand l'extension redevient
+// fonctionnelle toute seule (voir finishExtPopupAsSuccess). Le jeton évite
+// qu'une fermeture programmée n'efface par erreur une réouverture survenue
+// entre-temps (ex: nouvel échec juste après la reprise).
+let extOverlayCloseToken = 0;
+function closeExtOverlayAnimated() {
+  const overlay = document.getElementById('ext-overlay');
+  const token = ++extOverlayCloseToken;
+  overlay.classList.add('closing');
+  setTimeout(() => {
+    if (token !== extOverlayCloseToken) return; // une réouverture a eu lieu depuis
+    overlay.classList.remove('open', 'closing');
+  }, 400);
 }
 
 function closeExtensionRequiredPopup() {
@@ -11514,7 +11474,7 @@ function closeExtensionRequiredPopup() {
 // temps d'une tentative) : on referme tout sans passer à la source
 // suivante, puisque cette source fonctionne maintenant.
 function finishExtPopupAsSuccess() {
-  document.getElementById('ext-overlay').classList.remove('open');
+  closeExtOverlayAnimated();
   extPopupPending = false;
   extInstallAttempted = false;
   extRetryPending = false;
@@ -11527,13 +11487,22 @@ function finishExtPopupAsSuccess() {
   }
 }
 
-// ── Détection retour sur l'onglet après "Installer l'extension" ──
-// Si l'utilisateur quitte la page pour aller installer l'extension puis
-// revient sur cet onglet pendant que la popup est toujours affichée, on
-// retente automatiquement le chargement de finepulfe : succès -> on reste
-// dessus ; nouvel échec (403) -> popup de confirmation avec "Réessayer" /
-// "Annuler". Sans clic préalable sur "Installer l'extension", revenir sur
-// l'onglet ne déclenche rien (ex: simple clic sur "J'ai compris").
+// ── Détection retour sur l'onglet pendant que la popup est affichée ──
+// Si l'utilisateur quitte l'onglet (pour installer l'extension, ou pour
+// simplement la réactiver dans les paramètres/menu du navigateur) puis
+// revient dessus pendant que la popup "extension requise" est toujours
+// affichée, on retente automatiquement le chargement de finepulfe :
+// succès -> la popup se referme toute seule (avec animation, voir
+// finishExtPopupAsSuccess) et la vidéo reprend pile où elle s'était
+// arrêtée (pas depuis le début) ; nouvel échec (403) -> popup de
+// confirmation avec "Réessayer" / "Annuler".
+//
+// Avant, ce retest automatique ne se déclenchait que si l'utilisateur avait
+// préalablement cliqué sur "Installer l'extension" — ce qui ratait le cas
+// où l'extension était déjà installée et seulement désactivée : il suffit
+// alors de la réactiver directement dans le navigateur, sans passer par ce
+// bouton. On retente donc désormais à CHAQUE retour sur l'onglet tant que
+// la popup est affichée, que ce bouton ait été cliqué ou non.
 //
 // On n'utilise QUE 'visibilitychange' (pas 'focus') : ouvrir un nouvel
 // onglet via window.open() (bouton "Installer"/"Réessayer") ne fait très
@@ -11548,7 +11517,6 @@ let extReturnCheckLock = false;
 let extRetryInFlight = false; // évite un chevauchement si l'utilisateur revient plusieurs fois très vite
 function watchTabReturnForExtInstall() {
   if (document.hidden) return; // ne réagit qu'au retour, pas au départ
-  if (!extInstallAttempted) return;
   const overlay = document.getElementById('ext-overlay');
   if (!overlay || !overlay.classList.contains('open')) return;
   if (extReturnCheckLock || extRetryInFlight) return;
@@ -11564,7 +11532,7 @@ document.addEventListener('visibilitychange', watchTabReturnForExtInstall);
 function retryFinepulfeExtensionCheck() {
   if (extRetryInFlight) return; // une tentative est déjà en cours, on ignore
   extRetryInFlight = true;
-  document.getElementById('ext-overlay').classList.remove('open');
+  closeExtOverlayAnimated();
   extRetryPending = true;
   selectCloudflareSource(currentSourceIndex, { bypassLock: true, forceReload: true });
 }
@@ -11585,7 +11553,10 @@ function reopenExtensionStoreFromRetry() {
 // d'installation initiaux masqués, uniquement "Réessayer" / "Annuler".
 function showExtRetryStillBlockedPopup() {
   enterExtRetryMode();
-  document.getElementById('ext-overlay').classList.add('open');
+  extOverlayCloseToken++; // invalide toute fermeture animée programmée en attente
+  const overlay = document.getElementById('ext-overlay');
+  overlay.classList.remove('closing');
+  overlay.classList.add('open');
   video.pause();
 }
 
