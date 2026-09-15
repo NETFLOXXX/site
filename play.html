@@ -6281,7 +6281,7 @@ function loadMedia(url, title, audioLangOverride, resumeTime, isReconnectRetry) 
   // On ne sort du "mode reconnexion" (srcReconnectionActive / srcReconnectPopupShown)
   // que si CE chargement n'est PAS lui-même une tentative de reconnexion
   // automatique — sinon une simple sélection manuelle de source ou un nouveau contenu.
-  if (!isReconnectRetry) { srcReconnectionActive = false; srcReconnectPopupShown = false; srcReconnectResumeTime = null; }
+  if (!isReconnectRetry) { srcReconnectionActive = false; srcReconnectPopupShown = false; srcReconnectResumeTime = null; srcErrorExtReason = false; }
   embedEstimateStartedAt = null; // on quitte l'iframe : plus besoin d'estimer
   loadScreen.style.display = 'none';
   pw.style.display = 'block';
@@ -6419,10 +6419,28 @@ function loadMedia(url, title, audioLangOverride, resumeTime, isReconnectRetry) 
           showExtRetryStillBlockedPopup();
         } else if (isFinepulfe && httpStatus === 403) {
           // Cas spécifique : source finepulfe qui répond 403 -> l'extension
-          // NETFLOX est requise pour y accéder. On propose son installation
-          // plutôt que d'afficher directement la popup générique d'erreur.
-          handleFinepulfeExtensionRequired();
+          // NETFLOX est requise pour y accéder.
+          // Deux situations bien différentes :
+          //  - échec AU LANCEMENT (la source n'a jamais démarré) : c'est
+          //    probablement la toute première fois, on propose carrément
+          //    l'installation (popup "Extension NETFLOX requise").
+          //  - coupure EN COURS DE LECTURE (srcHasStartedThisLoad) ou cycle
+          //    de reconnexion déjà en cours (srcReconnectionActive, ex: une
+          //    tentative de reconnexion en arrière-plan qui échoue encore) :
+          //    l'extension était visiblement déjà installée et fonctionnait,
+          //    donc pas besoin de reproposer son installation — on utilise
+          //    le même mécanisme que pour une perte de connexion (retente
+          //    en silence, popup "Réessayer / Changer de source" seulement
+          //    si ça ne se rétablit pas rapidement), avec un texte dédié
+          //    expliquant que l'extension semble avoir été désactivée.
+          if (srcHasStartedThisLoad || srcReconnectionActive) {
+            srcErrorExtReason = true;
+            handleSourceFailure();
+          } else {
+            handleFinepulfeExtensionRequired();
+          }
         } else {
+          srcErrorExtReason = false;
           handleSourceFailure();
         }
       }
@@ -6485,6 +6503,7 @@ function resolveReconnectionSuccess() {
   srcReconnectionActive = false;
   srcReconnectPopupShown = false;
   srcReconnectResumeTime = null;
+  srcErrorExtReason = false;
   hideFreezeFrame();
 }
 
@@ -10648,6 +10667,15 @@ let srcErrorCancelled = false;
 // comportement existant (échec au tout premier lancement d'une source),
 // inchangé.
 let srcErrorReconnectMode = false;
+// true quand le cycle de reconnexion en cours a été déclenché par un 403
+// finepulfe EN COURS DE LECTURE (extension NETFLOX désactivée après coup),
+// plutôt qu'une simple perte de connexion — permet à showSourceErrorPopup
+// d'afficher un texte dédié ("Oups, problème d'extension") au lieu du texte
+// générique de reconnexion. Remis à false à chaque nouveau chargement non-
+// reconnexion (voir loadMedia) et à la résolution du cycle (voir
+// resolveReconnectionSuccess), pour ne jamais "polluer" un futur cycle
+// causé par un autre problème.
+let srcErrorExtReason = false;
 // true dès que la source en cours a réussi à démarrer au moins une fois
 // depuis son chargement (voir loadMedia) — sert à distinguer un échec AU
 // LANCEMENT (jamais démarré) d'une panne EN COURS DE LECTURE.
@@ -10807,18 +10835,32 @@ function showSourceErrorPopup(reconnectMode) {
   srcErrorCountdownInterval = null;
 
   if (srcErrorReconnectMode) {
-    // Titre dédié pour ce cas précis (perte de connexion en cours de
-    // lecture) : plus parlant que le générique "petit problème technique"
-    // utilisé pour un vrai échec au lancement d'une source.
-    title.textContent = preferredLang === 'fr' ? 'Oups, problème de connexion' : 'Oops, connection issue';
     const inWatchParty = wpIsHost || wpIsGuest;
-    text.textContent = inWatchParty
-      ? (preferredLang === 'fr'
-          ? 'La connexion semble interrompue. Nouvelle tentative en cours...'
-          : 'The connection seems to be interrupted. Retrying...')
-      : (preferredLang === 'fr'
-          ? 'La connexion semble interrompue. Voulez-vous essayer une autre source ?'
-          : 'The connection seems to be interrupted. Would you like to try another source?');
+    if (srcErrorExtReason) {
+      // Coupure en cours de lecture causée par l'extension NETFLOX
+      // (désactivée après coup) plutôt qu'une vraie perte de connexion —
+      // texte dédié pour que l'utilisateur sache quoi vérifier.
+      title.textContent = preferredLang === 'fr' ? "Oups, problème d'extension" : 'Oops, extension issue';
+      text.textContent = inWatchParty
+        ? (preferredLang === 'fr'
+            ? "L'extension NETFLOX semble avoir été désactivée. Réactivez-la dans votre navigateur puis réessayez."
+            : 'The NETFLOX extension seems to have been disabled. Re-enable it in your browser, then try again.')
+        : (preferredLang === 'fr'
+            ? "L'extension NETFLOX semble avoir été désactivée. Réactivez-la dans votre navigateur puis réessayez, ou changez de source."
+            : 'The NETFLOX extension seems to have been disabled. Re-enable it in your browser, then try again, or switch source.');
+    } else {
+      // Titre dédié pour ce cas précis (perte de connexion en cours de
+      // lecture) : plus parlant que le générique "petit problème technique"
+      // utilisé pour un vrai échec au lancement d'une source.
+      title.textContent = preferredLang === 'fr' ? 'Oups, problème de connexion' : 'Oops, connection issue';
+      text.textContent = inWatchParty
+        ? (preferredLang === 'fr'
+            ? 'La connexion semble interrompue. Nouvelle tentative en cours...'
+            : 'The connection seems to be interrupted. Retrying...')
+        : (preferredLang === 'fr'
+            ? 'La connexion semble interrompue. Voulez-vous essayer une autre source ?'
+            : 'The connection seems to be interrupted. Would you like to try another source?');
+    }
     // En Watch Party, aucun changement de source n'est jamais proposé : seul
     // le bouton "Réessayer" est visible, et il devient le bouton principal
     // puisque c'est la seule action possible.
