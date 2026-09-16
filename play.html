@@ -6851,6 +6851,16 @@ function toggleTimeMode() { showRemaining = !showRemaining; updateTimeDisplay();
 function updateTimeDisplay(curOverride, durOverride) {
   const cur = curOverride != null ? curOverride : video.currentTime;
   const dur = durOverride != null ? durOverride : video.duration;
+  // Pendant un rechargement de reconnexion (perte de connexion ou extension
+  // désactivée en cours de lecture — voir srcReconnectionActive /
+  // startReconnectRetryLoop), clearHLS() remet temporairement
+  // video.currentTime à 0 et video.duration à NaN le temps de recharger le
+  // flux. Sans ce garde-fou, l'affichage retombait brièvement à "0:00 / --:--"
+  // à chaque tentative avant de "sauter" au bon temps une fois reconnecté —
+  // donnant l'impression à tort que la vidéo était repartie du début. On
+  // garde donc l'affichage figé sur la dernière valeur connue tant qu'aucun
+  // temps réel n'est encore disponible pour cette tentative.
+  if (srcReconnectionActive && cur === 0 && !isFinite(dur)) return;
   const display = (showRemaining && isFinite(dur))
     ? `−${fmt(dur-cur)} / ${fmt(dur)}`
     : `${fmt(cur)} / ${fmt(dur)}`;
@@ -7508,6 +7518,11 @@ function fmt(s) {
 function updateProgress() {
   // La barre de progression reflète toujours la vidéo locale, casting ou non.
   const { currentTime:ct, duration:dur, buffered } = video;
+  // Même garde-fou que updateTimeDisplay : pendant un rechargement de
+  // reconnexion, video.currentTime/duration sont momentanément à 0/NaN — on
+  // laisse le curseur là où il était plutôt que de le faire sauter au début
+  // puis revenir une fois reconnecté.
+  if (srcReconnectionActive && ct === 0 && !isFinite(dur)) { updateTimeDisplay(); return; }
   const pct = dur ? (ct/dur)*100 : 0;
   document.getElementById('progress-fill').style.width = pct+'%';
   document.getElementById('progress-thumb').style.left = pct+'%';
@@ -10861,22 +10876,34 @@ function showSourceErrorPopup(reconnectMode) {
             ? 'La connexion semble interrompue. Voulez-vous essayer une autre source ?'
             : 'The connection seems to be interrupted. Would you like to try another source?');
     }
-    // En Watch Party, aucun changement de source n'est jamais proposé : seul
-    // le bouton "Réessayer" est visible, et il devient le bouton principal
-    // puisque c'est la seule action possible.
-    skipBtn.style.display = inWatchParty ? 'none' : '';
-    skipBtn.textContent = preferredLang === 'fr' ? 'Changer de source' : 'Switch source';
+    // "Réessayer" est mis en avant (rouge, en premier) : c'est l'action la
+    // plus probable de résoudre le problème (reconnexion réseau ou
+    // réactivation de l'extension) sans perdre sa place dans la vidéo.
+    // "Changer de source" reste disponible juste en dessous, en solo
+    // uniquement — jamais en Watch Party, où un changement de source est
+    // interdit à tout moment pendant la lecture (seul "Réessayer" y est
+    // alors affiché, et devient de fait le bouton principal).
     retryBtn.style.display = '';
+    retryBtn.style.order = '1';
     retryBtn.textContent = preferredLang === 'fr' ? 'Réessayer' : 'Retry';
-    retryBtn.classList.toggle('ab-primary', inWatchParty);
-    retryBtn.classList.toggle('ab-ghost', !inWatchParty);
+    retryBtn.classList.add('ab-primary');
+    retryBtn.classList.remove('ab-ghost');
+    skipBtn.style.display = inWatchParty ? 'none' : '';
+    skipBtn.style.order = '2';
+    skipBtn.textContent = preferredLang === 'fr' ? 'Changer de source' : 'Switch source';
+    skipBtn.classList.add('ab-ghost');
+    skipBtn.classList.remove('ab-primary');
     openSrcErrorOverlay();
     return;
   }
 
   title.textContent = preferredLang === 'fr' ? 'Oups, petit problème technique' : 'Oops, small technical issue';
   retryBtn.style.display = 'none';
+  retryBtn.style.order = '';
   skipBtn.style.display = '';
+  skipBtn.style.order = '';
+  skipBtn.classList.add('ab-primary');
+  skipBtn.classList.remove('ab-ghost');
   skipBtn.textContent = preferredLang === 'fr' ? 'Passer maintenant' : 'Skip now';
 
   let n = 5;
