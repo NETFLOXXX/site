@@ -6288,7 +6288,7 @@ function loadMedia(url, title, audioLangOverride, resumeTime, isReconnectRetry) 
   // On ne sort du "mode reconnexion" (srcReconnectionActive / srcReconnectPopupShown)
   // que si CE chargement n'est PAS lui-même une tentative de reconnexion
   // automatique — sinon une simple sélection manuelle de source ou un nouveau contenu.
-  if (!isReconnectRetry) { srcReconnectionActive = false; srcReconnectPopupShown = false; srcReconnectResumeTime = null; srcErrorExtReason = false; }
+  if (!isReconnectRetry) { srcReconnectionActive = false; srcReconnectPopupShown = false; srcReconnectResumeTime = null; srcErrorExtReason = false; srcReconnectEpisodeStartedAt = 0; srcReconnectLastResolvedAt = 0; }
   embedEstimateStartedAt = null; // on quitte l'iframe : plus besoin d'estimer
   loadScreen.style.display = 'none';
   pw.style.display = 'block';
@@ -6530,6 +6530,11 @@ function resolveReconnectionSuccess() {
   srcReconnectPopupShown = false;
   srcReconnectResumeTime = null;
   srcErrorExtReason = false;
+  // Mémorise l'instant de cette résolution : voir srcReconnectEpisodeGraceMs
+  // ci-dessous et son usage dans handleSourceFailure — une source vraiment
+  // instable (qui recoupe presque aussitôt après un "succès") ne doit pas
+  // repartir sur un tout nouveau délai avant popup à chaque micro-reprise.
+  srcReconnectLastResolvedAt = Date.now();
   hideFreezeFrame();
 }
 
@@ -10747,6 +10752,11 @@ let srcReconnectionActive = false;
 // handleSourceFailure), car video.currentTime devient peu fiable (souvent
 // remis à 0) après la première tentative ratée. Voir selectCloudflareSource.
 let srcReconnectResumeTime = null;
+// Horodatage du tout premier échec de l'épisode de reconnexion EN COURS
+// (voir SRC_RECONNECT_EPISODE_GRACE) — sert à calculer le temps restant
+// avant popup quand un échec survient juste après un micro-succès, au lieu
+// de repartir sur un délai complet à chaque fois.
+let srcReconnectEpisodeStartedAt = 0;
 // true dès que la popup de choix (mode reconnexion) a déjà été montrée pour
 // le cycle de reconnexion EN COURS — évite de la ré-ouvrir en boucle pendant
 // que les tentatives silencieuses continuent en arrière-plan.
@@ -10789,6 +10799,18 @@ const SRC_RECONNECT_POPUP_DELAY_EXT = 8000;
 // (3s) qu'au premier échec silencieux (8s) — pas besoin de le faire
 // attendre aussi longtemps une deuxième fois pour la même popup.
 const SRC_RECONNECT_POPUP_DELAY_EXT_RETRY = 3000;
+// Une source instable peut charger UN fragment avec succès (ce qui déclenche
+// resolveReconnectionSuccess, donc un reset complet du cycle) puis recouper
+// presque aussitôt après. Sans garde-fou, chaque micro-succès de ce genre
+// repartait le délai avant popup (8s/15s) à zéro, et si les coupures
+// revenaient plus vite que ce délai, la popup ne s'affichait JAMAIS — la
+// vidéo se contentait de "chercher en boucle, relancer, recouper" sans fin.
+// Si un nouvel échec survient dans les 3s qui suivent une résolution, on
+// considère qu'il s'agit du MÊME épisode instable plutôt que d'un cycle
+// tout neuf : le minuteur déjà écoulé (ou déjà déclenché) n'est pas remis à
+// zéro (voir handleSourceFailure).
+const SRC_RECONNECT_EPISODE_GRACE = 3000;
+let srcReconnectLastResolvedAt = 0;
 let srcRetryInterval = null;
 
 // BUG FIX (popup qui ne se referme jamais / lecture qui ne reprend pas) :
@@ -10857,8 +10879,11 @@ function handleSourceFailure() {
   // déjà en cours (voir srcReconnectionActive) — sinon (échec au lancement),
   // ancien comportement plus bas.
   if (wpIsHost || wpIsGuest || srcHasStartedThisLoad || srcReconnectionActive) {
-    const enteringNewCycle = !srcReconnectionActive;
+    const withinGrace = !srcReconnectionActive
+      && (Date.now() - srcReconnectLastResolvedAt) < SRC_RECONNECT_EPISODE_GRACE;
+    const enteringNewCycle = !srcReconnectionActive && !withinGrace;
     srcReconnectionActive = true;
+    const delay = srcErrorExtReason ? SRC_RECONNECT_POPUP_DELAY_EXT : SRC_RECONNECT_POPUP_DELAY;
     if (enteringNewCycle) {
       // On capture la position à cet instant précis — avant toute tentative
       // de rechargement qui remettrait video.currentTime à 0 — pour pouvoir
@@ -10867,11 +10892,21 @@ function handleSourceFailure() {
       const t = getEstimatedCurrentTime();
       srcReconnectResumeTime = (isFinite(t) && t > 0) ? t : null;
       showFreezeFrame();
+      srcReconnectEpisodeStartedAt = Date.now();
       clearTimeout(srcReconnectDeadlineTimer);
-      srcReconnectDeadlineTimer = setTimeout(
-        showReconnectPopupIfStillFailing,
-        srcErrorExtReason ? SRC_RECONNECT_POPUP_DELAY_EXT : SRC_RECONNECT_POPUP_DELAY
-      );
+      srcReconnectDeadlineTimer = setTimeout(showReconnectPopupIfStillFailing, delay);
+    } else if (withinGrace) {
+      // Poursuite du MÊME épisode instable (voir SRC_RECONNECT_EPISODE_GRACE) :
+      // on ne repart pas le compte à rebours de la popup à zéro, on continue
+      // simplement de décompter depuis le tout premier échec de cet épisode
+      // — sinon une source qui alterne "ça remarche une seconde / ça
+      // recoupe" en boucle ne montrait jamais la popup.
+      showFreezeFrame();
+      const t = getEstimatedCurrentTime();
+      if (isFinite(t) && t > 0) srcReconnectResumeTime = t;
+      const remaining = Math.max(0, delay - (Date.now() - srcReconnectEpisodeStartedAt));
+      clearTimeout(srcReconnectDeadlineTimer);
+      srcReconnectDeadlineTimer = setTimeout(showReconnectPopupIfStillFailing, remaining);
     }
     startReconnectRetryLoop();
     return;
