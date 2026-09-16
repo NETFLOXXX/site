@@ -3029,7 +3029,7 @@
       <button id="ext-install-chrome-btn" class="ab-action ab-primary" onclick="openChromeDownloadLink()" data-i18n="ext_btn_install_chrome" style="display:none;">Installer Chrome</button>
       <button id="ext-install-firefox-mac-btn" class="ab-action ab-primary" onclick="openFirefoxMacDownloadLink()" data-i18n="ext_btn_install_firefox_mac" style="display:none;">Installer Firefox</button>
       <button id="ext-retry-btn" class="ab-action ab-primary" onclick="reopenExtensionStoreFromRetry()" data-i18n="ext_btn_retry" style="display:none;">Réessayer</button>
-      <button id="ext-retry-cancel-btn" class="ab-action ab-ghost" onclick="closeExtensionRequiredPopup()" data-i18n="ext_btn_retry_cancel" style="display:none;">Annuler</button>
+      <button id="ext-retry-cancel-btn" class="ab-action ab-ghost" onclick="closeExtensionRequiredPopup()" data-i18n="ext_btn_retry_cancel" style="display:none;">Changer de source</button>
       <button id="ext-proceed-btn" class="ab-action ab-ghost" onclick="closeExtensionRequiredPopup()" data-i18n="ext_btn_proceed">Changer de source</button>
     </div>
   </div>
@@ -3652,7 +3652,7 @@ const I18N = {
   ext_retry_title: { fr: 'Extension bien installée&nbsp;?', en: 'Extension installed correctly?' },
   ext_retry_text: { fr: 'La source nécessite toujours l\'extension NETFLOX. Vérifiez qu\'elle est bien installée <strong>et activée</strong> dans votre navigateur, puis réessayez.', en: 'This source still requires the NETFLOX extension. Please check that it is installed <strong>and enabled</strong> in your browser, then try again.' },
   ext_btn_retry: { fr: 'Réessayer', en: 'Try again' },
-  ext_btn_retry_cancel: { fr: 'Annuler', en: 'Cancel' },
+  ext_btn_retry_cancel: { fr: 'Changer de source', en: 'Switch source' },
   ext_btn_proceed: { fr: 'Changer de source', en: 'Switch source' },
   wp_ext_warn_title: { fr: 'Extension requise pour tes invités', en: 'Extension required for your guests' },
   wp_ext_warn_p1: { fr: 'La source actuelle nécessite l\'extension NETFLOX. Assure-toi que <strong>tous tes invités l\'ont installée et activée</strong>, sinon la lecture ne fonctionnera pas de leur côté.', en: 'The current source requires the NETFLOX extension. Make sure <strong>all your guests have it installed and enabled</strong>, otherwise playback won\'t work for them.' },
@@ -10759,6 +10759,13 @@ let srcReconnectDeadlineTimer = null;
 // la popup.
 const SRC_RETRY_DELAY = 4000;
 const SRC_RECONNECT_POPUP_DELAY = 15000;
+// Après un clic explicite sur "Réessayer" dans la popup "Oups, problème
+// d'extension" (voir retrySourceErrorReconnect), l'utilisateur vient de
+// prendre une action manuelle en connaissance de cause (il pense avoir
+// réglé le souci) : s'il échoue encore, on le réinforme bien plus vite
+// (3s) qu'au premier échec silencieux (15s) — pas besoin de le faire
+// attendre aussi longtemps une deuxième fois pour la même popup.
+const SRC_RECONNECT_POPUP_DELAY_EXT_RETRY = 3000;
 let srcRetryInterval = null;
 
 // BUG FIX (popup qui ne se referme jamais / lecture qui ne reprend pas) :
@@ -11014,7 +11021,13 @@ function retrySourceErrorReconnect() {
   // choix après avoir cliqué "Réessayer" une fois).
   srcReconnectPopupShown = false;
   clearTimeout(srcReconnectDeadlineTimer);
-  srcReconnectDeadlineTimer = setTimeout(showReconnectPopupIfStillFailing, SRC_RECONNECT_POPUP_DELAY);
+  // Délai raccourci (3s) si la coupure vient de l'extension : voir
+  // SRC_RECONNECT_POPUP_DELAY_EXT_RETRY. Sinon (perte de connexion), on
+  // garde le délai complet habituel.
+  srcReconnectDeadlineTimer = setTimeout(
+    showReconnectPopupIfStillFailing,
+    srcErrorExtReason ? SRC_RECONNECT_POPUP_DELAY_EXT_RETRY : SRC_RECONNECT_POPUP_DELAY
+  );
   srcErrorPending = true; // un nouveau cycle de tentatives est actif (même invariant que handleSourceFailure)
   startReconnectRetryLoop(); // s'assure que la boucle de fond tourne bien (sans effet si déjà active)
   // Nouvelle tentative immédiate (pas d'attente de SRC_RETRY_DELAY) puisque
