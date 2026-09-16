@@ -6415,16 +6415,34 @@ function loadMedia(url, title, audioLangOverride, resumeTime, isReconnectRetry) 
         hideSpinner();
         const httpStatus = (d.response && d.response.code) || (d.networkDetails && d.networkDetails.status);
         if (extRetryPending) {
-          // On vient de retenter le chargement suite à un retour sur
-          // l'onglet (ou un clic sur "Réessayer") après un passage par
-          // "Installer l'extension", et ça échoue encore — peu importe le
-          // code d'erreur exact (403 typique, mais un timeout ou une autre
-          // erreur réseau sont aussi possibles selon le serveur) : on
-          // affiche la popup de confirmation dédiée plutôt que de relancer
-          // bêtement la popup d'installation initiale ou la popup générique.
+          // On vient de retenter le chargement (retour sur l'onglet, clic
+          // sur "Réessayer", ou tick du sondage automatique en arrière-plan
+          // — voir startExtAutoRetryLoop) et ça échoue encore — peu importe
+          // le code d'erreur exact (403 typique, mais un timeout ou une
+          // autre erreur réseau sont aussi possibles selon le serveur).
           extRetryPending = false;
           extRetryInFlight = false;
-          showExtRetryStillBlockedPopup();
+          if (extRetryIsSilentBackground) {
+            // Échec d'un simple tick de sondage automatique (aucune action
+            // explicite de l'utilisateur) : on ne touche à rien
+            // visuellement, la popup actuellement affichée (ou son
+            // absence) reste telle quelle. Seul un succès a un effet (voir
+            // finishExtPopupAsSuccess) ; le sondage retentera de lui-même
+            // au prochain tick.
+            extRetryIsSilentBackground = false;
+          } else if (extRetryWasDeliberate) {
+            // Tentative précédée d'un clic explicite sur "Installer
+            // l'extension" (ou "Réessayer") : l'utilisateur pense avoir agi,
+            // on lui confirme que ça ne suffit pas encore.
+            showExtRetryStillBlockedPopup();
+          } else {
+            // Retour sur l'onglet fortuit, sans rapport avec l'extension
+            // (l'utilisateur n'a rien cliqué) : on réaffiche simplement la
+            // popup d'installation d'origine, sans passer par la
+            // confirmation "Extension bien installée ?" qui n'aurait pas de
+            // sens ici.
+            showExtensionRequiredPopup();
+          }
         } else if (isFinepulfe && httpStatus === 403) {
           // Cas spécifique : source finepulfe qui répond 403 -> l'extension
           // NETFLOX est requise pour y accéder.
@@ -10759,11 +10777,16 @@ let srcReconnectDeadlineTimer = null;
 // la popup.
 const SRC_RETRY_DELAY = 4000;
 const SRC_RECONNECT_POPUP_DELAY = 15000;
+// Délai initial avant la toute première apparition (silencieuse) de la
+// popup "Oups, problème d'extension" — plus court que le délai générique
+// de perte de connexion (15s) car quand la cause est l'extension, on veut
+// prévenir l'utilisateur plus vite qu'il doit aller la réactiver.
+const SRC_RECONNECT_POPUP_DELAY_EXT = 8000;
 // Après un clic explicite sur "Réessayer" dans la popup "Oups, problème
 // d'extension" (voir retrySourceErrorReconnect), l'utilisateur vient de
 // prendre une action manuelle en connaissance de cause (il pense avoir
 // réglé le souci) : s'il échoue encore, on le réinforme bien plus vite
-// (3s) qu'au premier échec silencieux (15s) — pas besoin de le faire
+// (3s) qu'au premier échec silencieux (8s) — pas besoin de le faire
 // attendre aussi longtemps une deuxième fois pour la même popup.
 const SRC_RECONNECT_POPUP_DELAY_EXT_RETRY = 3000;
 let srcRetryInterval = null;
@@ -10845,7 +10868,10 @@ function handleSourceFailure() {
       srcReconnectResumeTime = (isFinite(t) && t > 0) ? t : null;
       showFreezeFrame();
       clearTimeout(srcReconnectDeadlineTimer);
-      srcReconnectDeadlineTimer = setTimeout(showReconnectPopupIfStillFailing, SRC_RECONNECT_POPUP_DELAY);
+      srcReconnectDeadlineTimer = setTimeout(
+        showReconnectPopupIfStillFailing,
+        srcErrorExtReason ? SRC_RECONNECT_POPUP_DELAY_EXT : SRC_RECONNECT_POPUP_DELAY
+      );
     }
     startReconnectRetryLoop();
     return;
@@ -11514,6 +11540,46 @@ let extInstallAttempted = false;
 // d'un tout premier échec, pour afficher la bonne popup en cas de nouvel
 // échec.
 let extRetryPending = false;
+// Capturé juste avant chaque tentative de rechargement déclenchée par un
+// retour sur l'onglet (voir watchTabReturnForExtInstall) : true seulement
+// si l'utilisateur avait cliqué "Installer l'extension" (ou "Réessayer")
+// juste avant de changer d'onglet. Sert à savoir, EN CAS D'ÉCHEC, s'il faut
+// escalader vers la popup de confirmation "Extension bien installée ?"
+// (tentative délibérée) ou simplement laisser la popup d'origine telle
+// quelle (retour d'onglet fortuit, sans rapport avec l'extension — sinon
+// la popup de confirmation pouvait apparaître AVANT même que l'utilisateur
+// ait cliqué sur "Installer").
+let extRetryWasDeliberate = false;
+// true le temps d'un tick du sondage automatique en arrière-plan (voir
+// startExtAutoRetryLoop) : contrairement à une tentative déclenchée par un
+// retour sur l'onglet, un échec ne doit ici RIEN changer visuellement (la
+// popup affichée reste telle quelle, on retentera au prochain tick) — seul
+// un succès a un effet (fermeture automatique, voir finishExtPopupAsSuccess).
+let extRetryIsSilentBackground = false;
+// Sondage automatique en arrière-plan pendant que la popup extension est
+// affichée, sur le même principe que le cycle de reconnexion de la popup
+// "Oups, problème d'extension" (voir startReconnectRetryLoop) : sans ça,
+// réactiver l'extension depuis le menu du navigateur (qui, contrairement à
+// un changement d'onglet, ne déclenche pas toujours 'visibilitychange') ne
+// relançait jamais rien tant que l'utilisateur ne revenait pas
+// explicitement sur l'onglet.
+let extAutoRetryInterval = null;
+function startExtAutoRetryLoop() {
+  if (extAutoRetryInterval) return; // déjà en cours
+  extAutoRetryInterval = setInterval(() => {
+    const overlay = document.getElementById('ext-overlay');
+    if (!overlay || !overlay.classList.contains('open')) { stopExtAutoRetryLoop(); return; }
+    if (extRetryInFlight) return; // une tentative (manuelle ou auto) est déjà en cours
+    extRetryInFlight = true;
+    extRetryIsSilentBackground = true;
+    extRetryPending = true;
+    selectCloudflareSource(currentSourceIndex, { bypassLock: true, forceReload: true });
+  }, SRC_RETRY_DELAY);
+}
+function stopExtAutoRetryLoop() {
+  clearInterval(extAutoRetryInterval);
+  extAutoRetryInterval = null;
+}
 
 function handleFinepulfeExtensionRequired() {
   if (pw.classList.contains('embed-mode')) return; // un embed gère ses propres erreurs
@@ -11541,6 +11607,7 @@ function showExtensionRequiredPopup() {
   // affichée (elle ne le devrait déjà pas, mais on s'assure qu'aucune
   // lecture ne démarre/continue derrière le popup).
   video.pause();
+  startExtAutoRetryLoop();
 }
 
 // Ferme la popup en fondu (voir CSS #ext-overlay.closing) plutôt que de la
@@ -11561,10 +11628,12 @@ function closeExtOverlayAnimated() {
 
 function closeExtensionRequiredPopup() {
   document.getElementById('ext-overlay').classList.remove('open');
+  stopExtAutoRetryLoop();
   extPopupPending = false;
   extInstallAttempted = false;
   extRetryPending = false;
   extRetryInFlight = false;
+  extRetryIsSilentBackground = false;
   exitExtRetryMode();
   goToNextSourceAfterError();
   if (typeof extPopupResolve === 'function') {
@@ -11580,10 +11649,12 @@ function closeExtensionRequiredPopup() {
 // suivante, puisque cette source fonctionne maintenant.
 function finishExtPopupAsSuccess() {
   closeExtOverlayAnimated();
+  stopExtAutoRetryLoop();
   extPopupPending = false;
   extInstallAttempted = false;
   extRetryPending = false;
   extRetryInFlight = false;
+  extRetryIsSilentBackground = false;
   exitExtRetryMode();
   if (typeof extPopupResolve === 'function') {
     const resolve = extPopupResolve;
@@ -11607,7 +11678,13 @@ function finishExtPopupAsSuccess() {
 // où l'extension était déjà installée et seulement désactivée : il suffit
 // alors de la réactiver directement dans le navigateur, sans passer par ce
 // bouton. On retente donc désormais à CHAQUE retour sur l'onglet tant que
-// la popup est affichée, que ce bouton ait été cliqué ou non.
+// la popup est affichée, que ce bouton ait été cliqué ou non — MAIS en cas
+// de nouvel échec, seule une tentative précédée d'un clic explicite sur
+// "Installer l'extension" (ou "Réessayer") escalade vers la popup de
+// confirmation "Extension bien installée ?" (voir extRetryWasDeliberate) :
+// sinon, un simple changement d'onglet sans rapport avec l'extension
+// pouvait faire apparaître cette confirmation AVANT même que l'utilisateur
+// ait cliqué sur "Installer" — ce qui n'avait aucun sens.
 //
 // On n'utilise QUE 'visibilitychange' (pas 'focus') : ouvrir un nouvel
 // onglet via window.open() (bouton "Installer"/"Réessayer") ne fait très
@@ -11620,6 +11697,22 @@ function finishExtPopupAsSuccess() {
 // réellement à "l'utilisateur est parti puis revenu".
 let extReturnCheckLock = false;
 let extRetryInFlight = false; // évite un chevauchement si l'utilisateur revient plusieurs fois très vite
+
+// Relance le chargement de la source finepulfe actuelle. `deliberate` doit
+// être true uniquement si cette tentative fait suite à une action
+// explicite de l'utilisateur (clic sur "Installer l'extension" avant de
+// changer d'onglet, ou clic direct sur "Réessayer") — voir
+// extRetryWasDeliberate pour ce que ça change en cas de nouvel échec.
+function retryFinepulfeExtensionCheck(deliberate) {
+  if (extRetryInFlight) return; // une tentative est déjà en cours, on ignore
+  extRetryWasDeliberate = deliberate;
+  extRetryIsSilentBackground = false;
+  extRetryInFlight = true;
+  closeExtOverlayAnimated();
+  extRetryPending = true;
+  selectCloudflareSource(currentSourceIndex, { bypassLock: true, forceReload: true });
+}
+
 function watchTabReturnForExtInstall() {
   if (document.hidden) return; // ne réagit qu'au retour, pas au départ
   const overlay = document.getElementById('ext-overlay');
@@ -11627,20 +11720,11 @@ function watchTabReturnForExtInstall() {
   if (extReturnCheckLock || extRetryInFlight) return;
   extReturnCheckLock = true;
   setTimeout(() => { extReturnCheckLock = false; }, 1000);
+  const wasDeliberate = extInstallAttempted; // capturé AVANT le reset ci-dessous
   extInstallAttempted = false;
-  retryFinepulfeExtensionCheck();
+  retryFinepulfeExtensionCheck(wasDeliberate);
 }
 document.addEventListener('visibilitychange', watchTabReturnForExtInstall);
-
-// Relance le chargement de la source finepulfe actuelle (bouton "Réessayer"
-// de la popup de confirmation, ou tentative automatique au retour d'onglet).
-function retryFinepulfeExtensionCheck() {
-  if (extRetryInFlight) return; // une tentative est déjà en cours, on ignore
-  extRetryInFlight = true;
-  closeExtOverlayAnimated();
-  extRetryPending = true;
-  selectCloudflareSource(currentSourceIndex, { bypassLock: true, forceReload: true });
-}
 
 // Bouton "Réessayer" de la popup de confirmation ("Extension bien
 // installée ?") : plutôt que de relancer une requête à l'aveugle, on
@@ -11663,6 +11747,7 @@ function showExtRetryStillBlockedPopup() {
   overlay.classList.remove('closing');
   overlay.classList.add('open');
   video.pause();
+  startExtAutoRetryLoop();
 }
 
 function enterExtRetryMode() {
