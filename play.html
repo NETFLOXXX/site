@@ -6515,12 +6515,37 @@ function hideFreezeFrame() {
   if (canvas) canvas.style.display = 'none';
 }
 
-// Appelée dès que la source est de nouveau saine — que la lecture ait
+// Appelée dès que la source SEMBLE de nouveau saine — que la lecture ait
 // réellement repris (événement 'playing') ou non (utilisateur resté en
-// pause pendant la reconnexion, voir playWhenReady/userWantsPlaying) : dans
-// les deux cas, on referme popup/spinner/image gelée et on nettoie l'état
-// du cycle de reconnexion. Sans effet si aucun cycle n'était en cours.
+// pause pendant la reconnexion, voir playWhenReady/userWantsPlaying).
+//
+// Pour une coupure causée par l'extension (srcErrorExtReason) : une source
+// finepulfe encore instable peut charger UN fragment isolé avec succès puis
+// recouper presque aussitôt après. Résoudre le cycle INSTANTANÉMENT sur ce
+// seul signal effaçait le minuteur vers la popup à chaque fois — et comme
+// un nouvel échec arrivait presque toujours dans la foulée, la popup ne
+// s'affichait jamais (boucle "recherche / relance / recoupe" sans fin). On
+// attend donc une courte confirmation (SRC_RESOLVE_CONFIRM_DELAY) qu'aucun
+// nouvel échec ne survient avant de considérer le cycle vraiment résolu :
+// si handleSourceFailure() est appelée entre-temps, cette confirmation en
+// attente est annulée (voir là-bas) et le cycle/minuteur d'origine continue
+// sans avoir jamais été interrompu.
+let srcResolvePendingTimer = null;
+const SRC_RESOLVE_CONFIRM_DELAY = 1500;
 function resolveReconnectionSuccess() {
+  if (!srcReconnectionActive && !srcReconnectPopupShown) return; // rien à résoudre
+  if (srcErrorExtReason) {
+    if (srcResolvePendingTimer) return; // confirmation déjà programmée
+    srcResolvePendingTimer = setTimeout(() => {
+      srcResolvePendingTimer = null;
+      finalizeReconnectionSuccess();
+    }, SRC_RESOLVE_CONFIRM_DELAY);
+    return;
+  }
+  finalizeReconnectionSuccess();
+}
+
+function finalizeReconnectionSuccess() {
   if (srcReconnectionActive || srcReconnectPopupShown) {
     stopReconnectRetryLoop();
     clearTimeout(srcReconnectDeadlineTimer);
@@ -6530,10 +6555,10 @@ function resolveReconnectionSuccess() {
   srcReconnectPopupShown = false;
   srcReconnectResumeTime = null;
   srcErrorExtReason = false;
-  // Mémorise l'instant de cette résolution : voir srcReconnectEpisodeGraceMs
-  // ci-dessous et son usage dans handleSourceFailure — une source vraiment
-  // instable (qui recoupe presque aussitôt après un "succès") ne doit pas
-  // repartir sur un tout nouveau délai avant popup à chaque micro-reprise.
+  // Mémorise l'instant de cette résolution : voir SRC_RECONNECT_EPISODE_GRACE
+  // ci-dessous et son usage dans handleSourceFailure — filet de sécurité
+  // supplémentaire pour une instabilité qui déborderait la fenêtre de
+  // confirmation ci-dessus.
   srcReconnectLastResolvedAt = Date.now();
   hideFreezeFrame();
 }
@@ -10863,6 +10888,11 @@ function showReconnectPopupIfStillFailing() {
 
 function handleSourceFailure() {
   if (pw.classList.contains('embed-mode')) return; // un embed gère ses propres erreurs
+  // Un nouvel échec pendant qu'une résolution était en attente de
+  // confirmation (voir resolveReconnectionSuccess) annule cette
+  // confirmation : le succès était visiblement une fausse alerte, le cycle
+  // en cours (et son minuteur vers la popup) continue sans interruption.
+  if (srcResolvePendingTimer) { clearTimeout(srcResolvePendingTimer); srcResolvePendingTimer = null; }
   if (srcErrorPending) return; // déjà en train de gérer une bascule
   srcErrorPending = true;
   srcErrorCancelled = false;
