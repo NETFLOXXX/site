@@ -697,16 +697,18 @@
   body.wp-guest-mode .wp-guest-hide { display:none !important; }
 
   #wp-topbar {
-    display:flex; position:fixed; top:0; left:0; right:0; height:56px; z-index:700;
+    display:flex; position:fixed; top:0; left:0; right:0; min-height:56px; z-index:700;
     background:rgba(10,10,10,0.97); border-bottom:1px solid rgba(255,255,255,0.08);
-    align-items:center; justify-content:space-between; padding:0 18px; gap:14px;
+    align-items:center; justify-content:space-between; padding:8px 18px; gap:14px;
     backdrop-filter:blur(14px);
     transform:translateY(-100%); opacity:0; pointer-events:none;
     transition:transform 0.4s cubic-bezier(0.22,1,0.36,1), opacity 0.3s ease;
   }
   body.wp-room-active #wp-topbar { transform:translateY(0); opacity:1; pointer-events:all; }
-  #wp-topbar-left { display:flex; align-items:center; gap:10px; min-width:0; }
-  #wp-topbar-title { font-size:1rem; font-weight:700; letter-spacing:-0.01em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:260px; }
+  #wp-topbar-left { display:flex; align-items:center; gap:10px; min-width:0; flex:1 1 auto; margin-right:28px; }
+  #wp-topbar-title { font-size:1rem; font-weight:700; letter-spacing:-0.01em; line-height:24px; overflow-wrap:break-word; word-break:break-word; flex:0 1 auto; min-width:0; }
+  #wp-topbar-episode { font-size:0.82rem; font-weight:500; color:rgba(255,255,255,0.5); line-height:24px; white-space:nowrap; flex-shrink:0; }
+  #wp-topbar-episode:empty { display:none; }
   .wp-role-badge { flex-shrink:0; font-size:0.68rem; font-weight:700; letter-spacing:0.03em; padding:3px 9px; border-radius:20px; text-transform:uppercase; }
   .wp-role-badge.host { background:rgba(220,38,38,0.18); color:#f87171; border:1px solid rgba(248,113,113,0.4); }
   .wp-role-badge.guest { background:rgba(255,255,255,0.08); color:rgba(255,255,255,0.65); border:1px solid rgba(255,255,255,0.14); }
@@ -877,6 +879,16 @@
     color:rgba(255,255,255,0.4); cursor:pointer; display:flex; align-items:center; justify-content:center; transition:color 0.15s, background 0.15s;
   }
   .wp-fs-toast-close:hover { color:#fff; background:rgba(255,255,255,0.1); }
+  .wp-fs-notif-prompt { padding:12px 14px; }
+  .wp-fs-notif-actions { display:flex; gap:8px; }
+  .wp-fs-notif-btn {
+    flex:1; padding:7px 0; border-radius:8px; border:1px solid rgba(255,255,255,0.14);
+    background:rgba(255,255,255,0.06); color:#fff; font-family:'Outfit',sans-serif; font-size:0.76rem; font-weight:600;
+    cursor:pointer; transition:background 0.15s, border-color 0.15s; white-space:nowrap;
+  }
+  .wp-fs-notif-btn:hover { background:rgba(255,255,255,0.12); }
+  .wp-fs-notif-btn.wp-fs-notif-yes { background:rgba(220,38,38,0.16); border-color:rgba(220,38,38,0.4); color:#f87171; }
+  .wp-fs-notif-btn.wp-fs-notif-yes:hover { background:rgba(220,38,38,0.26); }
 
   /* Le mode immersif "mobile landscape très bas" du lecteur passe en
      z-index:1000 — on le repasse sous la topbar/chat quand un salon est actif
@@ -1778,7 +1790,7 @@
 
   .ep-list { padding:0 0 12px; }
   .ep-row {
-    display:flex; gap:12px; align-items:flex-start; cursor:pointer;
+    display:flex; gap:12px; align-items:center; cursor:pointer;
     margin:3px 12px; padding:10px; border-radius:12px;
     border:1px solid transparent; transition:background .15s, border-color .15s;
   }
@@ -1795,7 +1807,7 @@
   .ep-row.active .ep-meta { color:var(--red-h); }
   .ep-title {
     font-size:0.92rem; font-weight:700; color:#fff; margin-bottom:3px;
-    display:-webkit-box; -webkit-line-clamp:1; -webkit-box-orient:vertical; overflow:hidden;
+    overflow-wrap:break-word; word-break:break-word;
   }
   .ep-overview {
     font-size:0.8rem; color:rgba(255,255,255,0.5); line-height:1.35;
@@ -2857,6 +2869,7 @@
 <div id="wp-topbar">
   <div id="wp-topbar-left">
     <span id="wp-topbar-title">Watch Party</span>
+    <span id="wp-topbar-episode"></span>
     <span id="wp-topbar-role-badge" class="wp-role-badge host">Hôte</span>
   </div>
   <div id="wp-topbar-right">
@@ -4053,7 +4066,6 @@ function applyTMDBInfo(info, id, season=null, episode=null) {
 
   if (info) {
     titleEl.textContent = info.title;
-    if (document.body.classList.contains('wp-room-active')) wpUpdateTopbarMedia();
     posterEl.innerHTML = info.posterPath
       ? `<img src="${TMDB_IMG}${info.posterPath}" alt="" style="width:100%;height:100%;object-fit:cover;">`
       : DEFAULT_POSTER_HTML;
@@ -4061,6 +4073,8 @@ function applyTMDBInfo(info, id, season=null, episode=null) {
     episodeEl.textContent = info.type === 'tv' && season && episode
       ? (preferredLang === 'fr' ? `Saison ${season} · Épisode ${episode}` : `Season ${season} · Episode ${episode}`)
       : '';
+
+    if (document.body.classList.contains('wp-room-active')) wpUpdateTopbarMedia();
 
     document.title = (info.type === 'tv' && season && episode)
       ? (preferredLang === 'fr'
@@ -4074,6 +4088,7 @@ function applyTMDBInfo(info, id, season=null, episode=null) {
     document.title = `TMDB ${id}`;
     posterEl.innerHTML = DEFAULT_POSTER_HTML;
     episodeEl.textContent = '';
+    if (document.body.classList.contains('wp-room-active')) wpUpdateTopbarMedia();
     durationEl.textContent = tr('duration_unknown');
   }
 }
@@ -9193,6 +9208,9 @@ let wpSelfMemberUnsub = null;      // détecte un ban/kick (notre propre entrée
 let wpSelfLeaving = false;         // évite de se traiter soi-même comme "banni" quand on part volontairement
 let wpChatCache = {};
 let wpChatRenderedCount = 0;
+let wpChatToastsDisabled = false;  // désactivées après réponse "Oui" au prompt anti-spam
+let wpChatToastBurstTimes = [];    // timestamps des derniers toasts, pour détecter une rafale
+let wpChatToastPromptShown = false; // évite de spammer le prompt tant que la rafale continue
 let wpJoinCodeDraft = '';          // conserve le code tapé dans le champ "rejoindre" même après une erreur
 
 const WP_PRESETS = [
@@ -9876,7 +9894,9 @@ document.addEventListener('fullscreenchange', () => {
 
 function wpUpdateTopbarMedia() {
   const titleEl = document.getElementById('media-title');
+  const episodeEl = document.getElementById('media-episode');
   document.getElementById('wp-topbar-title').textContent = (titleEl && titleEl.textContent) ? titleEl.textContent : 'Watch Party';
+  document.getElementById('wp-topbar-episode').textContent = (episodeEl && episodeEl.textContent) ? episodeEl.textContent : '';
   document.getElementById('wp-topbar-code').textContent = wpRoomCode || '-----';
 }
 
@@ -10184,6 +10204,7 @@ function wpListenChat() {
 }
 
 function wpSpawnChatToast(m) {
+  if (wpChatToastsDisabled) return;
   const container = document.getElementById('wp-fs-chat-toast');
   if (!container) return;
   const bubble = document.createElement('div');
@@ -10199,6 +10220,54 @@ function wpSpawnChatToast(m) {
   while (container.children.length > 4) wpDismissChatToast(container.firstChild, true);
   requestAnimationFrame(() => requestAnimationFrame(() => bubble.classList.add('in')));
   bubble._wpAutoDismiss = setTimeout(() => wpDismissChatToast(bubble), 5000);
+
+  // Détection de rafale : 5 messages reçus d'affilée, chacun espacé de 2s
+  // maximum du précédent → on propose de désactiver les notifications.
+  if (document.body.classList.contains('wp-fullscreen')) {
+    const now = Date.now();
+    if (wpChatToastBurstTimes.length && now - wpChatToastBurstTimes[wpChatToastBurstTimes.length - 1] > 2000) {
+      wpChatToastBurstTimes = [];
+    }
+    wpChatToastBurstTimes.push(now);
+    if (wpChatToastBurstTimes.length >= 5 && !wpChatToastPromptShown) {
+      wpChatToastPromptShown = true;
+      wpShowChatNotifPrompt();
+    }
+  }
+}
+
+// ── PROMPT "BEAUCOUP DE MESSAGES — DÉSACTIVER LES NOTIFICATIONS ?" ──
+// Affiché en haut à droite (même zone que les toasts de chat) après une
+// rafale de 5 messages rapprochés en plein écran. Se referme seul après 10s.
+function wpShowChatNotifPrompt() {
+  const container = document.getElementById('wp-fs-chat-toast');
+  if (!container) return;
+  const bubble = document.createElement('div');
+  bubble.className = 'wp-fs-toast-bubble wp-fs-notif-prompt';
+  bubble.innerHTML = `
+    <div class="wp-fs-toast-text" style="margin-bottom:9px;">${preferredLang === 'fr' ? 'Beaucoup de messages — désactiver les notifications ?' : 'Lots of messages — turn off notifications?'}</div>
+    <div class="wp-fs-notif-actions">
+      <button class="wp-fs-notif-btn wp-fs-notif-yes" onclick="wpAnswerChatNotifPrompt(this, true)">${preferredLang === 'fr' ? 'Oui' : 'Yes'}</button>
+      <button class="wp-fs-notif-btn wp-fs-notif-no" onclick="wpAnswerChatNotifPrompt(this, false)">${preferredLang === 'fr' ? 'Laisser pour l’instant' : 'Leave it for now'}</button>
+    </div>`;
+  container.appendChild(bubble);
+  while (container.children.length > 4) wpDismissChatToast(container.firstChild, true);
+  requestAnimationFrame(() => requestAnimationFrame(() => bubble.classList.add('in')));
+  bubble._wpAutoDismiss = setTimeout(() => {
+    wpDismissChatToast(bubble);
+    wpChatToastPromptShown = false;
+    wpChatToastBurstTimes = [];
+  }, 10000);
+}
+
+function wpAnswerChatNotifPrompt(btn, disable) {
+  const bubble = btn.closest('.wp-fs-toast-bubble');
+  if (disable) {
+    wpChatToastsDisabled = true;
+  }
+  wpChatToastPromptShown = false;
+  wpChatToastBurstTimes = [];
+  wpDismissChatToast(bubble);
 }
 
 function wpDismissChatToast(bubble, instant) {
