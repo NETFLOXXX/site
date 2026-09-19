@@ -9738,7 +9738,7 @@ function joinWatchParty(code, onDone, viaLink) {
     // wpHandleHostDeparture, qui ne peut agir que si un invité est DÉJÀ
     // là), le salon existe encore mais n'a plus personne — pas la peine de
     // chercher des sources pour un contenu que personne ne fait tourner.
-    if (roomFetched && hostId && membersSnap && !membersSnap[hostId]) {
+    if (roomFetched && hostId && (!membersSnap || !membersSnap[hostId])) {
       wpJoinErrorMsg = tr('watchparty_ended');
       renderWatchPartyPanel();
       wpShowJoinPromptError(wpJoinErrorMsg);
@@ -10869,7 +10869,7 @@ function wpConfirmJoinPrompt() {
       const room = snap.exists() ? snap.val() : null;
       if (!room) { showErr(tr('watchparty_invalid_code')); return; }
       if (room.closedByHost) { showErr(tr('watchparty_ended')); return; }
-      if (room.host && room.members && !room.members[room.host]) { showErr(tr('watchparty_ended')); return; }
+      if (room.host && (!room.members || !room.members[room.host])) { showErr(tr('watchparty_ended')); return; }
       if (room.createdAt && Date.now() - room.createdAt >= WP_ROOM_TTL_MS) { showErr(tr('watchparty_expired_msg')); return; }
     } catch (e) {
       // Lecture impossible (réseau) : on laisse joinWatchParty gérer ça
@@ -10927,7 +10927,7 @@ function wpPrefetchHostLangThenShowPrompt(code) {
         deadMsg = tr('watchparty_invalid_code');
       } else if (room.closedByHost) {
         deadMsg = tr('watchparty_ended');
-      } else if (room.host && room.members && !room.members[room.host]) {
+      } else if (room.host && (!room.members || !room.members[room.host])) {
         deadMsg = tr('watchparty_ended');
       } else if (room.createdAt && Date.now() - room.createdAt >= WP_ROOM_TTL_MS) {
         deadMsg = tr('watchparty_expired_msg');
