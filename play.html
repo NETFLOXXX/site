@@ -9733,7 +9733,7 @@ function joinWatchParty(code, onDone, viaLink) {
     if (!media) {
       wpJoinErrorMsg = fbFailed ? tr('watchparty_conn_error') : tr('watchparty_invalid_code');
       renderWatchPartyPanel();
-      wpShowJoinPromptError(wpJoinErrorMsg);
+      if (viaLink) wpShowJoinPromptError(wpJoinErrorMsg);
       finish(false);
       return;
     }
@@ -9746,7 +9746,7 @@ function joinWatchParty(code, onDone, viaLink) {
     if (roomFetched && hostId && (!membersSnap || !membersSnap[hostId])) {
       wpJoinErrorMsg = tr('watchparty_ended');
       renderWatchPartyPanel();
-      wpShowJoinPromptError(wpJoinErrorMsg);
+      if (viaLink) wpShowJoinPromptError(wpJoinErrorMsg);
       finish(false);
       return;
     }
@@ -9758,7 +9758,7 @@ function joinWatchParty(code, onDone, viaLink) {
       window.wpRemove(window.wpRef(window.wpDB, `watchparties/${code}`)).catch(() => {});
       wpJoinErrorMsg = tr('watchparty_expired_msg');
       renderWatchPartyPanel();
-      wpShowJoinPromptError(wpJoinErrorMsg);
+      if (viaLink) wpShowJoinPromptError(wpJoinErrorMsg);
       finish(false);
       return;
     }
@@ -9769,7 +9769,7 @@ function joinWatchParty(code, onDone, viaLink) {
       const msg = tr('watchparty_banned_msg');
       wpPseudoErrorMsg = msg;
       renderWatchPartyPanel();
-      wpShowJoinPromptError(msg);
+      if (viaLink) wpShowJoinPromptError(msg);
       finish(false);
       return;
     }
@@ -9781,7 +9781,7 @@ function joinWatchParty(code, onDone, viaLink) {
       const msg = tr('watchparty_pseudo_taken');
       wpPseudoErrorMsg = msg;
       renderWatchPartyPanel();
-      wpShowJoinPromptError(msg);
+      if (viaLink) wpShowJoinPromptError(msg);
       finish(false);
       return;
     }
