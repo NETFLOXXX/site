@@ -2781,17 +2781,9 @@
     </div>
   </div>
 
-  <!-- POPUP fin de Watch Party (côté invité) -->
-  <div id="wp-ended-overlay" onclick="if(event.target===this) wpCloseEndedPopup()">
-    <div id="wp-ended-card">
-      <div id="wp-ended-icon">
-        <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="17" y1="8" x2="23" y2="14"/><line x1="23" y1="8" x2="17" y2="14"/></svg>
-      </div>
-      <h3 id="wp-ended-title" data-i18n="watchparty_ended_title">Watch Party terminée</h3>
-      <p id="wp-ended-msg" data-i18n="watchparty_ended">L'hôte a terminé la Watch Party.</p>
-      <button onclick="wpCloseEndedPopup()" data-i18n="watchparty_ended_ok">Compris</button>
-    </div>
-  </div>
+  <!-- (POPUP fin de Watch Party déplacé hors de #player-wrap, voir plus bas
+       — sinon invisible quand affiché avant que le lecteur ne soit révélé,
+       par ex. à l'arrivée sur un lien pointant vers un salon déjà mort.) -->
 
   <!-- "Le film/épisode est terminé" — hôte uniquement, en Watch Party.
        Remplace l'enchaînement automatique silencieux par une confirmation
@@ -2981,6 +2973,19 @@
      Placé en dehors de #player-wrap (qui reste display:none tant que la vidéo
      n'a pas démarré) pour qu'il soit visible dès l'arrivée sur le lien, avant
      tout chargement de contenu. -->
+<!-- POPUP fin de Watch Party (côté invité) — en dehors de #player-wrap pour
+     rester visible même avant que le lecteur ne soit révélé. -->
+<div id="wp-ended-overlay" onclick="if(event.target===this) wpCloseEndedPopup()">
+  <div id="wp-ended-card">
+    <div id="wp-ended-icon">
+      <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="17" y1="8" x2="23" y2="14"/><line x1="23" y1="8" x2="17" y2="14"/></svg>
+    </div>
+    <h3 id="wp-ended-title" data-i18n="watchparty_ended_title">Watch Party terminée</h3>
+    <p id="wp-ended-msg" data-i18n="watchparty_ended">L'hôte a terminé la Watch Party.</p>
+    <button onclick="wpCloseEndedPopup()" data-i18n="watchparty_ended_ok">Compris</button>
+  </div>
+</div>
+
 <div id="wp-join-prompt-overlay" onclick="if(event.target===this) wpCancelJoinPrompt()">
   <div id="wp-join-prompt-card">
     <div id="wp-join-prompt-icon">
