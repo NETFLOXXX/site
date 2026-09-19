@@ -9694,13 +9694,21 @@ function joinWatchParty(code, onDone, viaLink) {
     let media = null;
     let createdAt = null;
     let hostLang = null;
+    let hostId = null;
+    let membersSnap = null;
+    let roomFetched = false;
     let fbFailed = false;
     try {
       const snap = await window.wpGet(window.wpRef(window.wpDB, `watchparties/${code}`));
       const room = snap.exists() ? snap.val() : null;
-      media = room ? room.media : null;
-      createdAt = room ? room.createdAt : null;
-      hostLang = room ? room.lang : null;
+      if (room) {
+        roomFetched = true;
+        media = room.media;
+        createdAt = room.createdAt;
+        hostLang = room.lang;
+        hostId = room.host;
+        membersSnap = room.members || {};
+      }
     } catch (e) {
       console.error('Watch Party: lecture Firebase impossible', e);
       fbFailed = true;
@@ -9724,7 +9732,20 @@ function joinWatchParty(code, onDone, viaLink) {
       return;
     }
 
-    // 1bis. Salon périmé (créé il y a plus de 24h) ? On refuse la jonction et
+    // 1bis. L'hôte est-il toujours présent dans le salon ? S'il a fermé son
+    // onglet avant que quelqu'un ne rejoigne pour prendre le relais (voir
+    // wpHandleHostDeparture, qui ne peut agir que si un invité est DÉJÀ
+    // là), le salon existe encore mais n'a plus personne — pas la peine de
+    // chercher des sources pour un contenu que personne ne fait tourner.
+    if (roomFetched && hostId && membersSnap && !membersSnap[hostId]) {
+      wpJoinErrorMsg = tr('watchparty_ended');
+      renderWatchPartyPanel();
+      wpShowJoinPromptError(wpJoinErrorMsg);
+      finish(false);
+      return;
+    }
+
+    // 1ter. Salon périmé (créé il y a plus de 24h) ? On refuse la jonction et
     // on en profite pour le nettoyer nous-mêmes si personne ne l'a fait —
     // utile si l'hôte a disparu sans déclencher son onDisconnect (crash, etc.).
     if (createdAt && Date.now() - createdAt >= WP_ROOM_TTL_MS) {
@@ -10762,12 +10783,40 @@ function wpCloseJoinPrompt() {
   setTimeout(() => overlay.classList.remove('show'), 250);
 }
 
+// Utilisé quand on ferme le popup de pseudo (annulation, ou après une
+// erreur comme "salon introuvable"/"hôte a terminé la Watch Party") : si le
+// lien pointait vers un contenu précis, on le lance quand même en solo au
+// lieu de renvoyer sur l'écran d'accueil. Renvoie true si un contenu a pu
+// être lancé.
+function wpPlaySoloFromUrlParams() {
+  const params = new URLSearchParams(window.location.search);
+  const type = params.get('wpType');
+  const id = params.get('wpId');
+  if (!type || !id) return false;
+  if (type === 'tv') {
+    const season = params.get('wpSeason');
+    const episode = params.get('wpEpisode');
+    if (!season || !episode) return false;
+    document.getElementById('series-input').value = id;
+    document.getElementById('season-input').value = season;
+    document.getElementById('episode-input').value = episode;
+    loadSeriesByTMDB();
+  } else {
+    document.getElementById('movie-input').value = id;
+    loadMovieByTMDB();
+  }
+  return true;
+}
+
 function wpCancelJoinPrompt() {
   wpPendingJoinCode = null;
   wpCloseJoinPrompt();
-  // L'utilisateur annule : on réaffiche le menu normal (masqué au départ
-  // pour éviter qu'il ne clignote derrière le popup de pseudo).
-  loadScreen.style.display = 'block';
+  // Si le lien pointait vers un contenu précis, on le lance en solo plutôt
+  // que de réafficher le menu normal (masqué au départ pour éviter qu'il
+  // ne clignote derrière le popup de pseudo).
+  if (!wpPlaySoloFromUrlParams()) {
+    loadScreen.style.display = 'block';
+  }
 }
 
 function wpConfirmJoinPrompt() {
@@ -10803,7 +10852,9 @@ function wpConfirmJoinPrompt() {
       errorEl.style.display = 'flex';
     };
 
-    // 1. Le salon existe-t-il toujours, et n'a-t-il pas été terminé/expiré ?
+    // 1. Le salon existe-t-il toujours, n'a-t-il pas été terminé/expiré, et
+    // l'hôte est-il toujours présent (parti sans transfert avant que
+    // quelqu'un ne rejoigne = salon mort même s'il existe encore) ?
     // (une panne réseau ici n'empêche pas de continuer : joinWatchParty a
     // son propre repli sur les infos de l'URL dans ce cas précis)
     try {
@@ -10811,6 +10862,7 @@ function wpConfirmJoinPrompt() {
       const room = snap.exists() ? snap.val() : null;
       if (!room) { showErr(tr('watchparty_invalid_code')); return; }
       if (room.closedByHost) { showErr(tr('watchparty_ended')); return; }
+      if (room.host && room.members && !room.members[room.host]) { showErr(tr('watchparty_ended')); return; }
       if (room.createdAt && Date.now() - room.createdAt >= WP_ROOM_TTL_MS) { showErr(tr('watchparty_expired_msg')); return; }
     } catch (e) {
       // Lecture impossible (réseau) : on laisse joinWatchParty gérer ça
