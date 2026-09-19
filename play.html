@@ -9228,6 +9228,7 @@ let wpSelfLeaving = false;         // évite de se traiter soi-même comme "bann
 let wpChatCache = {};
 let wpChatRenderedCount = 0;
 let wpChatToastsDisabled = false;  // désactivées après réponse "Oui" au prompt anti-spam
+let wpEndedPopupPlaySoloAfterClose = false; // lance le film en solo à la fermeture du popup "salon mort" affiché à l'arrivée
 let wpChatToastBurstTimes = [];    // timestamps des derniers toasts, pour détecter une rafale
 let wpChatToastPromptShown = false; // évite de spammer le prompt tant que la rafale continue
 let wpJoinCodeDraft = '';          // conserve le code tapé dans le champ "rejoindre" même après une erreur
@@ -10692,6 +10693,12 @@ function wpCloseEndedPopup() {
   const overlay = document.getElementById('wp-ended-overlay');
   overlay.classList.remove('in');
   setTimeout(() => overlay.classList.remove('show'), 250);
+  if (wpEndedPopupPlaySoloAfterClose) {
+    wpEndedPopupPlaySoloAfterClose = false;
+    if (!wpPlaySoloFromUrlParams()) {
+      loadScreen.style.display = 'block';
+    }
+  }
 }
 
 function wpShowEndedNotice() {
@@ -10902,14 +10909,41 @@ function wpPrefetchHostLangThenShowPrompt(code) {
   wpJoinViaLink = true;
   wpArrivedViaLink = true;
   wpWaitReady(async () => {
+    // 0. On vérifie D'ABORD si le salon est encore valide (existe, pas
+    // terminé par l'hôte, hôte toujours présent, pas expiré) AVANT même de
+    // demander un pseudo — inutile de demander un pseudo pour un salon mort.
+    let room = null;
+    let fbFailed = false;
     try {
-      const snap = await window.wpGet(window.wpRef(window.wpDB, `watchparties/${code}/lang`));
-      const hostLang = snap.exists() ? snap.val() : null;
-      if (hostLang === 'en' || hostLang === 'fr') wpSyncPreferredLangFromHost(hostLang);
+      const snap = await window.wpGet(window.wpRef(window.wpDB, `watchparties/${code}`));
+      room = snap.exists() ? snap.val() : null;
     } catch (e) {
-      // Pas grave : le popup s'affichera simplement dans la langue par défaut,
-      // la vraie synchro sera de toute façon refaite dans joinWatchParty().
+      fbFailed = true;
     }
+
+    if (!fbFailed) {
+      let deadMsg = null;
+      if (!room) {
+        deadMsg = tr('watchparty_invalid_code');
+      } else if (room.closedByHost) {
+        deadMsg = tr('watchparty_ended');
+      } else if (room.host && room.members && !room.members[room.host]) {
+        deadMsg = tr('watchparty_ended');
+      } else if (room.createdAt && Date.now() - room.createdAt >= WP_ROOM_TTL_MS) {
+        deadMsg = tr('watchparty_expired_msg');
+      }
+      if (deadMsg) {
+        // Pas de popup pseudo pour un salon mort : le message s'affiche
+        // d'abord, et fermer ce popup lance le film en solo (voir
+        // wpCloseEndedPopup) — l'éventuel popup d'extension viendra après,
+        // dans la foulée normale du chargement de la source.
+        wpEndedPopupPlaySoloAfterClose = true;
+        wpShowEndedPopup(null, deadMsg, 'ban');
+        return;
+      }
+      if (room.lang === 'en' || room.lang === 'fr') wpSyncPreferredLangFromHost(room.lang);
+    }
+
     wpShowJoinPrompt(code);
   });
 }
