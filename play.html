@@ -3132,7 +3132,7 @@
   // de lecture (temps courant / pause) entre l'hôte et les invités d'une Watch Party.
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-app.js";
   import {
-    getDatabase, ref, set, update, remove, onValue, onDisconnect, get
+    getDatabase, ref, set, update, remove, onValue, onDisconnect, get, serverTimestamp
   } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-database.js";
 
   const firebaseConfig = {
@@ -3158,6 +3158,7 @@
   window.wpOnValue = onValue;
   window.wpOnDisconnect = onDisconnect;
   window.wpGet = get;
+  window.wpServerTimestamp = serverTimestamp;
   window.wpFirebaseReady = true;
   window.dispatchEvent(new Event('wp-firebase-ready'));
 </script>
@@ -10420,7 +10421,11 @@ document.addEventListener('click', (e) => {
 function wpRenderChatMessages() {
   const el = document.getElementById('wp-chat-messages');
   if (!el) return;
-  const keys = Object.keys(wpChatCache).sort();
+  const keys = Object.keys(wpChatCache).sort((a, b) => {
+    const ta = (wpChatCache[a] && wpChatCache[a].ts) || 0;
+    const tb = (wpChatCache[b] && wpChatCache[b].ts) || 0;
+    return ta - tb;
+  });
   el.innerHTML = keys.map(k => {
     const m = wpChatCache[k];
     if (!m) return '';
@@ -10467,8 +10472,12 @@ let wpLeaveMsgKey = null;
 function wpRegisterLeaveMessageOnDisconnect(pseudo) {
   wpLeaveMsgKey = wpChatKey();
   const ref = window.wpRef(window.wpDB, `watchparties/${wpRoomCode}/chat/${wpLeaveMsgKey}`);
+  // ts calculé par le SERVEUR au moment réel de la déconnexion, pas ici à
+  // l'inscription (Date.now() aurait figé l'heure de connexion, faisant
+  // apparaître le départ tout en haut du chat, avant les messages envoyés
+  // pendant la session).
   window.wpOnDisconnect(ref).set({
-    system: true, text: tr('watchparty_left_msg').replace('{pseudo}', pseudo), ts: Date.now(),
+    system: true, text: tr('watchparty_left_msg').replace('{pseudo}', pseudo), ts: window.wpServerTimestamp(),
   });
 }
 
@@ -10777,33 +10786,47 @@ function wpConfirmJoinPrompt() {
   input.classList.remove('wp-input-error');
   errorEl.style.display = 'none';
 
-  // On vérifie D'ABORD (pseudo banni / déjà pris) AVANT de fermer le popup —
-  // ainsi, en cas de conflit, on reste sur le popup avec un message clair
-  // au lieu de le fermer sur un écran noir qui ne charge rien.
+  // On vérifie D'ABORD TOUT (salon existant/pas terminé, pseudo banni/déjà
+  // pris) AVANT de fermer le popup — ainsi, en cas de problème, on reste
+  // sur le popup avec un message clair au lieu de le fermer sur un écran
+  // noir (ou pire, sur une lecture qui démarre en arrière-plan pour un
+  // salon qui n'existe plus).
   confirmBtn.disabled = true;
   const prevLabel = confirmBtn.textContent;
   confirmBtn.textContent = '…';
   wpWaitReady(async () => {
+    const showErr = (msg) => {
+      confirmBtn.disabled = false;
+      confirmBtn.textContent = prevLabel;
+      input.classList.add('wp-input-error');
+      errorEl.textContent = msg;
+      errorEl.style.display = 'flex';
+    };
+
+    // 1. Le salon existe-t-il toujours, et n'a-t-il pas été terminé/expiré ?
+    // (une panne réseau ici n'empêche pas de continuer : joinWatchParty a
+    // son propre repli sur les infos de l'URL dans ce cas précis)
+    try {
+      const snap = await window.wpGet(window.wpRef(window.wpDB, `watchparties/${code}`));
+      const room = snap.exists() ? snap.val() : null;
+      if (!room) { showErr(tr('watchparty_invalid_code')); return; }
+      if (room.closedByHost) { showErr(tr('watchparty_ended')); return; }
+      if (room.createdAt && Date.now() - room.createdAt >= WP_ROOM_TTL_MS) { showErr(tr('watchparty_expired_msg')); return; }
+    } catch (e) {
+      // Lecture impossible (réseau) : on laisse joinWatchParty gérer ça
+      // avec son propre repli, pas la peine de bloquer ici.
+    }
+
+    // 2. Banni / pseudo déjà pris ?
     const [banned, taken] = await Promise.all([
       wpCheckPseudoBanned(code, pseudo),
       wpCheckPseudoTaken(code, pseudo),
     ]);
+    if (banned) { showErr(tr('watchparty_banned_msg')); return; }
+    if (taken) { showErr(tr('watchparty_pseudo_taken')); return; }
+
     confirmBtn.disabled = false;
     confirmBtn.textContent = prevLabel;
-
-    if (banned) {
-      input.classList.add('wp-input-error');
-      errorEl.textContent = tr('watchparty_banned_msg');
-      errorEl.style.display = 'flex';
-      return;
-    }
-    if (taken) {
-      input.classList.add('wp-input-error');
-      errorEl.textContent = tr('watchparty_pseudo_taken');
-      errorEl.style.display = 'flex';
-      return;
-    }
-
     wpSavePseudo(pseudo);
     // Tout est bon : on ferme le popup seulement maintenant, la Watch Party
     // continue de se rejoindre en tâche de fond, et l'animation de
@@ -10814,9 +10837,8 @@ function wpConfirmJoinPrompt() {
       if (ok) {
         wpPendingJoinCode = null;
       }
-      // Filet de sécurité pour tout autre problème (salon expiré, erreur
-      // réseau...) : wpShowJoinPromptError() rouvre ce popup avec le
-      // message correspondant.
+      // Filet de sécurité pour tout autre problème (erreur réseau...) :
+      // wpShowJoinPromptError() rouvre ce popup avec le message correspondant.
     }, true);
   });
 }
