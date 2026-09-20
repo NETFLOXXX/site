@@ -150,17 +150,29 @@
     position:absolute; inset:0; width:100%; height:100%; object-fit:contain;
     display:none; pointer-events:none; z-index:1;
   }
+  /* BUG FIX : le canvas capture les pixels bruts de la vidéo (drawImage
+     n'hérite PAS du filtre CSS appliqué au <video>), donc sans cette règle
+     l'image gelée réapparaissait en couleur pendant une reconnexion en
+     pause, par-dessus la vidéo grisée en dessous. */
+  #player-wrap.paused #freeze-frame { filter:grayscale(1); }
 
   /* gradients */
   .overlay-gradient {
     position:absolute; inset:0;
     background:linear-gradient(to top, rgba(0,0,0,0.92) 0%, transparent 45%);
     pointer-events:none; opacity:0; transition:opacity 0.3s;
+    /* BUG FIX : #freeze-frame (image gelée affichée pendant une recherche de
+       connexion) a un z-index:1 explicite — sans z-index ici, ce dégradé
+       restait "sous" l'image gelée dans l'ordre d'empilement et disparaissait
+       visuellement dès qu'une reconnexion démarrait, alors qu'on veut qu'il
+       reste visible en continu. */
+    z-index:2;
   }
   .overlay-top {
     position:absolute; top:0; left:0; right:0; height:130px;
     background:linear-gradient(to bottom, rgba(0,0,0,0.75), transparent);
     pointer-events:none; opacity:0; transition:opacity 0.3s;
+    z-index:2; /* même correctif que .overlay-gradient ci-dessus */
   }
   #player-wrap.cv .overlay-gradient, #player-wrap.cv .overlay-top { opacity:1; }
 
@@ -4578,10 +4590,19 @@ async function fetchTMDBSources(id, type, season, episode, allowSeriesFallback=f
     });
     assignDisplayNames(processed);
 
+    // Watch Party (hôte) : on retient la source utilisée AVANT de remplacer la
+    // liste, pour rester dessus si le nouveau contenu (épisode suivant, etc.)
+    // la propose aussi, au lieu de retomber sur finepulfe.
+    const prevHostSourceDesc = wpIsHost ? wpDescribeSource(currentSources[currentSourceIndex]) : null;
     currentTMDB = id;
     currentMediaType = type === 'tv' ? 'tv' : 'movie';
     currentSources = processed;
     currentSourceIndex = -1;
+    // BUG FIX : nouveau contenu = position mémorisée d'un éventuel cycle de
+    // reconnexion précédent (autre film/épisode) devenue obsolète — on
+    // l'efface ici pour ne jamais l'appliquer par erreur à ce nouveau
+    // contenu (voir selectCloudflareSource, qui s'en sert de repli).
+    srcReconnectResumeTime = null;
     // Nouveau contenu chargé (retour + autre film, changement via la
     // recherche du haut, etc.) : on autorise le popup adblocker à
     // réapparaître au prochain "Autres lecteurs", puisqu'il ne s'était
@@ -4643,6 +4664,23 @@ async function fetchTMDBSources(id, type, season, episode, allowSeriesFallback=f
       sourceToSelect = processed.findIndex(s => s.lang === sortLang && !s.isDirect);
     }
     if (sourceToSelect < 0) sourceToSelect = 0;
+    // Watch Party : l'invité doit atterrir DIRECTEMENT sur la source partagée par
+    // l'hôte (et non sur la source par défaut = finepulfe, qui déclenchait la
+    // popup "installer l'extension" puis un repli automatique vers une autre
+    // source). L'hôte, lui, reste sur sa source d'un contenu à l'autre.
+    {
+      let wpIdx = -1;
+      try {
+        wpIdx = wpIsHost
+          ? wpFindSourceIndex(processed, prevHostSourceDesc)
+          : await wpResolveHostSourceIndex(processed);
+      } catch (e) { console.error('Watch Party: source de l\'hôte introuvable', e); }
+      if (wpIdx >= 0) {
+        sourceToSelect = wpIdx;
+        const ws = processed[wpIdx];
+        if (ws.lang) sourceSubTab[ws.lang] = ws.isDirect ? 'netflox' : 'autres';
+      }
+    }
     userWantsPlaying = true; // un nouveau contenu se lance en lecture par défaut, quel que soit l'état du précédent
     selectCloudflareSource(sourceToSelect, { bypassLock: true, noResume: true });
     setStatus('', false);
@@ -5326,6 +5364,51 @@ function wpIsFinepulfeUrl(url) {
   catch (e) { return false; }
 }
 
+// ── SOURCE PARTAGÉE PAR L'HÔTE (Watch Party) ──
+// L'hôte publie sa source active dans watchparties/CODE/source ; l'invité la
+// retrouve dans SA liste (les URLs directes peuvent différer d'un utilisateur à
+// l'autre → repli sur hostname + langue + type) et la lance directement.
+function wpDescribeSource(src) {
+  if (!src) return null;
+  return {
+    url: src.url || null,
+    hostname: src.hostname || null,
+    lang: src.lang || null,
+    isDirect: !!src.isDirect,
+    audio: src.audioLangOverride || null,
+  };
+}
+function wpPublishHostSource() {
+  if (!wpIsHost || !wpRoomCode || !window.wpDB) return;
+  const desc = wpDescribeSource(currentSources[currentSourceIndex]);
+  if (!desc) return;
+  window.wpSet(window.wpRef(window.wpDB, `watchparties/${wpRoomCode}/source`), desc)
+    .catch(err => console.error('Watch Party (hôte): publication de la source refusée', err));
+}
+function wpFindSourceIndex(list, d) {
+  if (!d || !list || !list.length) return -1;
+  const audio = s => s.audioLangOverride || null;
+  let i = list.findIndex(s => s.url === d.url && s.lang === d.lang && !!s.isDirect === !!d.isDirect && audio(s) === (d.audio || null));
+  if (i >= 0) return i;
+  i = list.findIndex(s => s.hostname === d.hostname && s.lang === d.lang && !!s.isDirect === !!d.isDirect && audio(s) === (d.audio || null));
+  if (i >= 0) return i;
+  return list.findIndex(s => s.hostname === d.hostname && !!s.isDirect === !!d.isDirect && audio(s) === (d.audio || null));
+}
+// wpHostSourceHint : source lue dans le salon au moment de rejoindre (avant que
+// wpIsGuest ne soit vrai). Ensuite (épisode suivant décidé par l'hôte), on va
+// relire la source courante dans Firebase.
+let wpHostSourceHint = null;
+async function wpResolveHostSourceIndex(list) {
+  let d = wpHostSourceHint;
+  if (!d && wpIsGuest && wpRoomCode && window.wpDB) {
+    try {
+      const snap = await window.wpGet(window.wpRef(window.wpDB, `watchparties/${wpRoomCode}/source`));
+      d = snap.exists() ? snap.val() : null;
+    } catch (e) {}
+  }
+  return wpFindSourceIndex(list, d);
+}
+
 function selectCloudflareSource(id, opts) {
   const source = currentSources[id];
   if (!source) return;
@@ -5381,12 +5464,39 @@ function selectCloudflareSource(id, opts) {
   // en priorité le temps mémorisé UNE SEULE FOIS au tout début du cycle de
   // reconnexion (srcReconnectResumeTime, capturé dans handleSourceFailure
   // avant toute tentative), plutôt que de le relire à chaque tentative.
-  const estimatedTime = (opts.forceReload && isFinite(srcReconnectResumeTime) && srcReconnectResumeTime > 0)
+  // BUG FIX : un changement de source MANUEL déclenché pendant une
+  // reconnexion active (srcReconnectionActive) lisait jusqu'ici
+  // getEstimatedCurrentTime() -> video.currentTime, déjà remis à 0 par le
+  // clearHLS() d'une tentative automatique précédente — la nouvelle source
+  // repartait donc du tout début.
+  // BUG FIX 2 (bascule automatique EN CASCADE après un changement manuel) :
+  // si la source qu'on vient de sélectionner manuellement échoue elle-même
+  // dès le lancement, goToNextSourceAfterError() rappelle cette fonction
+  // pour la source suivante — mais srcReconnectionActive est alors déjà
+  // retombé à false (nouveau chargement, pas une retentative) ET
+  // video.currentTime est déjà à 0 (source jamais vraiment lancée). Le repli
+  // automatique repartait donc lui aussi du tout début. On utilise
+  // maintenant srcReconnectResumeTime comme repli dès que le temps "live"
+  // semble avoir été remis à zéro (<1s) alors qu'on a une position mémorisée
+  // valable — plus seulement pendant un cycle de reconnexion actif — ce qui
+  // couvre toute la chaîne (retentative auto, changement manuel, ou repli en
+  // cascade sur la source suivante).
+  const liveTime = getEstimatedCurrentTime();
+  const estimatedTime = (isFinite(srcReconnectResumeTime) && srcReconnectResumeTime > 0
+      && (!isFinite(liveTime) || liveTime < 1))
     ? srcReconnectResumeTime
-    : getEstimatedCurrentTime();
+    : liveTime;
   const resumeTime = ((changed || opts.forceReload) && !opts.noResume && isFinite(estimatedTime) && estimatedTime > 0)
     ? estimatedTime : null;
+  // BUG FIX (demande explicite) : un changement de source MANUEL (pas une
+  // retentative/repli automatique, distingués par l'absence de
+  // opts.bypassLock — voir le toast juste plus bas qui utilise déjà ce même
+  // critère) doit toujours relancer la lecture, même si on était en pause
+  // juste avant — l'utilisateur qui choisit activement une autre source veut
+  // évidemment la regarder tout de suite.
+  if (changed && !opts.bypassLock) userWantsPlaying = true;
   currentSourceIndex = id;
+  if (changed) wpPublishHostSource();
 
   if (source.isDirect) {
     loadMedia(source.url, source.displayName, source.audioLangOverride, resumeTime, !!opts.forceReload);
@@ -6323,11 +6433,35 @@ function loadMedia(url, title, audioLangOverride, resumeTime, isReconnectRetry) 
   if (!isReconnectRetry) hideSourceErrorPopup();
   hideUpNextCard();
   clearHLS(); hideError(); showSpinner();
-  srcHasStartedThisLoad = false; // nouveau chargement : on ne sait pas encore si ça va démarrer
+  // BUG FIX (le vrai coupable du "bascule automatique de source" alors
+  // qu'on était juste en train de retenter silencieusement) : cette ligne
+  // remettait srcHasStartedThisLoad à false à CHAQUE tentative de
+  // reconnexion en arrière-plan (isReconnectRetry), pas seulement au tout
+  // premier chargement. Or un simple 'canplay' (pas forcément un vrai
+  // 'playing' stable, voir resolveReconnectionSuccess) suffit à résoudre le
+  // cycle et à couper la boucle de retentatives — sans jamais avoir
+  // remis srcHasStartedThisLoad à true entre-temps. Si la connexion
+  // recoupait juste après, handleSourceFailure() trouvait alors
+  // srcHasStartedThisLoad ET srcReconnectionActive tous les deux à false,
+  // et retombait à tort dans l'ancien comportement (countdown 5s + bascule
+  // automatique vers la source suivante) — alors qu'on était en pleine
+  // lecture d'un contenu qui avait pourtant déjà démarré. On ne réinitialise
+  // donc ce drapeau QUE pour un vrai nouveau chargement (contenu différent,
+  // sélection manuelle) — jamais pour une tentative de reconnexion.
+  if (!isReconnectRetry) srcHasStartedThisLoad = false; // nouveau chargement : on ne sait pas encore si ça va démarrer
   // On ne sort du "mode reconnexion" (srcReconnectionActive / srcReconnectPopupShown)
   // que si CE chargement n'est PAS lui-même une tentative de reconnexion
   // automatique — sinon une simple sélection manuelle de source ou un nouveau contenu.
-  if (!isReconnectRetry) { srcReconnectionActive = false; srcReconnectPopupShown = false; srcReconnectResumeTime = null; srcErrorExtReason = false; srcReconnectEpisodeStartedAt = 0; srcReconnectLastResolvedAt = 0; }
+  // BUG FIX : srcReconnectResumeTime ne doit PAS être effacé ici — un
+  // changement de source manuel, ou un repli automatique en cascade sur la
+  // source suivante (goToNextSourceAfterError), passe aussi par ce chemin
+  // (!isReconnectRetry) et avait donc besoin de cette position mémorisée
+  // (voir selectCloudflareSource) : l'effacer ici la perdait immédiatement.
+  // Elle est effacée ailleurs, au bon moment : une fois la reconnexion
+  // vraiment confirmée (finalizeReconnectionSuccess) ou au chargement d'un
+  // contenu réellement NOUVEAU (voir le point d'entrée qui peuple
+  // currentSources depuis zéro).
+  if (!isReconnectRetry) { srcReconnectionActive = false; srcReconnectPopupShown = false; srcErrorExtReason = false; srcReconnectEpisodeStartedAt = 0; srcReconnectLastResolvedAt = 0; }
   embedEstimateStartedAt = null; // on quitte l'iframe : plus besoin d'estimer
   loadScreen.style.display = 'none';
   pw.style.display = 'block';
@@ -6555,33 +6689,32 @@ function hideFreezeFrame() {
 }
 
 // Appelée dès que la source SEMBLE de nouveau saine — que la lecture ait
-// réellement repris (événement 'playing') ou non (utilisateur resté en
-// pause pendant la reconnexion, voir playWhenReady/userWantsPlaying).
+// réellement repris (événement 'playing'/'canplay') ou non (utilisateur
+// resté en pause pendant la reconnexion, voir playWhenReady/userWantsPlaying).
 //
-// Pour une coupure causée par l'extension (srcErrorExtReason) : une source
-// finepulfe encore instable peut charger UN fragment isolé avec succès puis
-// recouper presque aussitôt après. Résoudre le cycle INSTANTANÉMENT sur ce
-// seul signal effaçait le minuteur vers la popup à chaque fois — et comme
-// un nouvel échec arrivait presque toujours dans la foulée, la popup ne
-// s'affichait jamais (boucle "recherche / relance / recoupe" sans fin). On
-// attend donc une courte confirmation (SRC_RESOLVE_CONFIRM_DELAY) qu'aucun
-// nouvel échec ne survient avant de considérer le cycle vraiment résolu :
-// si handleSourceFailure() est appelée entre-temps, cette confirmation en
+// Une source encore instable (extension désactivée, ou simplement une
+// connexion qui flanche) peut charger UN fragment isolé (ou juste atteindre
+// 'canplay') avec succès puis recouper presque aussitôt après. Résoudre le
+// cycle INSTANTANÉMENT sur ce seul signal effaçait le minuteur vers la popup
+// à chaque fois ET arrêtait la boucle de retentatives — et comme un nouvel
+// échec arrivait presque toujours dans la foulée, on retombait dans
+// l'ancien comportement par défaut (countdown 5s + bascule automatique de
+// source), croyant à tort qu'aucune reconnexion n'était en cours (voir
+// handleSourceFailure). BUG FIX : cette confirmation (SRC_RESOLVE_CONFIRM_DELAY)
+// était auparavant réservée au seul cas "extension" — elle s'applique
+// maintenant à TOUTE résolution, connexion perdue comprise. Si
+// handleSourceFailure() est appelée entre-temps, cette confirmation en
 // attente est annulée (voir là-bas) et le cycle/minuteur d'origine continue
 // sans avoir jamais été interrompu.
 let srcResolvePendingTimer = null;
 const SRC_RESOLVE_CONFIRM_DELAY = 1500;
 function resolveReconnectionSuccess() {
   if (!srcReconnectionActive && !srcReconnectPopupShown) return; // rien à résoudre
-  if (srcErrorExtReason) {
-    if (srcResolvePendingTimer) return; // confirmation déjà programmée
-    srcResolvePendingTimer = setTimeout(() => {
-      srcResolvePendingTimer = null;
-      finalizeReconnectionSuccess();
-    }, SRC_RESOLVE_CONFIRM_DELAY);
-    return;
-  }
-  finalizeReconnectionSuccess();
+  if (srcResolvePendingTimer) return; // confirmation déjà programmée
+  srcResolvePendingTimer = setTimeout(() => {
+    srcResolvePendingTimer = null;
+    finalizeReconnectionSuccess();
+  }, SRC_RESOLVE_CONFIRM_DELAY);
 }
 
 function finalizeReconnectionSuccess() {
@@ -6762,6 +6895,7 @@ function performGoBack() {
   setStatus('', false);
   currentSources = [];
   currentSourceIndex = -1;
+  srcReconnectResumeTime = null; // on quitte ce contenu : plus besoin de cette position mémorisée
   renderCloudflareSources();
 
   currentSeason = null;
@@ -7737,6 +7871,20 @@ video.addEventListener('playing', () => {
 // dès que 'canplay' se déclenche (assez de données pour jouer, qu'on joue
 // ou non). On résout donc aussi le cycle de reconnexion à ce moment-là,
 // pour que la popup/l'image gelée disparaissent même en restant en pause.
+// BUG FIX (le vrai bloquant : "faut appuyer sur play" après une coupure) :
+// ce raccourci "canplay" ne doit s'appliquer QUE si userWantsPlaying est
+// false (voir juste au-dessus) — c'est tout son intérêt documenté. Or il
+// s'appliquait avant SANS cette condition, même quand on voulait activement
+// reprendre la lecture (userWantsPlaying=true) : 'canplay' se déclenche dès
+// qu'il y a assez de données, AVANT que video.play() n'ait réellement repris
+// — et après plusieurs cycles de coupure/retentative sans geste utilisateur,
+// le navigateur peut bloquer l'autoplay et faire échouer silencieusement ce
+// play() (playWhenReady -> video.play().catch(()=>{})). Résultat : le cycle
+// se déclarait résolu (popup/spinner/retentatives arrêtés) alors que la
+// vidéo restait en réalité figée en pause, obligeant à cliquer soi-même sur
+// Lecture pour la débloquer. Quand on veut réellement jouer, seul un vrai
+// 'playing' (preuve que la lecture a RÉELLEMENT repris) doit résoudre le
+// cycle — voir l'écouteur 'playing' juste au-dessus.
 // EXCEPTION finepulfe : sur cette source, le manifeste (et donc un premier
 // 'canplay') peut se déclencher SANS l'extension — seuls les segments la
 // nécessitent réellement (voir le commentaire détaillé sur FRAG_LOADED plus
@@ -7750,7 +7898,7 @@ video.addEventListener('playing', () => {
 video.addEventListener('canplay', () => {
   if (currentSourceIsFinepulfe) return;
   hideSpinner();
-  resolveReconnectionSuccess();
+  if (!userWantsPlaying) resolveReconnectionSuccess();
 });
 video.addEventListener('loadeddata', hideSpinner);
 video.addEventListener('loadedmetadata', () => {
@@ -7772,7 +7920,16 @@ function hideCtrls() {
   // classe "buffering" sur le lecteur), les commandes ne doivent JAMAIS être
   // masquées par le minuteur d'inactivité — avant, au bout de 3.5s sans
   // bouger la souris pendant un buffering, elles disparaissaient quand même.
-  if (!video.paused && !scrubbing && !overBar && !castIsOpen() && !pw.classList.contains('buffering')) {
+  // BUG FIX 2 : la classe "buffering" (et video.paused) clignote en réalité
+  // pendant tout le cycle de reconnexion — chaque tentative vide puis
+  // recharge la vidéo (clearHLS -> pause native, puis play() dès qu'un
+  // manifeste répond -> paused redevient false AVANT que la vraie lecture
+  // ne reprenne), donc "buffering" peut être brièvement retiré (canplay/
+  // loadeddata) pile au moment où le minuteur de 3.5s se déclenche. On se
+  // fie donc plutôt à srcReconnectionActive, qui reste vrai en continu sur
+  // TOUT le cycle (jusqu'à la vraie résolution), pour garder le dégradé du
+  // bas visible sans interruption tant qu'on cherche la connexion.
+  if (!video.paused && !scrubbing && !overBar && !castIsOpen() && !pw.classList.contains('buffering') && !srcReconnectionActive) {
     pw.classList.remove('cv');
     pw.style.cursor = 'none';
   }
@@ -9588,6 +9745,9 @@ function startWatchParty() {
       wpConnErrorMsg = tr('watchparty_conn_error');
       renderWatchPartyPanel();
     });
+    // Source active de l'hôte, partagée avec les invités (écriture séparée du
+    // set() atomique ci-dessus, dans l'ordre, sur la même connexion).
+    wpPublishHostSource();
     wpScheduleExpiryCheck();
 
     // Le membre (donc l'hôte) disparaît automatiquement de la liste s'il ferme
@@ -9702,6 +9862,8 @@ function joinWatchParty(code, onDone, viaLink) {
     let hostLang = null;
     let hostId = null;
     let membersSnap = null;
+    let hostSource = null;
+    let closedByHost = false;
     let roomFetched = false;
     let fbFailed = false;
     try {
@@ -9714,13 +9876,15 @@ function joinWatchParty(code, onDone, viaLink) {
         hostLang = room.lang;
         hostId = room.host;
         membersSnap = room.members || {};
+        hostSource = room.source || null;
+        closedByHost = !!room.closedByHost;
       }
     } catch (e) {
       console.error('Watch Party: lecture Firebase impossible', e);
       fbFailed = true;
     }
 
-    if (!media) {
+    if (!media && viaLink) {
       const params = new URLSearchParams(window.location.search);
       if (params.get('wpType') && params.get('wpId')) {
         media = {
@@ -9728,6 +9892,14 @@ function joinWatchParty(code, onDone, viaLink) {
           season: params.get('wpSeason'), episode: params.get('wpEpisode'),
         };
       }
+    }
+
+    if (roomFetched && closedByHost) {
+      wpJoinErrorMsg = tr('watchparty_ended');
+      renderWatchPartyPanel();
+      if (viaLink) wpShowJoinPromptError(wpJoinErrorMsg);
+      finish(false);
+      return;
     }
 
     if (!media) {
@@ -9812,6 +9984,9 @@ function joinWatchParty(code, onDone, viaLink) {
       }
     }
 
+    // La source de l'hôte est utilisée par le choix de source initial de
+    // loadTMDB (voir wpResolveHostSourceIndex) : pas de passage par finepulfe.
+    wpHostSourceHint = hostSource;
     try {
       if (media.type === 'movie') {
         document.getElementById('movie-input').value = media.id;
@@ -9823,6 +9998,7 @@ function joinWatchParty(code, onDone, viaLink) {
         await loadSeriesByTMDB();
       }
     } catch (e) { console.error('Watch Party: échec du chargement du contenu', e); }
+    finally { wpHostSourceHint = null; }
 
     // Le chargement du film le relance automatiquement en lecture — on le
     // remet en pause : c'est l'état réel de l'hôte (reçu juste après) qui
@@ -10251,6 +10427,7 @@ function wpBecomeHost() {
   clearInterval(wpPushInterval);
   wpPushInterval = setInterval(() => { if (!video.paused) wpPushStateThrottled(); }, 4000);
   wpPushStateThrottled();
+  wpPublishHostSource();
   document.getElementById('watchparty-btn').classList.add('wp-live');
   wpUpdateGuestControlsUI();
   showNewHostToast();
@@ -10671,6 +10848,12 @@ function wpApplyRemoteState(s) {
   }
   if (s.paused && !video.paused) video.pause();
   if (!s.paused && video.paused) video.play().catch(() => {});
+  // On force la mise à jour visuelle (dont le noir et blanc) directement,
+  // sans dépendre de l'événement natif 'pause'/'play' : s'il n'y a pas de
+  // vraie transition d'état (ex. la vidéo était déjà en pause après le
+  // chargement initial), le navigateur ne redéclenche pas cet événement,
+  // et l'image restait en couleur au lieu de passer en noir et blanc.
+  updatePlayPauseUI(s.paused);
   userWantsPlaying = !s.paused; // reflète l'état voulu par la Watch Party (utilisé par playWhenReady pendant une reconnexion)
   setTimeout(() => { wpApplyingRemote = false; }, 300);
 }
@@ -11129,6 +11312,10 @@ let srcReconnectDeadlineTimer = null;
 // la popup.
 const SRC_RETRY_DELAY = 4000;
 const SRC_RECONNECT_POPUP_DELAY = 15000;
+// Délai spécifique quand la coupure survient alors que la vidéo est EN PAUSE
+// (voir handleSourceFailure) : on prévient plus vite (8s) puisqu'il n'y a de
+// toute façon aucune lecture en cours à préserver silencieusement.
+const SRC_RECONNECT_POPUP_DELAY_PAUSED = 8000;
 // Délai initial avant la toute première apparition (silencieuse) de la
 // popup "Oups, problème d'extension" — plus court que le délai générique
 // de perte de connexion (15s) car quand la cause est l'extension, on veut
@@ -11192,6 +11379,15 @@ function showReconnectPopupIfStillFailing() {
   // Peut se déclencher alors que la reconnexion a entre-temps réussi (le
   // minuteur tournait déjà) : dans ce cas, ne rien faire.
   if (!srcReconnectionActive || srcReconnectPopupShown) return;
+  // DEMANDE EXPLICITE : pour une vraie perte de connexion (pas le cas
+  // extension, qui nécessite une action de l'utilisateur — réactiver
+  // l'extension — qu'une simple retentative silencieuse ne peut pas
+  // résoudre toute seule), on ne propose plus jamais de popup. La vidéo
+  // continue de chercher indéfiniment en arrière-plan (voir
+  // startReconnectRetryLoop, qui continue de tourner sans interruption)
+  // jusqu'à ce que la connexion revienne, sans jamais rien demander à
+  // l'utilisateur.
+  if (!srcErrorExtReason) return;
   srcReconnectPopupShown = true;
   srcErrorPending = true;
   enqueuePopup(POPUP_PRIORITY.srcError, () => {
@@ -11225,12 +11421,26 @@ function handleSourceFailure() {
   // démarré (panne en cours de lecture) OU si un cycle de reconnexion est
   // déjà en cours (voir srcReconnectionActive) — sinon (échec au lancement),
   // ancien comportement plus bas.
-  if (wpIsHost || wpIsGuest || srcHasStartedThisLoad || srcReconnectionActive) {
+  // BUG FIX : une coupure survenant alors que l'utilisateur a explicitement
+  // mis pause tombait auparavant dans le comportement historique (countdown
+  // 5s + bascule automatique de source, voir plus bas) dès lors que
+  // srcHasStartedThisLoad était encore false (ex: contenu mis en pause
+  // avant même le tout premier frame) — ce qui n'a pourtant rien à voir avec
+  // une "vraie" panne au lancement. On se base sur userWantsPlaying (voir sa
+  // définition plus haut) plutôt que sur video.paused directement : ce
+  // dernier est AUSSI vrai à chaque tout début de chargement, avant même le
+  // premier appel à play() — s'y fier ferait à tort passer en mode
+  // reconnexion (retente sur place, jamais de bascule) une source réellement
+  // cassée dès le lancement, alors que l'utilisateur n'a jamais demandé de
+  // pause.
+  if (wpIsHost || wpIsGuest || srcHasStartedThisLoad || srcReconnectionActive || !userWantsPlaying) {
     const withinGrace = !srcReconnectionActive
       && (Date.now() - srcReconnectLastResolvedAt) < SRC_RECONNECT_EPISODE_GRACE;
     const enteringNewCycle = !srcReconnectionActive && !withinGrace;
     srcReconnectionActive = true;
-    const delay = srcErrorExtReason ? SRC_RECONNECT_POPUP_DELAY_EXT : SRC_RECONNECT_POPUP_DELAY;
+    const delay = srcErrorExtReason
+      ? SRC_RECONNECT_POPUP_DELAY_EXT
+      : (!userWantsPlaying ? SRC_RECONNECT_POPUP_DELAY_PAUSED : SRC_RECONNECT_POPUP_DELAY);
     if (enteringNewCycle) {
       // On capture la position à cet instant précis — avant toute tentative
       // de rechargement qui remettrait video.currentTime à 0 — pour pouvoir
@@ -11306,27 +11516,26 @@ function showSourceErrorPopup(reconnectMode) {
       // lecture) : plus parlant que le générique "petit problème technique"
       // utilisé pour un vrai échec au lancement d'une source.
       title.textContent = preferredLang === 'fr' ? 'Oups, problème de connexion' : 'Oops, connection issue';
-      text.textContent = inWatchParty
-        ? (preferredLang === 'fr'
-            ? 'La connexion semble interrompue. Nouvelle tentative en cours...'
-            : 'The connection seems to be interrupted. Retrying...')
-        : (preferredLang === 'fr'
-            ? 'La connexion semble interrompue. Voulez-vous essayer une autre source ?'
-            : 'The connection seems to be interrupted. Would you like to try another source?');
+      text.textContent = preferredLang === 'fr'
+        ? 'La connexion semble interrompue. Nouvelle tentative en cours...'
+        : 'The connection seems to be interrupted. Retrying...';
     }
     // "Réessayer" est mis en avant (rouge, en premier) : c'est l'action la
     // plus probable de résoudre le problème (reconnexion réseau ou
     // réactivation de l'extension) sans perdre sa place dans la vidéo.
-    // "Changer de source" reste disponible juste en dessous, en solo
-    // uniquement — jamais en Watch Party, où un changement de source est
-    // interdit à tout moment pendant la lecture (seul "Réessayer" y est
-    // alors affiché, et devient de fait le bouton principal).
+    // "Changer de source" reste disponible juste en dessous pour le cas
+    // "extension" en solo uniquement (jamais en Watch Party, où un
+    // changement de source est interdit à tout moment pendant la lecture).
+    // BUG FIX (demande explicite) : pour une vraie coupure de connexion
+    // (pas l'extension), ce bouton ne doit JAMAIS s'afficher, même en solo
+    // — "Réessayer" reste alors le seul bouton, et devient de fait le
+    // bouton principal.
     retryBtn.style.display = '';
     retryBtn.style.order = '1';
     retryBtn.textContent = preferredLang === 'fr' ? 'Réessayer' : 'Retry';
     retryBtn.classList.add('ab-primary');
     retryBtn.classList.remove('ab-ghost');
-    skipBtn.style.display = inWatchParty ? 'none' : '';
+    skipBtn.style.display = (srcErrorExtReason && !inWatchParty) ? '' : 'none';
     skipBtn.style.order = '2';
     skipBtn.textContent = preferredLang === 'fr' ? 'Changer de source' : 'Switch source';
     skipBtn.classList.add('ab-ghost');
