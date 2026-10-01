@@ -1124,7 +1124,7 @@
         .message-textarea {
             width: 100%;
             min-height: clamp(120px, 24vh, 190px);
-            background: rgba(255,255,255,0.04);
+            background: #151515;
             color: #fff;
             border: 1.5px solid #333;
             border-radius: 14px;
@@ -1142,11 +1142,13 @@
         .message-textarea:focus {
             outline: none;
             border-color: #e50914;
-            background: rgba(229,9,20,0.06);
+            background: #1a1214;
             box-shadow: 0 0 0 4px rgba(229,9,20,0.14);
         }
         .message-textarea::placeholder { color: #777; font-weight: 400; }
         .message-actions { margin-top: clamp(16px, 3vh, 24px); }
+        /* fond plein : le halo de la souris reste derrière le bouton, il ne transparaît pas dedans */
+        .message-actions .roulette-back:not(:hover) { background: #121212; }
         .message-actions .roulette-relaunch:hover:not(:disabled) svg { transform: translateX(4px) translateY(-2px); }
 
         /* ─── OVERLAYS / POPUPS ─── */
@@ -2637,15 +2639,16 @@
             margin-bottom: 14px;
         }
         .feedback-text { color: #9a9a9a; font-size: 14.5px; line-height: 1.65; margin-bottom: 30px; }
-        .feedback-ok-btn {
-            justify-content: center;
-            border-radius: 999px;
-            padding: 13px 34px;
-            font-family: 'Montserrat', sans-serif;
-            font-weight: 600;
-            font-size: 0.92rem;
+        .feedback-btn {
+            display: flex;
             width: 100%;
+            justify-content: center;
+            box-sizing: border-box;
+            padding-top: 13px;
+            padding-bottom: 13px;
         }
+        .feedback-login-btn { margin-bottom: 12px; }
+        .feedback-login-btn:hover:not(:disabled) svg { transform: translateX(4px); }
 
         /* ─── FOOTER ─── */
         footer {
@@ -4381,10 +4384,19 @@ try {
 
     auth.onAuthStateChanged(user => { currentUser = user; updateContinueWatchingMessage(); updateRecommendedMessage(); });
 
-    function handleLogin() {
+    function handleLogin(onSuccess) {
         const provider = new firebase.auth.GoogleAuthProvider();
         auth.signInWithPopup(provider)
-            .then(result => alert('Bienvenue ' + result.user.displayName + ' !'))
+            .then(result => {
+                // Appelé depuis un bouton avec une action à enchaîner (ex. ouvrir le message) :
+                // on enchaîne direct, sans alerte bloquante.
+                if (typeof onSuccess === 'function') {
+                    currentUser = result.user;
+                    onSuccess(result.user);
+                } else {
+                    alert('Bienvenue ' + result.user.displayName + ' !');
+                }
+            })
             .catch(err => console.warn('Connexion annulée', err.message));
     }
 
@@ -6141,7 +6153,7 @@ function showFeedbackPopup(type, message, title, options = {}) {
         : `<svg class="feedback-icon-svg" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path class="feedback-draw-path" d="M12 3.5L2.5 20H21.5L12 3.5Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" stroke-dasharray="57.08 999" stroke-dashoffset="57.08"/><path class="feedback-draw-path feedback-draw-path-fast" d="M12 9.5V14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-dasharray="4.5 999" stroke-dashoffset="4.5"/><circle class="feedback-dot-pop" cx="12" cy="17" r="1.1" fill="currentColor"/></svg>`;
     const icon = ring + iconSvg;
     const loginBtnHtml = options.showLoginBtn
-        ? `<button class="btn btn-primary feedback-login-btn" style="margin-bottom:10px;width:100%;justify-content:center;border-radius:999px;font-family:'Poppins', sans-serif;">Se connecter</button>`
+        ? `<button type="button" class="roulette-relaunch feedback-btn feedback-login-btn"><span>Se connecter</span><svg viewBox="0 0 24 24" fill="none"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M15 12H3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>`
         : '';
     overlay.innerHTML = `
         <div class="tv-popup fullscreen feedback-popup ${type}" style="display:flex;align-items:center;justify-content:center;">
@@ -6156,7 +6168,7 @@ function showFeedbackPopup(type, message, title, options = {}) {
                     <h2 class="feedback-title">${title || (type === 'success' ? 'Merci !' : 'Oups...')}</h2>
                     <p class="feedback-text">${message}</p>
                     ${loginBtnHtml}
-                    <button class="btn btn-primary feedback-ok-btn" style="border-radius:999px;background:#3a3a3a;color:#ddd;font-family:'Poppins', sans-serif;">Compris</button>
+                    <button type="button" class="roulette-back feedback-btn feedback-ok-btn">Compris</button>
                 </div>
             </div>
         </div>`;
@@ -6165,7 +6177,8 @@ function showFeedbackPopup(type, message, title, options = {}) {
     if (options.showLoginBtn) {
         overlay.querySelector('.feedback-login-btn').addEventListener('click', () => {
             closeOverlayAnimated(overlay);
-            handleLogin();
+            // Une fois connecté via la popup Google, on rouvre directement la fenêtre pour écrire le message.
+            handleLogin(options.afterLogin);
         });
     }
 }
@@ -6173,7 +6186,7 @@ function showFeedbackPopup(type, message, title, options = {}) {
 // ─── BOUTON MESSAGE ───
 document.getElementById('messageBtn').addEventListener('click', () => {
     if (!currentUser || !currentUser.email) {
-        showFeedbackPopup('error', 'Connectez-vous avec votre compte Google pour pouvoir nous envoyer un message.', 'Connexion requise', { showLoginBtn: true });
+        showFeedbackPopup('error', 'Connectez-vous avec votre compte Google pour pouvoir nous envoyer un message.', 'Connexion requise', { showLoginBtn: true, afterLogin: showMessagePopup });
     } else {
         showMessagePopup();
     }
