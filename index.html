@@ -667,11 +667,11 @@
             text-transform: uppercase;
             font-size: 29px;
             letter-spacing: 1.5px;
-            margin-bottom: 20px;
+            margin-bottom: 8px; /* affiches rapprochées du titre (avant : 20px) */
             display: inline-block;
             position: relative;
             padding-bottom: 6px;
-            cursor: default;
+            cursor: pointer;
             transition: color 0.3s ease, transform 0.3s ease;
             transform-origin: left center;
         }
@@ -808,6 +808,21 @@
             cursor: pointer;
         }
         .custom-scrollbar-track.visible { opacity: 1; pointer-events: auto; }
+        .custom-scrollbar-track { transition: opacity 0.45s ease, transform 0.45s cubic-bezier(0.16, 1, 0.3, 1); }
+        /* Barre masquée tant que la rangée n'est pas "in-view" (même timing que les affiches) */
+        .row-wrap:not(.in-view) .custom-scrollbar-track,
+        .row-wrap:not(.in-view) .custom-scrollbar-track.visible {
+            opacity: 0;
+            transform: translateY(24px);
+            pointer-events: none;
+        }
+        /* Barre qui passe sous le header en scrollant vers le bas : elle s'efface en animation */
+        .custom-scrollbar-track.bar-hidden,
+        .custom-scrollbar-track.visible.bar-hidden {
+            opacity: 0;
+            transform: translateY(-20px);
+            pointer-events: none;
+        }
         .custom-scrollbar-thumb {
             position: absolute;
             top: 0;
@@ -828,13 +843,16 @@
             font-style: italic;
             font-family: 'Montserrat', sans-serif;
             text-align: center;
-            padding: 18px 0;
-            margin-top: 40px;
+            padding: 16px 0;
+            margin-top: 24px;
             opacity: 0;
             transform: translateY(10px);
             transition: opacity 0.5s ease, transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
         }
         .continue-message.visible { opacity: 1; transform: translateY(0); }
+        /* Sections vides (Historique / Recommandations) : une seule ligne de texte => hauteur réduite */
+        .row:empty { padding: 0; }
+        .section:has(.row:empty) { margin-bottom: 32px; } /* espace sous le texte = espace au-dessus => texte centré dans le bloc */
 
         /* Animation d'entrée au scroll pour les messages "Historique" / "Recommandations",
            même logique que .card-reveal (voir plus bas) : un wrapper séparé est observé,
@@ -1149,7 +1167,6 @@
         .message-actions { margin-top: clamp(16px, 3vh, 24px); }
         /* fond plein : le halo de la souris reste derrière le bouton, il ne transparaît pas dedans */
         .message-actions .roulette-back:not(:hover) { background: #121212; }
-        .message-actions .roulette-relaunch:hover:not(:disabled) svg { transform: translateX(4px) translateY(-2px); }
 
         /* ─── OVERLAYS / POPUPS ─── */
         .tv-overlay, .episode-overlay {
@@ -1880,24 +1897,6 @@
         .wz-tag { padding: 3px 11px; border-radius: 99px; font-size: 0.85em; background: rgba(229,9,20,0.14); color: #ffb3b8; border: 1px solid rgba(229,9,20,0.35); }
         .wz-tag.no { background: #1a1a1a; color: #888; border-color: #333; text-decoration: line-through; }
 
-        /* Pastille "pourquoi ce titre" sur la fiche du tirage (mode questionnaire) */
-        .result-why {
-            display: flex;
-            align-items: center;
-            width: fit-content;
-            max-width: 100%;
-            margin: 0 0 clamp(8px, 1.6vh, 12px);
-            padding: 5px 12px;
-            border-radius: 999px;
-            background: rgba(229,9,20,0.12);
-            border: 1px solid rgba(229,9,20,0.35);
-            color: #ffc0c4;
-            font-family: 'Montserrat', sans-serif;
-            font-weight: 600;
-            font-size: 12.5px;
-            line-height: 1.25;
-        }
-
         /* Onglets par personne (mode groupe) */
         .wz-tabs {
             display: flex;
@@ -1972,7 +1971,7 @@
             white-space: nowrap;
         }
         .roulette-back {
-            background: transparent;
+            background: #000;
             border: 1.5px solid #333;
             color: #bbb;
             padding: clamp(10px, 2.6vw, 12px) clamp(16px, 3.8vw, 22px) clamp(10px, 2.6vw, 12px) clamp(13px, 3.2vw, 18px);
@@ -2648,7 +2647,6 @@
             padding-bottom: 13px;
         }
         .feedback-login-btn { margin-bottom: 12px; }
-        .feedback-login-btn:hover:not(:disabled) svg { transform: translateX(4px); }
 
         /* ─── FOOTER ─── */
         footer {
@@ -3375,7 +3373,7 @@
             position: fixed;
             inset: 0;
             z-index: 99999;
-            background: radial-gradient(ellipse at 50% 40%, #171717 0%, #0a0a0a 55%, #000 100%);
+            background: #141414;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -3388,89 +3386,6 @@
             visibility: visible;
             transition: opacity 0.35s ease, visibility 0s linear 0s;
         }
-
-        /* ── phase 1 : scan / détection ── */
-        .egg-scan {
-            position: absolute;
-            inset: 0;
-            z-index: 2;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            overflow: hidden;
-            opacity: 1;
-            transform: scale(1);
-            transition: opacity 0.4s ease, transform 0.4s cubic-bezier(0.4,0,0.6,1);
-        }
-        .egg-scan.egg-fade-out {
-            opacity: 0;
-            transform: scale(0.82);
-            pointer-events: none;
-        }
-
-        .egg-scan::before {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background:
-                repeating-linear-gradient(0deg, rgba(229,9,20,0.05) 0px, rgba(229,9,20,0.05) 1px, transparent 1px, transparent 3px);
-            opacity: 0.5;
-        }
-
-        .egg-scan-line {
-            position: absolute;
-            left: 0;
-            right: 0;
-            height: 2px;
-            top: 0;
-            background: linear-gradient(90deg, transparent, #e50914 20%, #ff1744 50%, #e50914 80%, transparent);
-            box-shadow: 0 0 20px 4px rgba(229,9,20,0.7);
-            animation: eggScanMove 1.15s cubic-bezier(0.4,0,0.2,1) infinite;
-        }
-        @keyframes eggScanMove {
-            0% { top: 0%; opacity: 0; }
-            10% { opacity: 1; }
-            90% { opacity: 1; }
-            100% { top: 100%; opacity: 0; }
-        }
-
-        .egg-scan-text {
-            position: relative;
-            text-align: center;
-            padding: 0 24px;
-        }
-        .egg-scan-title {
-            font-family: 'Anton', 'Bebas Neue', sans-serif;
-            font-size: clamp(26px, 6.5vw, 44px);
-            letter-spacing: 3px;
-            color: #e50914;
-            text-transform: uppercase;
-            text-shadow: 0 0 30px rgba(229,9,20,0.75);
-            opacity: 0;
-            animation: eggAppear 0.55s cubic-bezier(0.16,1,0.3,1) forwards 0.1s;
-        }
-        .egg-scan-sub {
-            font-family: 'Montserrat', sans-serif;
-            font-size: 12.5px;
-            font-weight: 700;
-            letter-spacing: 3px;
-            color: #999;
-            text-transform: uppercase;
-            margin-top: 12px;
-            opacity: 0;
-            animation: eggAppear 0.5s ease forwards 0.35s;
-        }
-        @keyframes eggAppear {
-            0% { opacity: 0; transform: scale(0.85); }
-            100% { opacity: 1; transform: scale(1); }
-        }
-        .egg-dots span {
-            opacity: 0;
-            animation: eggDot 1.2s infinite;
-        }
-        .egg-dots span:nth-child(2) { animation-delay: 0.2s; }
-        .egg-dots span:nth-child(3) { animation-delay: 0.4s; }
-        @keyframes eggDot { 0%,100% { opacity: 0; } 50% { opacity: 1; } }
 
         /* ── phase 2 : jeu ── */
         .egg-game {
@@ -3491,26 +3406,20 @@
             pointer-events: auto;
         }
 
+        /* Croix : reprend le style .close-btn du reste du site (cercle translucide, rotation + rouge au survol) */
         .egg-close {
             position: absolute;
             top: 20px;
             right: 30px;
+            width: 50px;
+            height: 50px;
+            padding: 0;
             z-index: 20;
-            width: 44px;
-            height: 44px;
-            border-radius: 50%;
-            border: none;
-            background: rgba(0,0,0,0.5);
-            color: #fff;
-            font-size: 40px;
-            line-height: 1;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: color 0.25s ease, transform 0.25s ease;
         }
-        .egg-close:hover { color: #e50914; transform: scale(1.15); }
+        @media (max-width: 600px) {
+            .egg-close { width: 38px; height: 38px; top: 14px; right: 14px; }
+            .egg-close svg { width: 17px; height: 17px; }
+        }
 
         .egg-frame {
             position: relative;
@@ -3519,15 +3428,7 @@
             height: 100%;
             max-height: 900px;
             aspect-ratio: 9 / 16;
-            background:
-                radial-gradient(ellipse 120% 60% at 50% 0%, rgba(229,9,20,0.24) 0%, rgba(229,9,20,0) 60%),
-                radial-gradient(ellipse 120% 50% at 50% 100%, rgba(229,9,20,0.12) 0%, rgba(229,9,20,0) 60%),
-                radial-gradient(ellipse at 50% 40%, #141414 0%, #0a0a0a 60%, #000 100%);
-            box-shadow:
-                inset 0 90px 70px -50px #000,
-                inset 0 -100px 90px -50px #000;
-            border-left: 1px solid #1f1f1f;
-            border-right: 1px solid #1f1f1f;
+            background: #141414;
             overflow: hidden;
         }
 
@@ -3544,11 +3445,10 @@
             padding-top: 18px;
             z-index: 5;
             pointer-events: none;
-            background: linear-gradient(180deg, rgba(0,0,0,0.55) 0%, transparent 100%);
             padding-bottom: 30px;
         }
         .egg-brand-logo {
-            height: clamp(26px, 7vw, 38px);
+            height: clamp(32px, 8.5vw, 46px);
             width: auto;
             filter: drop-shadow(0 0 12px rgba(229,9,20,0.5));
             margin-bottom: 12px;
@@ -3697,6 +3597,73 @@
             transform: translateY(-2px);
         }
         .egg-btn:active { transform: scale(0.96); }
+
+        /* ── PC / grand écran : l'arène devient une vraie carte arrondie, centrée, avec lueur rouge ── */
+        @media (min-width: 901px) and (min-height: 561px) {
+            .egg-overlay {
+                background:
+                    radial-gradient(ellipse 60% 50% at 50% 38%, rgba(229,9,20,0.16) 0%, rgba(229,9,20,0) 70%),
+                    radial-gradient(ellipse at center, #1a1a1a 0%, #0c0c0c 100%);
+            }
+            .egg-frame {
+                --egg-h: min(90vh, 860px, 118vw);
+                height: var(--egg-h);
+                width: calc(var(--egg-h) * 0.8);
+                max-width: none;
+                max-height: none;
+                aspect-ratio: auto;
+                border-radius: 26px;
+                border: 1px solid rgba(229,9,20,0.38);
+                box-shadow:
+                    0 0 0 6px rgba(255,255,255,0.025),
+                    0 40px 90px rgba(0,0,0,0.75),
+                    0 0 90px rgba(229,9,20,0.16),
+                    inset 0 0 60px rgba(229,9,20,0.07);
+                background:
+                    linear-gradient(rgba(255,255,255,0.022) 1px, transparent 1px) 0 0 / 48px 48px,
+                    linear-gradient(90deg, rgba(255,255,255,0.022) 1px, transparent 1px) 0 0 / 48px 48px,
+                    radial-gradient(ellipse 80% 40% at 50% 0%, rgba(229,9,20,0.14), rgba(229,9,20,0) 70%),
+                    #111;
+            }
+            .egg-topbar { padding-top: 26px; }
+            .egg-brand-logo { height: 48px; margin-bottom: 16px; }
+            .egg-score { font-size: 46px; }
+            .egg-hud-chip { padding: 9px 32px 12px; }
+            .egg-panel { max-width: 360px; padding: 38px 30px 32px; }
+            .egg-close { top: 28px; right: 36px; }
+        }
+
+        /* ── Téléphone en paysage : plein écran, HUD compact sur une ligne ── */
+        @media (orientation: landscape) and (max-height: 560px) {
+            .egg-frame {
+                width: 100%;
+                height: 100%;
+                max-width: none;
+                max-height: none;
+                aspect-ratio: auto;
+            }
+            .egg-topbar {
+                flex-direction: row;
+                align-items: center;
+                justify-content: space-between;
+                padding: 10px calc(66px + env(safe-area-inset-right, 0px)) 0 calc(18px + env(safe-area-inset-left, 0px));
+            }
+            .egg-brand-logo { height: 36px; margin-bottom: 0; }
+            .egg-hud { flex-direction: row; align-items: center; gap: 12px; }
+            .egg-hud-chip { flex-direction: row; align-items: center; gap: 10px; padding: 4px 16px; border-radius: 12px; }
+            .egg-score { font-size: 26px; line-height: 1.1; }
+            .egg-best-row { margin-top: 0; font-size: 10px; }
+            .egg-close { top: 10px; right: calc(14px + env(safe-area-inset-right, 0px)); width: 38px; height: 38px; }
+            .egg-close svg { width: 17px; height: 17px; }
+            .egg-panel-overlay { padding: 10px; }
+            .egg-panel { max-width: 340px; padding: 16px 22px 18px; gap: 7px; }
+            .egg-found-badge { font-size: 9.5px; padding: 4px 12px; margin-bottom: 0; }
+            .egg-panel h1 { font-size: 24px; letter-spacing: 2px; }
+            .egg-panel p { font-size: 12px; line-height: 1.45; }
+            .egg-panel .egg-big-score { font-size: 40px; }
+            .egg-panel .egg-sub-score { font-size: 11px; margin-top: -2px; }
+            .egg-btn { margin-top: 2px; padding: 10px 32px; font-size: 13px; }
+        }
 
         .logo, .logo-mobile { cursor: pointer; }
 
@@ -4504,8 +4471,45 @@ document.querySelectorAll('a[href^="#"]').forEach(a => {
         // retour) avant de rejoindre la section demandée, pour que ça ne se mélange pas
         // avec son fond — exactement comme un retour classique à l'accueil.
         if (window.calIsOpen && window.calIsOpen()) window.calClose();
-        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        // Sections (Historique, Films, Séries...) : même position que le clic sur leur titre.
+        // Autres cibles (ex. "À la une" = tout en haut) : défilement classique.
+        if (!(target.classList.contains('section') && scrollToSectionCentered(target))) {
+            target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
     });
+});
+
+// ─── POSITION "AFFICHES CENTRÉES" : utilisée par le clic sur un titre de section ET par le menu du haut ───
+// Pixels de défilement en plus vers le bas (augmenter pour descendre davantage)
+const SECTION_CLICK_EXTRA_SCROLL = 125;
+// Distance minimale entre le haut de l'écran et le titre après le clic (augmenter = page moins descendue)
+const SECTION_TITLE_TOP_GAP = 86;
+function scrollToSectionCentered(section) {
+    const title = section && section.querySelector('.section-title');
+    const rowEl = section && section.querySelector('.row-wrap, .row');
+    if (!title || !rowEl) return false;
+    const rowRect = rowEl.getBoundingClientRect();
+    // IMPORTANT : on mesure le conteneur du titre (.title-reveal-observe), qui n'est JAMAIS transformé.
+    // Le <h2> lui-même est décalé de 26px vers le bas tant qu'il n'est pas "in-view" (animation d'entrée),
+    // ce qui faussait la position quand on arrivait depuis le menu (titre encore hors écran).
+    const titleRect = (title.closest('.title-reveal-observe') || title).getBoundingClientRect();
+    const rowCenterAbs = rowRect.top + window.scrollY + rowRect.height / 2;
+    let target = rowCenterAbs - window.innerHeight / 2 + SECTION_CLICK_EXTRA_SCROLL;
+    // Le titre doit rester visible sous le header fixe
+    const titleTopAbs = titleRect.top + window.scrollY;
+    // Le titre reste à ~SECTION_TITLE_TOP_GAP px du haut de l'écran (juste sous le header).
+    target = Math.min(target, titleTopAbs - SECTION_TITLE_TOP_GAP);
+    target = Math.max(target, 0);
+    // Le titre s'arrête sous le header, dans la zone où l'animation d'entrée ne se déclencherait pas
+    // toute seule : on force son apparition (et celle de la barre de scroll) pour qu'il soit toujours visible.
+    section.querySelectorAll('.section-title.scroll-reveal, .message-reveal, .row-wrap').forEach(el => el.classList.add('in-view'));
+    window.scrollTo({ top: target, behavior: 'smooth' });
+    return true;
+}
+document.addEventListener('click', (e) => {
+    const title = e.target.closest && e.target.closest('.section-title');
+    if (!title) return;
+    scrollToSectionCentered(title.closest('.section'));
 });
 
 // ─── UTILS ───
@@ -5627,16 +5631,25 @@ function scoreColor(v) {
     if (v >= 2.5) return '#f5c518';
     return '#e5342b';
 }
-function certBadge(cert) {
-    if (!cert) return '';
-    const c = cert.toString().trim().toUpperCase();
-    if (c === 'U' || c === 'TP' || c === 'G') return `<span class="cert-chip cert-u" title="Classification">${CERT_ICON}Tous publics</span>`;
-    const num = c.replace(/[^0-9]/g, '');
-    if (num === '10') return `<span class="cert-chip cert-10" title="Classification">${CERT_ICON}-10 ans</span>`;
-    if (num === '12') return `<span class="cert-chip cert-12" title="Classification">${CERT_ICON}-12 ans</span>`;
-    if (num === '16') return `<span class="cert-chip cert-16" title="Classification">${CERT_ICON}-16 ans</span>`;
-    if (num === '18') return `<span class="cert-chip cert-18" title="Classification">${CERT_ICON}-18 ans</span>`;
-    return '';
+// Affiche la classification en format français (convertie si elle ne vient pas de France, ex. US « TV-14 » → -16 ans).
+function certBadge(cert, cc = 'FR') {
+    const lvl = wzCertToLevel(cert);
+    if (lvl === null) return '';
+    const title = 'Classification';
+    if (lvl === 0) return `<span class="cert-chip cert-u" title="${escapeHtml(title)}">${CERT_ICON}Tous publics</span>`;
+    return `<span class="cert-chip cert-${lvl}" title="${escapeHtml(title)}">${CERT_ICON}-${lvl} ans</span>`;
+}
+// Choisit la classification à afficher : France d'abord, sinon US, puis GB, puis DE (la plus stricte si plusieurs).
+const WZ_CERT_COUNTRIES = ['FR', 'US', 'GB', 'DE'];
+function wzPickCert(list, isTv) {
+    for (const cc of WZ_CERT_COUNTRIES) {
+        const reg = (list || []).find(r => r.iso_3166_1 === cc);
+        if (!reg) continue;
+        const raw = isTv ? [reg.rating] : (reg.release_dates || []).map(rd => rd.certification);
+        const ok = raw.filter(c => wzCertToLevel(c) !== null);
+        if (ok.length) return { cert: ok.reduce((m, c) => wzCertToLevel(c) > wzCertToLevel(m) ? c : m), cc };
+    }
+    return null;
 }
 
 function buildCastHTML(cast) {
@@ -5824,19 +5837,8 @@ async function openMediaPopup(item, type) {
         }
 
         // Classification (âge conseillé)
-        let cert = '';
-        if (isTv) {
-            const list = (details.content_ratings && details.content_ratings.results) || [];
-            const region = list.find(r => r.iso_3166_1 === 'FR') || list.find(r => r.iso_3166_1 === 'US');
-            cert = region ? region.rating : '';
-        } else {
-            const list = (details.release_dates && details.release_dates.results) || [];
-            const region = list.find(r => r.iso_3166_1 === 'FR') || list.find(r => r.iso_3166_1 === 'US');
-            if (region) {
-                const withCert = (region.release_dates || []).find(rd => rd.certification);
-                cert = withCert ? withCert.certification : '';
-            }
-        }
+        const certPick = wzPickCert(isTv ? (details.content_ratings && details.content_ratings.results) : (details.release_dates && details.release_dates.results), isTv);
+        const cert = certPick ? certPick.cert : '', certCc = certPick ? certPick.cc : 'FR';
 
         const castList = ((details.credits && details.credits.cast) || []).slice(0, 18);
 
@@ -5856,7 +5858,7 @@ async function openMediaPopup(item, type) {
                             ${runtime ? `<span class="media-pill">${runtime}</span>` : ''}
                             ${isTv ? `<span class="media-pill">${details.number_of_seasons} saison${details.number_of_seasons > 1 ? 's' : ''}</span>` : ''}
                             ${isTv ? `<span class="media-pill">${totalEp} épisodes</span>` : ''}
-                            ${certBadge(cert)}
+                            ${certBadge(cert, certCc)}
                         </div>
                         <div class="media-genres">${genres.map(g => `<span class="media-genre-tag">${escapeHtml(g.name)}</span>`).join('')}</div>
                         <div class="media-actions">
@@ -6153,7 +6155,7 @@ function showFeedbackPopup(type, message, title, options = {}) {
         : `<svg class="feedback-icon-svg" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path class="feedback-draw-path" d="M12 3.5L2.5 20H21.5L12 3.5Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" stroke-dasharray="57.08 999" stroke-dashoffset="57.08"/><path class="feedback-draw-path feedback-draw-path-fast" d="M12 9.5V14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-dasharray="4.5 999" stroke-dashoffset="4.5"/><circle class="feedback-dot-pop" cx="12" cy="17" r="1.1" fill="currentColor"/></svg>`;
     const icon = ring + iconSvg;
     const loginBtnHtml = options.showLoginBtn
-        ? `<button type="button" class="roulette-relaunch feedback-btn feedback-login-btn"><span>Se connecter</span><svg viewBox="0 0 24 24" fill="none"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M15 12H3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>`
+        ? `<button type="button" class="roulette-relaunch feedback-btn feedback-login-btn"><span>Se connecter</span></button>`
         : '';
     overlay.innerHTML = `
         <div class="tv-popup fullscreen feedback-popup ${type}" style="display:flex;align-items:center;justify-content:center;">
@@ -6323,7 +6325,6 @@ function showMessagePopup() {
                     <button type="button" class="roulette-back" id="cancelMessageBtn">Annuler</button>
                     <button type="button" class="roulette-relaunch" id="sendMessageBtn">
                         <span class="send-label">Envoyer</span>
-                        <svg viewBox="0 0 24 24" fill="none"><path d="M22 2 11 13M22 2l-7 20-4-9-9-4 20-7Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
                     </button>
                 </div>
             </div>
@@ -6591,6 +6592,100 @@ const WZ_WHO = [
     {v:'group',  emoji:'👥', label:'Entre amis',  sub:'3 personnes ou plus'},
     {v:'family', emoji:'👨‍👩‍👧', label:'En famille',  sub:'Avec des enfants : contenu adapté'}
 ];
+// Tranches d'âge → classification FR maximale autorisée (0 = Tous publics, puis -10, -12, -16, -18).
+const WZ_AGES = [
+    {v:'0',  emoji:'🧸', label:'Moins de 10 ans', sub:'Tous publics (TP) uniquement'},
+    {v:'10', emoji:'🎈', label:'10 – 11 ans',     sub:'Jusqu\'au -10'},
+    {v:'12', emoji:'🎮', label:'12 – 15 ans',     sub:'Jusqu\'au -12'},
+    {v:'16', emoji:'🎧', label:'16 – 17 ans',     sub:'Jusqu\'au -16'},
+    {v:'18', emoji:'🔞', label:'18 ans et plus',  sub:'Aucune restriction'}
+];
+// Famille avec jeunes enfants (≤ -12) : on garde le mode « contenu adapté aux enfants ».
+const wzKids = st => st.who === 'family' && Number(st.age) <= 12;
+
+// Convertit une classification (FR « 10 / -12 / TP », US « PG-13 / TV-14 », GB « 15 », DE « FSK 16 »…)
+// en niveau d'âge FR : 0, 10, 12, 16, 18. Toujours dans le sens prudent.
+function wzCertToLevel(cert) {
+    if (!cert) return null;
+    const c = String(cert).trim().toUpperCase();
+    if (['U', 'TP', 'TOUS PUBLICS', 'G', 'TV-Y', 'TV-G', '0'].includes(c)) return 0;
+    if (c === 'TV-Y7' || c === 'PG') return 10;
+    if (c === 'TV-PG' || c === 'PG-13' || c === '12A') return 12;
+    if (c === 'TV-14' || c === 'R') return 16;   // prudent : plus dur que -12
+    if (c === 'TV-MA' || c === 'NC-17') return 18;
+    const n = parseInt(c.replace(/[^0-9]/g, ''), 10);
+    if (!n) return null;
+    return n >= 18 ? 18 : n >= 15 ? 16 : n >= 12 ? 12 : 10;
+}
+// Titre SANS aucune classification connue : on n'a aucune garantie, donc on se base sur ses genres.
+//  ≤ 10 ans : uniquement Animation / Familial / Enfants · 12 ans : pas de genres « durs » · 16 ans : pas d'horreur.
+function wzUnratedOk(item, ageMax, type) {
+    const g = item.genre_ids || [];
+    const hard = (WZ_KIDS_VETO[type] || []);
+    if (ageMax <= 10) return g.some(id => [16, 10751, 10762].includes(id)) && !g.some(id => hard.includes(id));
+    if (ageMax <= 12) return !g.some(id => hard.includes(id));
+    return !g.includes(27);
+}
+// Classification d'un film : France d'abord, puis US / GB / DE. null = aucune classification trouvée.
+const wzMovieLevelCache = new Map();
+async function wzMovieLevel(id) {
+    if (wzMovieLevelCache.has(id)) return wzMovieLevelCache.get(id);
+    try {
+        const d = await tmdb(`/movie/${id}/release_dates`);
+        const list = d.results || [];
+        let lvl = null;
+        for (const cc of ['FR', 'US', 'GB', 'DE']) {
+            const reg = list.find(r => r.iso_3166_1 === cc);
+            const lv = reg && (reg.release_dates || []).map(rd => wzCertToLevel(rd.certification)).filter(x => x !== null);
+            if (lv && lv.length) { lvl = Math.max(...lv); break; }
+        }
+        wzMovieLevelCache.set(id, lvl);
+        return lvl;
+    } catch (e) { return undefined; } // erreur réseau : on écarte, sans mettre en cache
+}
+// Films repêchés SANS le filtre TMDB (donc ceux sans classification FR) : on vérifie chacun.
+async function wzRescueMovies(items, pr) {
+    const cand = items.slice(0, 60), out = [];
+    for (let k = 0; k < cand.length; k += 30) {
+        await Promise.all(cand.slice(k, k + 30).map(async it => {
+            const lvl = await wzMovieLevel(it.id);
+            if (lvl === undefined) return;
+            if (lvl !== null) { if (lvl <= pr.ageMax) out.push(it); }
+            else if (wzUnratedOk(it, pr.ageMax, 'movie')) { it._unrated = true; out.push(it); }
+        }));
+    }
+    return out;
+}
+// Classification d'une série : France d'abord, sinon US. null = inconnue. Résultats mis en cache.
+const wzTvLevelCache = new Map();
+async function wzTvLevel(id) {
+    if (wzTvLevelCache.has(id)) return wzTvLevelCache.get(id);
+    try {
+        const d = await tmdb(`/tv/${id}/content_ratings`);
+        const list = d.results || [];
+        const pick = wzPickCert(list, true);
+        const lvl = pick ? wzCertToLevel(pick.cert) : null;
+        wzTvLevelCache.set(id, lvl);
+        return lvl;
+    } catch (e) { return null; } // erreur réseau : non mis en cache, et traité comme « inconnu » (donc écarté pour un mineur)
+}
+// Retire du lot tout ce qui dépasse l'âge choisi. Films : déjà filtrés par TMDB (voir wzBuildParams).
+// Séries : TMDB ne sait pas filtrer, donc on vérifie la classification de chacune.
+async function wzFilterAge(pool, pr) {
+    if (pr.ageMax >= 18) return pool;
+    const tvs = pool.filter(i => i.type === 'tv').slice(0, 120);
+    const ok = new Set();
+    for (let k = 0; k < tvs.length; k += 30) {
+        await Promise.all(tvs.slice(k, k + 30).map(async it => {
+            const lvl = await wzTvLevel(it.id);
+            // Sans classification connue : on se base sur les genres (voir wzUnratedOk).
+            if (lvl !== null) { if (lvl <= pr.ageMax) ok.add(it.id); }
+            else if (wzUnratedOk(it, pr.ageMax, 'tv')) { it._unrated = true; ok.add(it.id); }
+        }));
+    }
+    return pool.filter(i => i.type !== 'tv' || ok.has(i.id));
+}
+
 const WZ_MOODS = [
     {v:'rire',       emoji:'😂', label:'Rire',        sub:'Légèreté, bonne humeur',   w:{comedie:1, familial:.5, animation:.4, romance:.3, aventure:.3}},
     {v:'cosy',       emoji:'🛋️', label:'Réconfort',   sub:'Doudou, feel-good',        w:{comedie:.7, familial:.8, animation:.7, romance:.6}},
@@ -6620,7 +6715,7 @@ const WZ_FAMES = [
 ];
 
 function wzNewState(type) {
-    return { type, step: 0, tab: 0, who: null, count: 1, people: [{ name: '', likes: [], vetoes: [] }], moods: [], era: 'any', length: 'any', fame: 'any' };
+    return { type, step: 0, tab: 0, who: null, age: null, count: 1, people: [{ name: '', likes: [], vetoes: [] }], moods: [], era: 'any', length: 'any', fame: 'any' };
 }
 function wzSyncPeople(st) {
     while (st.people.length < st.count) st.people.push({ name: '', likes: [], vetoes: [] });
@@ -6630,7 +6725,7 @@ function wzSyncPeople(st) {
 function wzSteps(st, type) {
     const s = ['who'];
     if (st.who === 'group' || st.who === 'family') s.push('count');
-    s.push('people');
+    s.push('age', 'people');
     s.push('mood', 'era');
     if (type === 'movie') s.push('length');
     s.push('fame', 'recap');
@@ -6671,25 +6766,27 @@ function wzBuildProfile(st, type) {
         const m = mood[id] || 0;
         weight[id] = hasLikes && hasMood ? 0.6 * t + 0.4 * m : (hasLikes ? t : m);
     });
-    if (st.who === 'family') [16, 10751].forEach(id => { weight[id] = Math.max(weight[id] || 0, 0.5); });
+    const kids = wzKids(st);
+    if (kids) [16, 10751].forEach(id => { weight[id] = Math.max(weight[id] || 0, 0.5); });
 
     // Vetos : "strict" = au moins une personne refuse ; "majorité" = la moitié du groupe ou plus
     // (utilisé quand le strict ne laisse plus assez de choix).
     const strictVeto = new Set(Object.keys(vetoCount).map(Number));
     const majorityVeto = new Set(Object.keys(vetoCount).map(Number).filter(id => vetoCount[id] >= Math.ceil(n / 2)));
-    if (st.who === 'family') (WZ_KIDS_VETO[type] || []).forEach(id => { strictVeto.add(id); majorityVeto.add(id); });
+    if (kids) (WZ_KIDS_VETO[type] || []).forEach(id => { strictVeto.add(id); majorityVeto.add(id); });
 
     return {
         type, n, weight, strictVeto, majorityVeto,
         likes: st.people.map(p => p.likes.slice()),
         era: st.era, length: st.length, fame: st.fame,
         hasSignal: Object.values(weight).some(w => w > 0),
-        kids: st.who === 'family'
+        kids,
+        ageMax: st.age === null || st.age === undefined ? 18 : Number(st.age)
     };
 }
 
 // ─── REQUÊTES TMDB : on assouplit progressivement (4 niveaux) si le pool est trop petit ───
-function wzBuildParams(pr, level) {
+function wzBuildParams(pr, level, withCert = true) {
     const veto = level === 0 ? pr.strictVeto : pr.majorityVeto;
     let p = '';
     if (level <= 2) {
@@ -6699,6 +6796,9 @@ function wzBuildParams(pr, level) {
         if (top.length) p += `&with_genres=${top.join('%7C')}`; // %7C = "|" → OU logique
     }
     if (veto.size) p += `&without_genres=${[...veto].join('%7C')}`;
+    p += '&include_adult=false';
+    // Limite d'âge : jamais assouplie. Films → classification française (U, 10, 12, 16, 18).
+    if (withCert && pr.ageMax < 18 && pr.type === 'movie') p += `&certification_country=FR&certification.lte=${pr.ageMax === 0 ? 'U' : pr.ageMax}`;
     if (level <= 1) {
         const isMovie = pr.type === 'movie';
         const dk = isMovie ? 'primary_release_date' : 'first_air_date';
@@ -6740,7 +6840,7 @@ function wzScoreItem(item, pr) {
     const vetoHits = g.filter(id => pr.strictVeto.has(id)).length;
 
     const base = 0.45 * match + 0.35 * avgSat + 0.2 * minSat;
-    item._score = base * 0.75 + quality * 0.2 + fameAdj - vetoHits * 0.6;
+    item._score = base * 0.75 + quality * 0.2 + fameAdj - vetoHits * 0.6 - (item._unrated ? 0.05 : 0);
     item._compat = Math.round(base * 100);
 
     const matched = g.filter(id => (pr.weight[id] || 0) > 0).sort((a, b) => pr.weight[b] - pr.weight[a])
@@ -6748,7 +6848,7 @@ function wzScoreItem(item, pr) {
     const parts = [];
     if (pr.hasSignal && item._compat >= 50) parts.push(`${item._compat} % de compatibilité`);
     if (sats.length > 1) parts.push(`plaît à ${sats.filter(s => s > 0).length}/${sats.length} d'entre vous`);
-    if (matched.length) parts.push(matched.join(' · '));
+    if (item._unrated) parts.push('classification non renseignée');
     item._why = parts.join(' · ');
     return item;
 }
@@ -6765,7 +6865,15 @@ async function fetchGuidedPool(type, pr) {
         const veto = level === 0 ? pr.strictVeto : pr.majorityVeto;
         for (const tier of wzTiers(pr.fame, level)) {
             let pool = await fetchPoolForTier(type, extra, tier);
+            if (pr.ageMax < 18 && type === 'movie') {
+                // 2e requête sans filtre de classification → on repêche les films non classés en France.
+                const raw = await fetchPoolForTier(type, wzBuildParams(pr, level, false), tier);
+                const known = new Set(pool.map(i => i.id));
+                const rescued = await wzRescueMovies(raw.filter(i => !known.has(i.id)), pr);
+                pool = dedupePool([...pool, ...rescued]);
+            }
             pool = pool.filter(i => !(i.genre_ids || []).some(id => veto.has(id)));
+            pool = await wzFilterAge(pool, pr);
             if (pool.length > best.length) best = pool;
             if (pool.length >= 10) return finalize(pool);
         }
@@ -6799,9 +6907,11 @@ function wzRecapHtml(st, type) {
     const lab = (list, v) => { const o = list.find(x => x.v === v); return o ? o.label + (o.sub ? ` (${o.sub})` : '') : ''; };
     const rows = [];
 
-    const who = { solo: 'Juste vous', duo: 'Duo', group: `Groupe de ${st.count}`, family: `Famille · ${st.count} personnes · adapté aux enfants` }[st.who] || '';
+    const who = { solo: 'Juste vous', duo: 'Duo', group: `Groupe de ${st.count}`, family: `Famille · ${st.count} personnes${wzKids(st) ? ' · adapté aux enfants' : ''}` }[st.who] || '';
     const names = st.people.map(p => p.name.trim()).filter(Boolean);
     rows.push(['Qui', escapeHtml(who + (names.length && st.who !== 'solo' ? ` — ${names.join(', ')}` : ''))]);
+
+    if (st.age) rows.push(['Âge', escapeHtml(lab(WZ_AGES, st.age))]);
 
     const want = Object.entries(pr.weight).filter(([id, w]) => w > 0 && !pr.strictVeto.has(Number(id))).sort((a, b) => b[1] - a[1]).slice(0, 5);
     if (want.length) rows.push(['Envies', `<div class="wz-tags">${want.map(([id]) => `<span class="wz-tag">${escapeHtml(nm(id))}</span>`).join('')}</div>`]);
@@ -6968,6 +7078,10 @@ function showGenreSelection(contentType, preSelected = [], startMode = 'genres')
             const min = st.who === 'family' ? 2 : 3;
             title = 'Combien êtes-vous ?'; subtitle = 'Chacun va indiquer ses goûts : on cherche le meilleur compromis';
             content = `<div class="wz-stepper"><button type="button" data-d="-1" ${st.count <= min ? 'disabled' : ''}>−</button><span class="wz-num">${st.count}</span><button type="button" data-d="1" ${st.count >= 8 ? 'disabled' : ''}>+</button></div>`;
+        } else if (id === 'age') {
+            title = solo ? 'Quel âge avez-vous ?' : 'Quel âge a le plus jeune ?';
+            subtitle = 'Je n\'afficherai rien au-dessus de la classification adaptée (Tous publics, -10, -12, -16, -18)';
+            content = optGrid(WZ_AGES, st.age ? [st.age] : []); nextDisabled = !st.age;
         } else if (id === 'people') {
             title = solo ? 'Vos goûts' : 'Les goûts de chacun';
             subtitle = solo ? 'Touchez une fois pour aimer ✓, deux fois pour refuser ✕. Vide = peu importe'
@@ -6977,7 +7091,7 @@ function showGenreSelection(contentType, preSelected = [], startMode = 'genres')
         } else if (id === 'mood') {
             title = st.who === 'solo' ? 'Quelle ambiance ce soir ?' : 'Quelle ambiance pour la soirée ?';
             subtitle = 'Choisissez-en jusqu\'à 2, ou aucune';
-            content = optGrid(WZ_MOODS.filter(m => !(st.who === 'family' && m.v === 'frissons')), st.moods);
+            content = optGrid(WZ_MOODS.filter(m => !(wzKids(st) && m.v === 'frissons')), st.moods);
         } else if (id === 'era') {
             title = 'Quelle époque ?'; subtitle = 'Récent ou plutôt vieux classiques ?';
             content = optGrid(WZ_ERAS, [st.era]);
@@ -7037,7 +7151,7 @@ function showGenreSelection(contentType, preSelected = [], startMode = 'genres')
                 else st.count = (prev === 'family' && st.count >= 2) ? st.count : 4;
                 markSelected(btn); advance();
             }));
-        } else if (id === 'era' || id === 'length' || id === 'fame') {
+        } else if (id === 'age' || id === 'era' || id === 'length' || id === 'fame') {
             const key = id;
             body.querySelectorAll('.wz-opt').forEach(btn => btn.addEventListener('click', () => {
                 st[key] = btn.dataset.v; markSelected(btn); advance();
@@ -7635,7 +7749,6 @@ function renderRouletteResult(resultBox, item, extraDetails, reveal = true) {
                 ${episodesMeta}
             </div>
             ${genresRow}
-            ${item._why ? `<div class="result-why">✨ ${escapeHtml(item._why)}</div>` : ''}
             <p class="result-overview" id="rouletteOverviewText">${overview}</p>
             <button type="button" class="result-overview-toggle" id="rouletteOverviewToggle">
                 <span class="toggle-label">Voir plus</span>
@@ -7717,35 +7830,31 @@ function closeKofiPopup() {
 
 // ─── FONDU + MONTÉE À L'APPARITION/DISPARITION AU SCROLL (titres + affiches) ───
 (function() {
-    const revealObserver = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            // On observe toujours un conteneur STABLE (jamais transformé) : entry.target.
-            // L'animation (opacité + transform) est appliquée à un élément séparé, référencé
-            // via _revealTarget, pour que le mouvement de l'animation ne modifie jamais la
-            // position réelle observée — sinon l'observateur se re-déclenche en boucle
-            // (l'élément "rentre" dans la zone en bougeant, ressort, rentre à nouveau...),
-            // ce qui provoquait le bug de "saut" pendant le scroll.
-            const target = entry.target._revealTarget || entry.target;
-            if (entry.isIntersecting) {
-                target.style.transitionDelay = target.dataset.revealDelay || '0ms';
-                target.classList.add('in-view');
-            } else {
-                target.style.transitionDelay = '0ms';
-                target.classList.remove('in-view');
-            }
-        });
+    // ENTRÉE : même réglage qu'avant (marge haute -160px / basse -60px) => animations d'entrée inchangées.
+    // SORTIE : observateur séparé, sans marge négative => les affiches, titres ET barres de scroll
+    // ne disparaissent que lorsqu'ils sont réellement sortis de l'écran (plus de titres qui
+    // s'effacent alors que les affiches sont encore visibles). Entre les deux zones (ex. 0-160px
+    // du haut), l'élément garde son état actuel : pas de clignotement.
+    function setInView(entry, on) {
+        const target = entry.target._revealTarget || entry.target;
+        if (on) {
+            target.style.transitionDelay = target.dataset.revealDelay || '0ms';
+            target.classList.add('in-view');
+        } else {
+            target.style.transitionDelay = '0ms';
+            target.classList.remove('in-view');
+        }
+    }
+    // Hauteur du header fixe : les affiches/titres s'effacent (animation) dès qu'ils passent dessous,
+    // exactement comme la barre de scroll.
+    const REVEAL_HEADER_H = Math.round((document.querySelector('.header') || {}).offsetHeight || 90);
+    const enterObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => { if (entry.isIntersecting) setInView(entry, true); });
     }, { threshold: 0, rootMargin: '-160px 0px -60px 0px' });
-    // rootMargin : légère marge négative en haut ET en bas pour laisser un petit délai
-    // volontaire avant le déclenchement du fondu, dans les deux sens de scroll.
-    // - Marge basse (-60px) : quand on scrolle vers le bas, l'élément qui entre par le bas
-    //   de l'écran doit avoir déjà un peu pénétré l'écran avant que le fondu se déclenche,
-    //   au lieu de se lancer pile au ras du bord (0px, testé trop instantané) tout en restant
-    //   bien plus réactif que l'ancien -4% (qui demandait de scroller beaucoup plus).
-    //   Cette valeur ne change pas : le comportement au scroll vers le bas reste parfait.
-    // - Marge haute (-160px) : pour l'élément qui entre par le HAUT de l'écran en scrollant
-    //   vers le haut. Plus grande que la marge basse exprès, pour un délai bien plus visible :
-    //   l'élément doit avancer de 160px dans l'écran avant que le fondu se déclenche, ce qui
-    //   laisse largement le temps de le voir apparaître ET s'animer en continuant de remonter.
+    const exitObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => { if (!entry.isIntersecting) setInView(entry, false); });
+    }, { threshold: 0, rootMargin: `-${REVEAL_HEADER_H}px 0px 0px 0px` });
+    function observeReveal(el) { enterObserver.observe(el); exitObserver.observe(el); }
 
     function prepareReveal(el) {
         if (!el || el.dataset.revealDone) return;
@@ -7790,11 +7899,28 @@ function closeKofiPopup() {
         }
 
         outer._revealTarget = animatedTarget;
-        revealObserver.observe(outer);
+        observeReveal(outer);
     }
 
     // Titres de section déjà présents dans le HTML, + messages "Historique"/"Recommandations".
     document.querySelectorAll('.section-title, .continue-message').forEach(prepareReveal);
+
+    // Barres de scroll sous les rangées : elles apparaissent/disparaissent avec les affiches
+    // (classe .in-view posée sur le .row-wrap, voir CSS .custom-scrollbar-track).
+    document.querySelectorAll('.row-wrap').forEach(wrap => observeReveal(wrap));
+
+    // Barre de scroll qui passe sous le header (sortie par le HAUT) : elle disparaît avec une animation,
+    // et réapparaît quand elle redescend sous le header.
+    const headerForBars = document.querySelector('.header');
+    const headerBottomPx = Math.round((headerForBars ? headerForBars.offsetHeight : 90));
+    const barObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            const rootTop = entry.rootBounds ? entry.rootBounds.top : 0;
+            const passedAbove = !entry.isIntersecting && entry.boundingClientRect.bottom <= rootTop + 1;
+            entry.target.classList.toggle('bar-hidden', passedAbove);
+        });
+    }, { threshold: 0, rootMargin: `-${headerBottomPx}px 0px 0px 0px` });
+    document.querySelectorAll('.custom-scrollbar-track').forEach(t => barObserver.observe(t));
 
     // Affiches (movie-card) créées dynamiquement au fil des chargements TMDB : on observe
     // leur ajout au DOM pour leur appliquer le même fondu dès qu'elles apparaissent.
@@ -7866,16 +7992,9 @@ function closeKofiPopup() {
      EASTER EGG — NETFLOX PONG
      ═══════════════════════════════════════════════ -->
 <div id="eggOverlay" class="egg-overlay">
-  <div class="egg-scan" id="eggScan">
-    <div class="egg-scan-text">
-      <div class="egg-scan-title egg-found" id="eggTitle">Signal anormal détecté</div>
-      <div class="egg-scan-sub" id="eggSub">Easter egg<span class="egg-dots"><span>.</span><span>.</span><span>.</span></span></div>
-    </div>
-    <div class="egg-scan-line"></div>
-  </div>
 
   <div class="egg-game" id="eggGame">
-    <button class="egg-close" id="eggClose" aria-label="Fermer"><svg viewBox="0 0 24 24" width="22" height="22" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" fill="none"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    <button class="close-btn egg-close" id="eggClose" aria-label="Fermer"><svg viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
     <div class="egg-frame" id="eggFrame">
       <canvas id="eggCanvas"></canvas>
 
@@ -7905,9 +8024,6 @@ function closeKofiPopup() {
 <script>
 (function(){
   const eggOverlay = document.getElementById('eggOverlay');
-  const eggScan = document.getElementById('eggScan');
-  const eggTitle = document.getElementById('eggTitle');
-  const eggSub = document.getElementById('eggSub');
   const eggGame = document.getElementById('eggGame');
   const eggClose = document.getElementById('eggClose');
   const eggFrame = document.getElementById('eggFrame');
@@ -7952,7 +8068,6 @@ function closeKofiPopup() {
 
   function openEasterEgg() {
     // reset visuel complet à chaque ouverture (corrige le bug de relance)
-    eggScan.classList.remove('egg-fade-out');
 
     // on cache le jeu instantanément, sans transition, pour éviter tout flash
     // visible avant que l'animation de scan ne démarre
@@ -7970,14 +8085,11 @@ function closeKofiPopup() {
     openOverlayCount++;
     document.body.style.overflow = 'hidden';
 
-    // simple message "signal anormal détecté", qui disparaît (pop) pour révéler le jeu
-    setTimeout(() => {
-      eggScan.classList.add('egg-fade-out');
-      eggResize();
-      eggResetGame();
-      eggDraw();
-      eggGame.classList.add('egg-in');
-    }, 1100);
+    // plus d'écran d'intro : le jeu s'affiche directement
+    eggResize();
+    eggResetGame();
+    eggDraw();
+    requestAnimationFrame(() => eggGame.classList.add('egg-in'));
   }
 
   function closeEasterEgg() {
@@ -8004,7 +8116,22 @@ function closeKofiPopup() {
     eggCanvas.height = H * dpr;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   }
-  window.addEventListener('resize', () => { if (eggOverlay.classList.contains('show')) { eggResize(); if (!eggRunning) eggDraw(); } });
+  window.addEventListener('resize', () => {
+    if (!eggOverlay.classList.contains('show')) return;
+    const oW = W, oH = H;
+    eggResize();
+    if (oW && oH && (oW !== W || oH !== H)) {
+      const fx = W / oW, fy = H / oH;
+      eggBall.x *= fx; eggBall.y *= fy;
+      eggBall.vx *= fy; eggBall.vy *= fy;
+      eggBall.r = Math.min(W, H) * 0.07;
+      eggPaddle.w = W / H > 1.3 ? W * 0.14 : W * 0.18;
+      eggPaddle.h = Math.max(10, H * 0.012);
+      eggPaddle.x *= fx; eggPaddle.targetX *= fx;
+      eggPaddle.y = H - H * 0.06 - eggPaddle.h;
+    }
+    if (!eggRunning) eggDraw();
+  });
 
   const eggLogo = new Image();
   eggLogo.crossOrigin = "anonymous";
@@ -8019,7 +8146,7 @@ function closeKofiPopup() {
   let eggRunning = false;
   let eggScore = 0;
 
-  const eggPaddle = { w: 0, h: 16, x: 0, y: 0, targetX: 0 };
+  const eggPaddle = { w: 0, h: 10, x: 0, y: 0, targetX: 0 };
   const eggBall = { x: 0, y: 0, vx: 0, vy: 0, r: 0 };
 
   const EGG_MIN_RATIO = 0.5;
@@ -8054,18 +8181,20 @@ function closeKofiPopup() {
     return { vx: vx * cos - vy * sin, vy: vx * sin + vy * cos };
   }
 
-  function eggBaseSpeed() { return H * 0.0068; }
+  function eggBaseSpeed() { return H * 0.0068 * (W / H > 1.3 ? 1.25 : 1); }
 
+  const eggWall = { l: 0, r: 0, t: 0 }; // intensité du flash à l'impact (0 → 1)
   function eggResetGame() {
+    eggWall.l = eggWall.r = eggWall.t = 0;
     eggScore = 0;
     eggScoreEl.textContent = "0";
-    eggPaddle.w = W * 0.28;
-    eggPaddle.h = Math.max(14, H * 0.018);
+    eggPaddle.w = W / H > 1.3 ? W * 0.14 : W * 0.18;
+    eggPaddle.h = Math.max(10, H * 0.012);
     eggPaddle.x = W / 2 - eggPaddle.w / 2;
     eggPaddle.y = H - H * 0.06 - eggPaddle.h;
     eggPaddle.targetX = eggPaddle.x;
 
-    eggBall.r = Math.min(W, H) * 0.055;
+    eggBall.r = Math.min(W, H) * 0.07;
     eggBall.x = W / 2;
     eggBall.y = H * 0.25;
     const s = eggBaseSpeed();
@@ -8122,12 +8251,14 @@ function closeKofiPopup() {
     eggBall.y += eggBall.vy;
 
     if (eggBall.x - eggBall.r < 0) {
+      eggWall.l = 1;
       eggBall.x = eggBall.r;
       eggBall.vx *= -1;
       const j = eggJitter(eggBall.vx, eggBall.vy, 0.12);
       const c = eggClampDirection(j.vx, j.vy);
       eggBall.vx = c.vx; eggBall.vy = c.vy;
     } else if (eggBall.x + eggBall.r > W) {
+      eggWall.r = 1;
       eggBall.x = W - eggBall.r;
       eggBall.vx *= -1;
       const j = eggJitter(eggBall.vx, eggBall.vy, 0.12);
@@ -8136,6 +8267,7 @@ function closeKofiPopup() {
     }
 
     if (eggBall.y - eggBall.r < 0) {
+      eggWall.t = 1;
       eggBall.y = eggBall.r;
       eggBall.vy *= -1;
       const j = eggJitter(eggBall.vx, eggBall.vy, 0.12);
@@ -8180,6 +8312,44 @@ function closeKofiPopup() {
 
   function eggDraw() {
     ctx.clearRect(0, 0, W, H);
+
+    // murs : invisibles par défaut. Quand la balle s'approche d'un mur, une lueur rouge
+    // apparaît à l'endroit le plus proche de la balle et s'intensifie ; elle claque à l'impact.
+    eggWall.l *= 0.9; eggWall.r *= 0.9; eggWall.t *= 0.9;
+    const RANGE = Math.min(W, H) * 0.42;           // distance à partir de laquelle le mur réagit
+    const prox = (d) => { const p = Math.max(0, Math.min(1, 1 - d / RANGE)); return p * p; };
+    const wallGlow = (cx, cy, inten, vertical, edge) => {
+      if (inten < 0.01) return;
+      const R = Math.min(W, H) * 0.34;               // taille de la tache de lumière
+      // lueur douce qui part du mur vers l'intérieur
+      const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, R);
+      g.addColorStop(0, 'rgba(229,9,20,' + (0.55 * inten) + ')');
+      g.addColorStop(0.45, 'rgba(229,9,20,' + (0.18 * inten) + ')');
+      g.addColorStop(1, 'rgba(229,9,20,0)');
+      ctx.fillStyle = g;
+      ctx.fillRect(Math.max(0, cx - R), Math.max(0, cy - R), R * 2, R * 2);
+      // fine arête rouge, qui s'efface en s'éloignant de la balle
+      const L = R * 1.6, T = 2;
+      let eg;
+      if (vertical) {
+        eg = ctx.createLinearGradient(0, cy - L, 0, cy + L);
+      } else {
+        eg = ctx.createLinearGradient(cx - L, 0, cx + L, 0);
+      }
+      eg.addColorStop(0, 'rgba(255,40,55,0)');
+      eg.addColorStop(0.5, 'rgba(255,40,55,' + Math.min(1, 0.95 * inten + 0.1) + ')');
+      eg.addColorStop(1, 'rgba(255,40,55,0)');
+      ctx.fillStyle = eg;
+      if (edge === 'l') ctx.fillRect(0, cy - L, T, L * 2);
+      else if (edge === 'r') ctx.fillRect(W - T, cy - L, T, L * 2);
+      else ctx.fillRect(cx - L, 0, L * 2, T);
+    };
+    {
+      const bx = eggBall.x, by = eggBall.y, br = eggBall.r;
+      wallGlow(0, by, Math.max(prox(bx - br), eggWall.l), true, 'l');
+      wallGlow(W, by, Math.max(prox(W - (bx + br)), eggWall.r), true, 'r');
+      wallGlow(bx, 0, Math.max(prox(by - br), eggWall.t), false, 't');
+    }
 
     // zone de danger : liseré lumineux juste au-dessus du sol (remplace l'ancienne ligne pointillée)
     const floorY = H - 2;
