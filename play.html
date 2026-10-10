@@ -2551,8 +2551,17 @@
      seconde avant le popup de pseudo — ce script s'exécute pendant le parsing,
      avant que le menu ne soit peint à l'écran. -->
 <script>
-  if (new URLSearchParams(window.location.search).get('wp')) {
+  // On capture les paramètres du lien de Watch Party (?wp=CODE&wpType=...)
+  // puis on les retire aussitôt de la barre d'adresse : l'URL reste propre
+  // (sans "?..."). Tout le code lit ensuite window.wpUrlParams.
+  window.wpUrlParams = new URLSearchParams(window.location.search);
+  if (window.wpUrlParams.get('wp')) {
     document.write('<style>#load-screen{display:none !important}</style>');
+    try {
+      const cleanUrl = new URL(window.location.href);
+      ['wp', 'wpType', 'wpId', 'wpSeason', 'wpEpisode'].forEach(k => cleanUrl.searchParams.delete(k));
+      window.history.replaceState(window.history.state, '', cleanUrl.pathname + cleanUrl.search + cleanUrl.hash);
+    } catch (e) {}
   }
 </script>
 
@@ -4160,6 +4169,7 @@ const I18N = {
   ext_retry_text: { fr: 'La source nécessite toujours l\'extension NETFLOX. Vérifiez qu\'elle est bien installée <strong>et activée</strong> dans votre navigateur, puis réessayez.', en: 'This source still requires the NETFLOX extension. Please check that it is installed <strong>and enabled</strong> in your browser, then try again.' },
   ext_btn_retry: { fr: 'Réessayer', en: 'Try again' },
   ext_btn_retry_cancel: { fr: 'Changer de source', en: 'Switch source' },
+  ext_btn_leave_wp: { fr: 'Quitter la Watch Party', en: 'Leave the Watch Party' },
   ext_btn_proceed: { fr: 'Changer de source', en: 'Switch source' },
   wp_ext_warn_title: { fr: 'Extension requise pour tes invités', en: 'Extension required for your guests' },
   wp_ext_warn_p1: { fr: 'La source actuelle nécessite l\'extension NETFLOX. Assure-toi que <strong>tous tes invités l\'ont installée et activée</strong>, sinon la lecture ne fonctionnera pas de leur côté.', en: 'The current source requires the NETFLOX extension. Make sure <strong>all your guests have it installed and enabled</strong>, otherwise playback won\'t work for them.' },
@@ -10640,7 +10650,7 @@ function joinWatchParty(code, onDone, viaLink) {
     }
 
     if (!media && viaLink) {
-      const params = new URLSearchParams(window.location.search);
+      const params = window.wpUrlParams || new URLSearchParams('');
       if (params.get('wpType') && params.get('wpId')) {
         media = {
           type: params.get('wpType'), id: params.get('wpId'),
@@ -11746,7 +11756,7 @@ function wpCloseJoinPrompt() {
 // lieu de renvoyer sur l'écran d'accueil. Renvoie true si un contenu a pu
 // être lancé.
 function wpPlaySoloFromUrlParams() {
-  const params = new URLSearchParams(window.location.search);
+  const params = window.wpUrlParams || new URLSearchParams('');
   const type = params.get('wpType');
   const id = params.get('wpId');
   if (!type || !id) return false;
@@ -11899,7 +11909,7 @@ function wpPrefetchHostLangThenShowPrompt(code) {
 }
 
 window.addEventListener('DOMContentLoaded', () => {
-  const code = new URLSearchParams(window.location.search).get('wp');
+  const code = (window.wpUrlParams || new URLSearchParams('')).get('wp');
   if (code) wpPrefetchHostLangThenShowPrompt(code.toUpperCase());
   document.querySelectorAll('.settings-tabs').forEach(updateTabUnderline);
 });
@@ -11911,7 +11921,7 @@ window.addEventListener('DOMContentLoaded', () => {
 // lieu de revenir à l'accueil. On pousse une entrée d'historique factice et
 // on intercepte "popstate" pour rediriger proprement vers l'accueil. Ne
 // concerne que l'invité via lien : l'hôte n'est jamais impacté.
-if (new URLSearchParams(window.location.search).get('wp')) {
+if ((window.wpUrlParams || new URLSearchParams('')).get('wp')) {
   history.pushState({ wpBackGuard:true }, '', window.location.href);
 }
 window.addEventListener('popstate', () => {
@@ -13004,9 +13014,24 @@ function handleFinepulfeExtensionRequired() {
   });
 }
 
+// En Watch Party (invité), on ne peut pas changer de source : les boutons
+// "Changer de source" deviennent "Quitter la Watch Party".
+function applyExtGuestButtonLabels() {
+  const key = wpIsGuest ? 'ext_btn_leave_wp' : null;
+  [['ext-proceed-btn', 'ext_btn_proceed'], ['ext-retry-cancel-btn', 'ext_btn_retry_cancel']].forEach(([id, defKey]) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const k = key || defKey;
+    el.setAttribute('data-i18n', k);
+    const v = tr(k);
+    if (v) el.textContent = v;
+  });
+}
+
 function showExtensionRequiredPopup() {
   exitExtRetryMode();
   refreshExtensionButtonsUI();
+  applyExtGuestButtonLabels();
   extOverlayCloseToken++; // invalide toute fermeture animée programmée en attente
   const overlay = document.getElementById('ext-overlay');
   overlay.classList.remove('closing');
@@ -13035,6 +13060,8 @@ function closeExtOverlayAnimated() {
 }
 
 function closeExtensionRequiredPopup() {
+  const wasGuest = wpIsGuest;
+  const wasViaLink = wpJoinViaLink;
   document.getElementById('ext-overlay').classList.remove('open');
   stopExtAutoRetryLoop();
   extPopupPending = false;
@@ -13043,7 +13070,16 @@ function closeExtensionRequiredPopup() {
   extRetryInFlight = false;
   extRetryIsSilentBackground = false;
   exitExtRetryMode();
-  goToNextSourceAfterError();
+  if (wasGuest) {
+    // Invité de Watch Party : pas de changement de source possible, on
+    // quitte la Watch Party. Arrivé via le lien : retour sur le site ; code
+    // tapé à la main : on ferme juste la Watch Party (pas de changement de source).
+    leaveWatchParty();
+    if (wasViaLink) { window.location.href = 'https://netfloxxx.github.io/site'; return; }
+    showActionToast(tr('watchparty_left_toast'));
+  } else {
+    goToNextSourceAfterError();
+  }
   if (typeof extPopupResolve === 'function') {
     const resolve = extPopupResolve;
     extPopupResolve = null;
