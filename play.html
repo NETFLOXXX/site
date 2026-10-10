@@ -439,12 +439,21 @@
     text-transform:uppercase; letter-spacing:0.09em; margin-top:10px;
   }
   #ambient-overview {
-    font-family:'Fraunces',serif; font-style:italic; font-weight:400;
-    font-size:1.08rem; line-height:1.6; color:rgba(255,255,255,0.82);
+    font-family:'Outfit',sans-serif; font-style:normal; font-weight:400;
+    font-size:1.02rem; line-height:1.55; color:rgba(255,255,255,0.82);
     max-width:460px; margin-top:8px; padding-left:14px; border-left:2px solid rgba(255,255,255,0.25);
     display:-webkit-box; -webkit-line-clamp:5; -webkit-box-orient:vertical; overflow:hidden;
   }
   #ambient-overview:empty, #ambient-meta:empty { display:none; }
+  /* Watch Party hors plein écran : le panneau ambiance devient étroit (chat à
+     droite) — on réduit logo/texte/image proportionnellement pour que ça reste
+     bien proportionné plutôt que massif dans l'espace restreint. On NE touche
+     PAS à -webkit-line-clamp (reste à 5, comme en plein écran) : même longueur
+     de description affichée, juste plus compacte. */
+  body.wp-room-active:not(.wp-fullscreen) #ambient-badge { font-size:0.64rem; }
+  body.wp-room-active:not(.wp-fullscreen) #ambient-logo { font-size:1.5rem; }
+  body.wp-room-active:not(.wp-fullscreen) #ambient-logo img { max-width:230px; max-height:80px; }
+  body.wp-room-active:not(.wp-fullscreen) #ambient-meta { font-size:0.68rem; margin-top:6px; }
   @media (max-width:720px) {
     #ambient-panel { width:100%; padding:0 24px; align-items:flex-start; }
     #ambient-overview { -webkit-line-clamp:4; max-width:none; }
@@ -483,7 +492,23 @@
     transition:transform 0.22s cubic-bezier(0.34,1.56,0.64,1), background 0.2s, box-shadow 0.15s;
   }
   .cc-btn:focus { outline:none; }
-  .cc-btn:active { transform:scale(0.86) !important; transition-duration:0.08s !important; }
+  /* BUG FIX : l'effet de pression rétrécissait le BOUTON lui-même (transform sur
+     .cc-btn), donc sa zone cliquable réelle, dès le mousedown — en cliquant vers
+     le bord, le bouton se dérobait sous le curseur avant le mouseup et le clic
+     ne comptait pas (fallait rappuyer). L'effet visuel est maintenant sur l'icône
+     à l'intérieur (svg / spinner), jamais sur la zone cliquable elle-même. */
+  .cc-btn:active svg { transform:scale(0.86); transition-duration:0.08s; }
+  .cc-btn svg { transition:transform 0.22s cubic-bezier(0.34,1.56,0.64,1); }
+  /* Le triangle ▶ est visuellement décalé à gauche dans son cercle (son point
+     est à droite, sa base plate à gauche) — léger recentrage optique. */
+  /* Même recentrage optique pour avance/recul rapide : chaque icône est un
+     double-triangle dont le "poids" visuel (l'arête plate épaisse) est plus
+     marqué d'un côté que la pointe de l'autre — recul vers la gauche, avance
+     vers la droite, symétriques l'un de l'autre. */
+  .cc-btn.rewind svg { transform:translateX(-2.5px); }
+  .cc-btn.forward svg { transform:translateX(2.5px); }
+  .cc-btn.rewind:active svg { transform:translateX(-2.5px) scale(0.86); }
+  .cc-btn.forward:active svg { transform:translateX(2.5px) scale(0.86); }
 
   /* Small side buttons — bigger */
   .cc-btn.sm {
@@ -812,11 +837,16 @@
   }
   body.wp-room-active #wp-topbar { transform:translateY(0); opacity:1; pointer-events:all; }
   #wp-topbar-left { display:flex; align-items:center; gap:12px; min-width:0; flex:1 1 auto; margin-right:28px; }
-  #wp-topbar-titlewrap { display:flex; flex-direction:column; gap:2px; min-width:0; flex:0 1 auto; }
-  #wp-topbar-title { font-size:1rem; font-weight:700; letter-spacing:-0.01em; line-height:1.25; overflow-wrap:break-word; word-break:break-word; }
-  #wp-topbar-episode { font-size:0.78rem; font-weight:500; color:rgba(255,255,255,0.5); line-height:1.25; }
+  #wp-topbar-titlewrap { display:flex; flex-direction:column; justify-content:center; gap:2px; min-width:0; flex:0 1 auto; }
+  #wp-topbar-title { font-size:1rem; font-weight:700; letter-spacing:-0.01em; line-height:1.1; overflow-wrap:break-word; word-break:break-word; }
+  #wp-topbar-episode { font-size:0.78rem; font-weight:500; color:rgba(255,255,255,0.5); line-height:1.1; }
   #wp-topbar-episode:empty { display:none; }
-  .wp-role-badge { flex-shrink:0; font-size:0.68rem; font-weight:700; letter-spacing:0.03em; padding:3px 9px; border-radius:20px; text-transform:uppercase; }
+  /* BUG FIX : le titre (gros, gras) paraissait décalé vers le bas par rapport à la
+     pastille hôte/invité dans la même ligne flex — line-height plus serré ci-dessus
+     sur le titre, et la pastille passée en inline-flex centrée sur elle-même pour
+     que les deux soient alignées sur le même centre optique, pas juste la même
+     hauteur de ligne. */
+  .wp-role-badge { display:inline-flex; align-items:center; line-height:1; margin-top:1px; flex-shrink:0; font-size:0.76rem; font-weight:700; letter-spacing:0.03em; padding:4px 11px; border-radius:20px; text-transform:uppercase; }
   .wp-role-badge.host { background:rgba(220,38,38,0.18); color:#f87171; border:1px solid rgba(248,113,113,0.4); }
   .wp-role-badge.guest { background:rgba(255,255,255,0.08); color:rgba(255,255,255,0.65); border:1px solid rgba(255,255,255,0.14); }
   #wp-topbar-right { display:flex; align-items:center; gap:6px; flex-shrink:0; }
@@ -931,8 +961,17 @@
   #wp-chat-send { background:var(--red); border:none; color:#fff; border-radius:10px; width:40px; flex-shrink:0; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:background 0.15s; }
   #wp-chat-send:hover { background:var(--red-h); }
 
-  /* joueur rétréci pendant une Watch Party (hors plein écran) — paysage par défaut */
-  body.wp-room-active #player-wrap:not(:fullscreen) {
+  /* joueur rétréci pendant une Watch Party (hors plein écran) — paysage par défaut.
+     BUG FIX : on se basait sur le pseudo-sélecteur natif #player-wrap:not(:fullscreen),
+     pas fiable partout (cf. commentaires plus bas sur webkitfullscreenchange / Safari).
+     Quand il ne matchait pas comme attendu, #player-wrap restait à sa taille pleine
+     fenêtre (100vw/100vh) alors que rien ne le montrait visuellement à l'écran (la
+     vidéo elle-même n'en souffrait pas trop) — SAUF le fond du mode ambiance
+     (#ambient-mode, enfant en position:absolute;inset:0 de #player-wrap), qui lui
+     recouvrait alors toute la fenêtre au lieu de s'arrêter avant le panneau de chat.
+     On se base donc plutôt sur la classe JS body.wp-fullscreen, tenue à jour de façon
+     fiable par plusieurs listeners redondants (fullscreenchange + variantes préfixées). */
+  body.wp-room-active:not(.wp-fullscreen) #player-wrap {
     top:56px; height:calc(100vh - 56px); right:360px; width:calc(100vw - 360px);
   }
 
@@ -941,7 +980,7 @@
      @media(orientation) qui ne se déclenchait pas de façon fiable partout. */
   body.wp-portrait #wp-chat-panel { top:auto; right:0; left:0; bottom:0; width:auto; height:52%; border-left:none; border-top:1px solid rgba(255,255,255,0.08); transform:translateY(100%); }
   body.wp-room-active.wp-portrait #wp-chat-panel { transform:translateY(0); }
-  body.wp-room-active.wp-portrait #player-wrap:not(:fullscreen) {
+  body.wp-room-active.wp-portrait:not(.wp-fullscreen) #player-wrap {
     top:56px; right:0; width:100vw; height:calc(48% - 56px);
   }
   body.wp-portrait #wp-topbar-titlewrap { max-width:150px; }
@@ -3183,14 +3222,14 @@
     <div class="ab-icon">
       <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v4m0 4h.01M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"/></svg>
     </div>
-    <h3 data-i18n="ab_title">Attention aux publicités</h3>
-    <p data-i18n="ab_p1">Les lecteurs de l'onglet <strong>« Autres lecteurs »</strong> sont fournis par des sites tiers et peuvent afficher des publicités (pop-up, nouvel onglet, redirection). NETFLOX n'est pas responsable de leur contenu.</p>
+    <h3 id="ab-title" data-i18n="ab_title">Attention aux publicités</h3>
+    <p id="ab-p1" data-i18n="ab_p1">Les lecteurs de l'onglet <strong>« Autres lecteurs »</strong> sont fournis par des sites tiers et peuvent afficher des publicités (pop-up, nouvel onglet, redirection). NETFLOX n'est pas responsable de leur contenu.</p>
     <p data-i18n="ab_p2">Si une pub s'ouvre : <strong>ne cliquez sur rien</strong>, fermez simplement l'onglet ou la fenêtre et revenez sur le site.</p>
 
     <div class="ab-note" data-i18n="ab_note">Un adblocker est conseillé pour limiter les pubs, mais il ne les supprimera pas toutes à 100%. Pour les connaisseurs, nous conseillons aussi de mettre votre DNS sur dns.adguard.com, qui bloque une bonne partie des pubs directement au niveau du réseau.</div>
     <div class="ab-note-mobile" id="ab-note-mobile-wrap" style="display:none;">
       <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><g transform="translate(0,-0.6)"><path stroke-linecap="round" stroke-linejoin="round" d="M12 16v-4m0-4h.01"/></g></svg>
-      <span id="ab-note-mobile-text" data-i18n="ab_note_mobile_nonff">À noter que sur mobile, l'installation d'un adblocker n'est possible qu'avec <strong>Firefox</strong> ou <strong>Edge</strong>.</span>
+      <span id="ab-note-mobile-text" data-i18n="ab_note_mobile_nonff">À noter que sur mobile et tablette, l'installation d'un adblocker n'est possible qu'avec <strong>Firefox</strong> ou <strong>Edge</strong>.</span>
     </div>
 
     <div class="ab-btns">
@@ -3232,7 +3271,7 @@
 
     <div class="ab-note-mobile" id="ext-note-mobile-wrap" style="display:none;">
       <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><g transform="translate(0,-0.6)"><path stroke-linecap="round" stroke-linejoin="round" d="M12 16v-4m0-4h.01"/></g></svg>
-      <span id="ext-note-mobile-text" data-i18n="ext_note_mobile_nonff">À noter que sur mobile, l'installation de l'extension n'est possible qu'avec <strong>Firefox</strong> ou <strong>Edge</strong>.</span>
+      <span id="ext-note-mobile-text" data-i18n="ext_note_mobile_nonff">À noter que sur mobile et tablette, l'installation de l'extension n'est possible qu'avec <strong>Firefox</strong> ou <strong>Edge</strong>.</span>
     </div>
 
     <div class="ab-btns">
@@ -3706,60 +3745,113 @@ function stripLeadingArticle(str) {
   return normalizeTitleForCompare(str).replace(LEADING_ARTICLES_RE, '').trim();
 }
 
-// Détermine la langue dans laquelle l'affiche doit être prise :
-// - si le titre affiché (fr-FR ou en-US selon preferredLang) est le MÊME que le titre original
-//   (une fois les articles enlevés), le titre n'a pas été traduit -> on prend l'affiche dans la
-//   langue ORIGINALE du film/série.
-// - sinon, c'est une vraie traduction -> on prend l'affiche dans la langue affichée (fr ou en).
-function getPosterTargetLang(displayTitle, originalTitle, originalLanguage) {
-  if (displayTitle && originalTitle && stripLeadingArticle(displayTitle) === stripLeadingArticle(originalTitle)) {
-    return originalLanguage || null;
+// Règle UNIQUE pour l'affiche et le logo — seulement 'fr' ou 'en', jamais la langue d'origine :
+// - interface en anglais -> 'en'
+// - film/série d'origine française -> 'fr'
+// - titre fr == titre anglais (articles/accents/ponctuation ignorés) -> 'en'
+//   (le titre n'a pas été traduit : Vikings, Dark, Squid Game...)
+// - sinon (vraie traduction française) -> 'fr'
+function decideAssetLang(displayTitle, enTitle, originalLang) {
+  if (preferredLang === 'en') return 'en';
+  if (originalLang === 'fr') return 'fr';
+  if (displayTitle && enTitle) {
+    return stripLeadingArticle(displayTitle) === stripLeadingArticle(enTitle) ? 'en' : 'fr';
   }
-  return preferredLang === 'en' ? 'en' : 'fr';
+  return 'fr'; // titre anglais indisponible : on ignore la langue d'origine
+}
+
+// ── Requêtes TMDB fiables pour les visuels ──
+// Une requête refusée (trop de requêtes d'un coup -> erreur 429) était mise en cache comme « pas
+// d'affiche » : l'ancienne affiche restait alors affichée. Maintenant : 6 requêtes en parallèle
+// maximum, 3 essais, et un échec n'est JAMAIS mis en cache (la demande suivante réessaie).
+let tmdbActive = 0;
+const tmdbWaiters = [];
+async function tmdbAcquire() {
+  if (tmdbActive < 6) { tmdbActive++; return; }
+  await new Promise(r => tmdbWaiters.push(r)); // la place est transmise par tmdbRelease
+}
+function tmdbRelease() {
+  const next = tmdbWaiters.shift();
+  if (next) next(); else tmdbActive--;
+}
+async function tmdbFetchJson(url, attempts = 3) {
+  for (let i = 0; i < attempts; i++) {
+    await tmdbAcquire();
+    try {
+      const res = await fetch(url);
+      if (res.ok) return await res.json();
+      if (res.status === 404) return {}; // n'existe pas : définitif, inutile de réessayer
+    } catch (e) { /* réseau : on réessaie */ }
+    finally { tmdbRelease(); }
+    await new Promise(r => setTimeout(r, 400 * (i + 1)));
+  }
+  return null; // échec temporaire (non mis en cache)
+}
+
+// Titre ANGLAIS (en-US), uniquement pour comparer avec le titre français affiché.
+// Renvoie null en cas d'échec (jamais mis en cache).
+const enTitleCache = new Map();
+async function getEnglishTitle(id, type) {
+  const key = `${type}-${id}`;
+  if (enTitleCache.has(key)) return enTitleCache.get(key);
+  const d = await tmdbFetchJson(`${TMDB_BASE}/${type}/${id}?api_key=${TMDB_KEY}&language=en-US`);
+  if (!d) return null;
+  const t = d.title || d.name || '';
+  enTitleCache.set(key, t);
+  return t;
+}
+
+// Images brutes (fr / en / sans langue uniquement : jamais la langue d'origine), partagées par
+// tous les appelants pour que la langue choisie soit toujours la même partout.
+const rawAssetsCache = new Map();
+function getRawImages(id, type) {
+  const key = `${type}-${id}`;
+  if (!rawAssetsCache.has(key)) {
+    const p = (async () => {
+      const data = await tmdbFetchJson(`${TMDB_BASE}/${type}/${id}/images?api_key=${TMDB_KEY}&include_image_language=fr,en,null`);
+      if (!data) rawAssetsCache.delete(key);
+      return data;
+    })();
+    rawAssetsCache.set(key, p);
+  }
+  return rawAssetsCache.get(key);
 }
 
 const posterLangCache = new Map();
-// Va chercher, dans les affiches TMDB du film/série, celle qui correspond à la langue cible
-// (targetLang), avec repli sur la langue d'origine, puis sur une affiche neutre (sans texte).
-// Ne remonte null que si aucune affiche du tout n'existe (dans ce cas on garde l'affiche déjà
-// récupérée via l'appel principal, en langue d'interface, plutôt que de perdre l'affiche).
 // Va chercher l'affiche ET le logo transparent officiel (pour remplacer le titre écrit) dans la
-// langue cible, en un seul appel API — même logique que sur l'accueil.
-async function getTitleAssetsForLang(id, type, targetLang, originalLang) {
-  const key = `${type}-${id}-${targetLang || ''}-${originalLang || ''}`;
+// langue décidée par decideAssetLang (fr ou en, jamais la langue d'origine).
+// Affiche et logo : uniquement dans la langue choisie (affiche avec texte ; pas de version sans texte).
+// Si rien dans cette langue : affiche par défaut de l'appel principal / titre écrit à la place du logo.
+// Toujours awaité par l'appelant : la bonne affiche est connue AVANT l'affichage (pas de clignotement).
+async function getTitleAssetsForLang(id, type, displayTitle, originalLang) {
+  const key = `${type}-${id}-${preferredLang}`;
   if (posterLangCache.has(key)) return posterLangCache.get(key);
   const result = { posterPath: null, logoPath: null };
+  const load = () => Promise.all([
+    getRawImages(id, type),
+    preferredLang === 'en' ? Promise.resolve('') : getEnglishTitle(id, type)
+  ]);
+  let [data, enTitle] = await load();
+  if (!data || enTitle === null) { await new Promise(r => setTimeout(r, 1200)); [data, enTitle] = await load(); }
+  if (!data || enTitle === null) return result; // échec temporaire : rien en cache, la prochaine demande réessaiera
   try {
-    const langParam = ['fr', 'en', 'null', targetLang, originalLang].filter(Boolean).join(',');
-    const res = await fetch(`${TMDB_BASE}/${type}/${id}/images?api_key=${TMDB_KEY}&include_image_language=${langParam}`);
-    const data = await res.json();
     const posters = data.posters || [];
     const logos = data.logos || [];
-    const candidates = [...new Set([targetLang, originalLang].filter(Boolean))];
+    const lang = decideAssetLang(displayTitle, enTitle, originalLang);
 
-    let bestPoster = null;
-    for (const lang of candidates) {
-      bestPoster = posters.find(p => p.iso_639_1 === lang);
-      if (bestPoster) break;
-    }
-    if (!bestPoster) bestPoster = posters.find(p => !p.iso_639_1);
+    // Affiche AVEC texte, strictement dans la langue choisie (même principe que le logo).
+    // Pas d'affiche sans texte ni d'autre langue : s'il n'y en a pas, posterPath reste null et
+    // l'appelant garde l'affiche par défaut déjà récupérée via l'appel principal.
+    const bestPoster = posters.find(p => p.iso_639_1 === lang);
     if (bestPoster) result.posterPath = bestPoster.file_path;
 
-    // Logo : uniquement dans la langue cible ou la langue d'origine — pas de repli sur
-    // l'anglais/sans-langue ici (contrairement à l'accueil) : s'il n'y a pas de logo dans une
-    // langue cohérente avec le titre, on préfère garder le titre écrit plutôt qu'un logo dans
-    // une langue qui ne correspond pas.
-    let bestLogo = null;
-    for (const lang of candidates) {
-      bestLogo = logos.find(l => l.iso_639_1 === lang);
-      if (bestLogo) break;
-    }
+    const bestLogo = logos.find(l => l.iso_639_1 === lang);
     if (bestLogo) {
       result.logoPath = bestLogo.file_path;
       result.logoWidth = bestLogo.width;
       result.logoHeight = bestLogo.height;
     }
-  } catch (e) { /* pas de visuel dispo dans cette langue : on garde ce qui était déjà chargé */ }
+  } catch (e) { /* pas de visuel dispo : on garde ce qui était déjà chargé */ }
   posterLangCache.set(key, result);
   return result;
 }
@@ -4042,9 +4134,11 @@ const I18N = {
   mc_btn_cancel: { fr: 'Annuler', en: 'Cancel' },
   ab_title: { fr: 'Attention aux publicités', en: 'Beware of ads' },
   ab_p1: { fr: 'Les lecteurs de l\'onglet <strong>« Autres lecteurs »</strong> sont fournis par des sites tiers et peuvent afficher des publicités (pop-up, nouvel onglet, redirection). NETFLOX n\'est pas responsable de leur contenu.', en: 'Players in the <strong>"Other players"</strong> tab are provided by third-party sites and may show ads (pop-up, new tab, redirect). NETFLOX is not responsible for their content.' },
+  ab_auto_title: { fr: 'Source externe à NETFLOX', en: 'Source external to NETFLOX' },
+  ab_auto_p1: { fr: 'La source a changé automatiquement : vous êtes maintenant sur une <strong>source externe à NETFLOX</strong>, qui peut afficher des publicités (pop-up, nouvel onglet, redirection). NETFLOX n\'est pas responsable de leur contenu.', en: 'The source changed automatically: you are now on a <strong>source external to NETFLOX</strong>, which may show ads (pop-up, new tab, redirect). NETFLOX is not responsible for their content.' },
   ab_p2: { fr: 'Si une pub s\'ouvre : <strong>ne cliquez sur rien</strong>, fermez simplement l\'onglet ou la fenêtre et revenez sur le site.', en: 'If an ad opens: <strong>don\'t click on anything</strong>, just close the tab or window and come back to the site.' },
   ab_note: { fr: 'Un adblocker est conseillé pour limiter les pubs, mais il ne les supprimera pas toutes à 100%. Pour les connaisseurs, nous conseillons aussi de mettre votre DNS sur dns.adguard.com, qui bloque une bonne partie des pubs directement au niveau du réseau.', en: 'An adblocker is recommended to cut down on ads, though it won\'t block 100% of them. For advanced users, we also recommend setting your DNS to dns.adguard.com, which blocks a good share of ads at the network level.' },
-  ab_note_mobile_nonff: { fr: 'À noter que sur mobile, l\'installation d\'un adblocker n\'est possible qu\'avec <strong>Firefox</strong> ou <strong>Edge</strong>.', en: 'Note that on mobile, installing an adblocker is only possible with <strong>Firefox</strong> or <strong>Edge</strong>.' },
+  ab_note_mobile_nonff: { fr: 'À noter que sur mobile et tablette, l\'installation d\'un adblocker n\'est possible qu\'avec <strong>Firefox</strong> ou <strong>Edge</strong>.', en: 'Note that on mobile and tablet, installing an adblocker is only possible with <strong>Firefox</strong> or <strong>Edge</strong>.' },
   ab_btn_install: { fr: 'Installer un adblocker', en: 'Install an adblocker' },
   ab_btn_install_firefox: { fr: 'Ouvrir dans Firefox', en: 'Open in Firefox' },
   ab_btn_install_edge: { fr: 'Ouvrir dans Edge', en: 'Open in Edge' },
@@ -4054,7 +4148,7 @@ const I18N = {
   ext_benefit_1: { fr: 'Films et séries en qualité 1080p minimum', en: 'Movies and shows in 1080p quality or higher' },
   ext_benefit_2: { fr: 'Sous-titres et pistes audio en plusieurs langues', en: 'Subtitles and audio tracks in multiple languages' },
   ext_benefit_3: { fr: 'Une expérience de streaming optimisée, fluide et sans compromis', en: 'An optimized streaming experience, smooth and uncompromising' },
-  ext_note_mobile_nonff: { fr: 'À noter que sur mobile, l\'installation de l\'extension n\'est possible qu\'avec <strong>Firefox</strong> ou <strong>Edge</strong>.', en: 'Note that on mobile, installing the extension is only possible with <strong>Firefox</strong> or <strong>Edge</strong>.' },
+  ext_note_mobile_nonff: { fr: 'À noter que sur mobile et tablette, l\'installation de l\'extension n\'est possible qu\'avec <strong>Firefox</strong> ou <strong>Edge</strong>.', en: 'Note that on mobile and tablet, installing the extension is only possible with <strong>Firefox</strong> or <strong>Edge</strong>.' },
   ext_btn_install: { fr: 'Installer l\'extension', en: 'Install the extension' },
   ext_note_already_installed: { fr: 'Vous possédez déjà l\'extension\u00a0? Veuillez l\'activer dans votre navigateur.', en: 'Already have the extension? Please make sure it\'s enabled in your browser.' },
   ext_btn_install_firefox: { fr: 'Ouvrir dans Firefox', en: 'Open in Firefox' },
@@ -4255,11 +4349,10 @@ async function fetchTMDBInfo(id, typeHint) {
       if (mRes.ok) {
         const m = await mRes.json();
         let posterPath = m.poster_path || null;
-        // Affiche + logo dans la bonne langue (fr/en si le titre est traduit, langue d'origine
-        // sinon) — le logo reste vide s'il n'y en a pas dans cette langue (le titre écrit sert
-        // alors de repli, voir applyTMDBInfo).
-        const targetLang = getPosterTargetLang(m.title, m.original_title, m.original_language);
-        const assets = await getTitleAssetsForLang(id, 'movie', targetLang, m.original_language);
+        // Affiche + logo en fr ou en anglais (titre fr = titre anglais -> anglais, sinon fr),
+        // jamais la langue d'origine — le logo reste vide s'il n'y en a pas dans cette langue
+        // (le titre écrit sert alors de repli, voir applyTMDBInfo).
+        const assets = await getTitleAssetsForLang(id, 'movie', m.title, m.original_language);
         if (assets.posterPath) posterPath = assets.posterPath;
         return {
           type:'movie',
@@ -4284,11 +4377,10 @@ async function fetchTMDBInfo(id, typeHint) {
     if (tRes.ok) {
       const t = await tRes.json();
       let posterPath = t.poster_path || null;
-      // Affiche + logo dans la bonne langue (fr/en si le titre est traduit, langue d'origine
-      // sinon) — l'affiche est remplacée juste après par celle de la saison 1 si elle existe
-      // (priorité inchangée) ; le logo reste vide s'il n'y en a pas dans cette langue.
-      const targetLang = getPosterTargetLang(t.name, t.original_name, t.original_language);
-      const assets = await getTitleAssetsForLang(id, 'tv', targetLang, t.original_language);
+      // Affiche + logo en fr ou en anglais (titre fr = titre anglais -> anglais, sinon fr),
+      // jamais la langue d'origine — l'affiche est remplacée juste après par celle de la saison 1
+      // si elle existe (priorité inchangée) ; le logo reste vide s'il n'y en a pas dans cette langue.
+      const assets = await getTitleAssetsForLang(id, 'tv', t.name, t.original_language);
       if (assets.posterPath) posterPath = assets.posterPath;
       let runtime = Array.isArray(t.episode_run_time) && t.episode_run_time.length
         ? t.episode_run_time[0] : null;
@@ -4483,6 +4575,10 @@ async function ensureMovieCollection(movieId, belongsToCollection) {
         .filter(p => p.release_date)
         .sort((a, b) => new Date(a.release_date) - new Date(b.release_date));
       if (parts.length > 1) {
+        await Promise.all(parts.map(async p => {
+          const a = await getTitleAssetsForLang(p.id, 'movie', p.title || p.original_title, p.original_language);
+          if (a.posterPath) p.poster_path = a.posterPath;
+        }));
         movieCollection = { id: c.id, name: c.name || 'Films', parts };
       }
     }
@@ -4567,11 +4663,13 @@ async function fetchSimilarSuggestion(mediaType, id) {
     } catch (e) {}
   }
 
+  const pickTitle = path === 'movie' ? (pick.title || pick.original_title) : (pick.name || pick.original_name);
+  const pickAssets = await getTitleAssetsForLang(pick.id, path, pickTitle, pick.original_language);
   return {
     id: pick.id,
-    title: path === 'movie' ? (pick.title || pick.original_title) : (pick.name || pick.original_name),
+    title: pickTitle,
     overview: pick.overview || '',
-    posterPath: pick.poster_path || null,
+    posterPath: pickAssets.posterPath || pick.poster_path || null,
     backdropPath: pick.backdrop_path || null
   };
 }
@@ -7044,7 +7142,18 @@ function loadMedia(url, title, audioLangOverride, resumeTime, isReconnectRetry) 
   // premier segment n'arrive), le video.play() différé ici se déclenchait
   // quand même juste après, annulant sa pause. On vérifie donc aussi
   // userWantsPlaying dans ce cas.
+  // BUG FIX (Watch Party — invité lancé en lecture malgré un hôte en pause) :
+  // côté invité, le flux (HLS) devient souvent prêt à jouer AVANT que l'état
+  // réel de l'hôte (state.paused) n'arrive de Firebase — userWantsPlaying vaut
+  // encore sa valeur par défaut (true, "un nouveau contenu se lance en lecture
+  // par défaut") à ce moment-là. Résultat : la vidéo démarrait quand même chez
+  // l'invité, avant que wpApplyRemoteState() ne la remette en pause — visible
+  // comme un flash de lecture, voire une lecture qui reste lancée si le
+  // MANIFEST_PARSED/FRAG_LOADED arrivait juste après le premier sync. Tant
+  // qu'on attend ce premier sync (wpWaitingFirstSync), on ne lance rien du
+  // tout : c'est wpApplyRemoteState() qui décide, une fois l'état réel connu.
   const playWhenReady = () => {
+    if (wpWaitingFirstSync) return;
     if (isReconnectRetry) {
       if (userWantsPlaying) video.play().catch(()=>{});
       else resolveReconnectionSuccess(); // la source est de nouveau saine, même sans relancer la lecture
@@ -11461,7 +11570,13 @@ function wpTransferHostAndClose(id) {
 }
 
 function wpSuppressAutoplay() {
-  if (wpIsGuest && wpWaitingFirstSync) video.pause();
+  // BUG FIX : ce filet de sécurité vérifiait aussi wpIsGuest — or au moment
+  // où le contenu se charge pour un invité qui vient de rejoindre, wpIsGuest
+  // n'est mis à true QU'APRÈS la fin du chargement (voir le flux de
+  // rejoindre), donc une lecture auto déclenchée PENDANT ce chargement
+  // n'était jamais interceptée ici. wpWaitingFirstSync seul suffit : il n'est
+  // jamais vrai en dehors de ces fenêtres d'attente de synchro.
+  if (wpWaitingFirstSync) video.pause();
 }
 
 function wpApplyRemoteState(s) {
@@ -12332,10 +12447,14 @@ function goToNextSourceAfterError() {
     // fois que l'utilisateur l'ouvre.
     if (nextSource && !nextSource.isDirect) {
       sourceSubTab[nextSource.lang] = 'autres';
-      pendingAutresPanelOpen = true;
     }
     selectCloudflareSource(nextId, { bypassLock: true });
     showActionToast(tr('source_changed_toast').replace('{source}', escapeHTML(sourceLabel(currentSources[nextId]))));
+    // Source externe : on prévient tout de suite (popup "source externe + pubs",
+    // même logique que le popup adblocker) au lieu d'attendre l'ouverture du panneau.
+    if (nextSource && !nextSource.isDirect) {
+      setTimeout(() => openAdblockPopup(() => {}, { auto: true }), 400);
+    }
   } else {
     // Plus aucune source suivante disponible dans la liste.
     hideSpinner();
@@ -12575,8 +12694,24 @@ function refreshAdblockButtonsUI(detected) {
   }
 }
 
-async function openAdblockPopup(onProceed) {
-  if (abPopupAlreadyShown) { onProceed(); return; }
+// opts.auto : popup déclenché par une bascule automatique vers une source
+// externe (titre/texte dédiés, et affiché même si le popup classique a déjà
+// été vu pour ce film). Le reste (détection adblock, boutons, notes) est
+// strictement identique.
+function setAdblockPopupTexts(auto) {
+  const titleEl = document.getElementById('ab-title');
+  const p1El = document.getElementById('ab-p1');
+  const tKey = auto ? 'ab_auto_title' : 'ab_title';
+  const pKey = auto ? 'ab_auto_p1' : 'ab_p1';
+  if (titleEl) { titleEl.setAttribute('data-i18n', tKey); const v = tr(tKey); if (v) titleEl.innerHTML = v; }
+  if (p1El) { p1El.setAttribute('data-i18n', pKey); const v = tr(pKey); if (v) p1El.innerHTML = v; }
+}
+
+async function openAdblockPopup(onProceed, opts) {
+  const auto = !!(opts && opts.auto);
+  if (!auto && abPopupAlreadyShown) { onProceed(); return; }
+  if (auto && document.getElementById('ab-overlay').classList.contains('open')) { return; }
+  setAdblockPopupTexts(auto);
   abProceedCallback = onProceed;
   abVideoWasPlaying = !!video && !video.paused;
   if (abVideoWasPlaying) { try { video.pause(); } catch (e) {} }
@@ -12631,13 +12766,17 @@ function isDesktopSafari() {
 // Nom du navigateur desktop à afficher à la place du générique "votre
 // navigateur"/"your browser" dans les popups (ex: extension requise) — pour
 // que le message dise explicitement "Chrome", "Firefox", "Edge" ou "Safari".
+// Renvoie null si on n'est sûr d'aucun des quatre (Opera, Brave, autre
+// navigateur exotique...) : dans ce cas on garde le texte générique d'origine.
 // Uniquement utilisé sur desktop : sur mobile on garde le texte générique
 // existant, inchangé.
 function getDesktopBrowserName() {
   if (isDesktopFirefox()) return 'Firefox';
   if (isDesktopEdge()) return 'Edge';
   if (isDesktopSafari()) return 'Safari';
-  return 'Chrome'; // Chrome et autres navigateurs à base Chromium (Brave, Opera...)
+  const ua = navigator.userAgent || '';
+  if (/Chrome/i.test(ua) && !/OPR|Brave/i.test(ua)) return 'Chrome';
+  return null;
 }
 
 // Liens de téléchargement proposés sur Safari desktop, puisqu'aucune
@@ -12750,20 +12889,21 @@ function refreshExtensionButtonsUI() {
   const onEdge = isMobileEdge();
 
   // Sur desktop uniquement, on remplace le générique "votre navigateur"/"your
-  // browser" par le nom réel détecté (Chrome, Firefox, Edge) — sur mobile on
-  // laisse le texte générique existant tel quel.
-  if (!mobile) {
-    const name = getDesktopBrowserName();
+  // browser" par le nom réel détecté (Chrome, Firefox, Edge) — sur mobile, ou
+  // si le navigateur n'est identifié avec certitude dans aucun des quatre
+  // (Opera, Brave...), on laisse le texte générique existant tel quel.
+  const desktopBrowserName = mobile ? null : getDesktopBrowserName();
+  if (desktopBrowserName) {
     if (textEl) {
       textEl.innerHTML = (preferredLang === 'fr'
-        ? textEl.innerHTML.replace('votre navigateur', name)
-        : textEl.innerHTML.replace('your browser', name));
+        ? textEl.innerHTML.replace('votre navigateur', desktopBrowserName)
+        : textEl.innerHTML.replace('your browser', desktopBrowserName));
     }
     const infoNoteText = document.querySelector('#ext-note-info-wrap span');
     if (infoNoteText) {
       infoNoteText.innerHTML = (preferredLang === 'fr'
-        ? infoNoteText.innerHTML.replace('votre navigateur', name)
-        : infoNoteText.innerHTML.replace('your browser', name));
+        ? infoNoteText.innerHTML.replace('votre navigateur', desktopBrowserName)
+        : infoNoteText.innerHTML.replace('your browser', desktopBrowserName));
     }
   }
 
